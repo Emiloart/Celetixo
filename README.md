@@ -2,55 +2,39 @@
 
 > Autonomous software engineering infrastructure built around code intelligence, semantic coordination, verification, and learning.
 
-Celetixo is an experimental engineering system for coordinating multiple coding agents against the same software system without treating the repository as a collection of unrelated text files.
+Celetixo is an engineering-state coordination system in which AI agents act as execution workers against shared software repositories.
 
 The v0 objective is deliberately narrow:
 
 **Prove that a coordinated multi-agent system can outperform a strong sequential coding agent on the same engineering tasks, measured by verified outcomes rather than model benchmarks alone.**
 
+The **v1.0 architecture is frozen in [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md)**.
+
 ---
 
-## v0: The Core Loop
-
-Celetixo v0 contains four tightly connected systems:
+## Core Loop
 
 ```
-                    ┌──────────────────────┐
-                    │   Engineering Task   │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │   Code Intelligence  │
-                    │ AST + symbols + deps │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │ Semantic Transaction │
-                    │ intent + dependencies│
-                    └──────────┬───────────┘
-                               │
-                    ┌──────────▼───────────┐
-                    │ Coordinated Workers  │
-                    │ isolated execution   │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │ Tiered Verification  │
-                    │ syntax → tests → E2E │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │ Immutable Trajectory │
-                    │ state → actions →    │
-                    │ outcome → review     │
-                    └──────────────────────┘
+Engineering Task
+      ↓
+Code Intelligence
+      ↓
+Intent / Invariants
+      ↓
+Semantic Transaction
+      ↓
+Impact Analysis
+      ↓
+Coordinated Workers
+      ↓
+Tiered Verification
+      ↓
+Commit / Abort / Rebase
+      ↓
+Immutable Trajectory
 ```
 
-The resulting trajectories become the foundation for later skills, routing improvements, post-training, and reinforcement learning.
+The key abstraction is not a file edit. It is an **intent-driven, semantically analyzed, verifiably executed repository state transition**.
 
 ---
 
@@ -66,31 +50,31 @@ Build a deterministic representation of the repository:
 - symbol extraction
 - dependency relationships
 - references and call relationships
-- language-server-backed type information where available
-- incremental graph updates after changes
+- language-server-backed semantic information
+- incremental graph updates
+- dependency and configuration impact
 
-The LLM should query structural facts instead of repeatedly rediscovering them from raw files.
+The model should query structural facts instead of repeatedly rediscovering them from raw files.
 
 ### 2. Semantic Transactions
 
-Workers must declare their intended change before execution.
+Celetixo uses intent-driven optimistic concurrency control.
 
-A transaction contains:
+The Chief/Supervisor declares:
 
 - objective
-- files and symbols expected to change
-- read dependencies
-- write dependencies
-- affected contracts
+- explicit reads
+- explicit writes
+- invariants
+- task dependencies
 - verification requirements
+- resource constraints
 
-The coordination engine determines whether transactions can execute concurrently.
+The Engineering State Engine derives the transaction footprint and impact set, coordinates short-lived write reservations, validates against repository revisions, and controls commit, abort, or rebase.
 
-The first version may use AST-level locks, but the abstraction must be transaction-oriented rather than file-lock-oriented.
+Workers do not directly manipulate semantic locks.
 
 ### 3. Coordinated Agent Runtime
-
-Implement the minimum hierarchy required to test coordination:
 
 ```
 Chief
@@ -100,56 +84,58 @@ Chief
         └── Worker
 ```
 
-The Chief owns the global task DAG and system-level objective.
+The Chief owns global objectives and task decomposition.
 
-The Supervisor owns domain/task coordination.
+Supervisors own domain/task coordination.
 
-Workers perform bounded implementation and verification tasks.
+Workers perform bounded implementation and verification work.
 
-Workers and supervisors must be able to publish relevant state changes without forcing every event through the Chief.
+Workers and supervisors publish relevant state changes through the event fabric without routing every event through the Chief.
 
 ### 4. Tiered Verification
 
-Verification must escalate according to the change:
+Verification escalates according to the change:
 
-1. syntax / parse validity
+1. syntax / parse
 2. formatting / lint
 3. type checking / static analysis
-4. targeted unit or component tests
+4. targeted tests
 5. subsystem/integration tests
 6. broader E2E verification when required
 
-A change should not trigger expensive verification when deterministic lower-level evidence is sufficient.
+The system records which levels ran and why.
 
-The system must record exactly which verification levels were executed and why.
+### 5. Tiered Isolated Execution
 
-### 5. Isolated Execution
+Execution uses the cheapest environment that provides sufficient safety and evidence:
 
-Provide isolated execution environments for workers.
+- Tier 0: deterministic local analysis
+- Tier 1: isolated process/container/gVisor
+- Tier 2: Firecracker microVM
+- Tier 3: future remote execution pool
 
-v0 should support a practical sandbox abstraction and must not couple the coordination layer directly to one runtime implementation.
-
-Firecracker is a candidate execution backend, not the architectural contract.
+Firecracker is an execution backend, not an architectural coupling point.
 
 ### 6. Immutable Trajectory Logging
 
-Every meaningful agent execution must capture:
+Meaningful execution records include:
 
-- repository state
-- code graph state relevant to the task
-- transaction declarations
-- locks acquired/released
-- model and model configuration
+- repository revision
+- relevant code graph state
+- transaction intent
+- derived impact set
+- reservations
+- model/configuration provenance
 - prompts/instructions
 - tool calls
-- file/symbol mutations
+- patches
 - execution output
 - verification results
+- rollback/rebase events
 - final diff
-- rollback/recovery events
 - human review outcome
 
-The trajectory is an engineering record, not merely a chat transcript.
+The trajectory is an engineering evidence record, not merely a chat transcript.
 
 ### 7. Baseline Models
 
@@ -157,7 +143,7 @@ Use existing models through a swappable model interface.
 
 **No Celetixo-specific weight training is required for v0.**
 
-The architecture must allow different models for Chief, Supervisor, and Worker roles without changing the coordination runtime.
+Different models can fill Chief, Supervisor, and Worker roles without changing the coordination runtime.
 
 ### 8. Comparative Evaluation
 
@@ -168,7 +154,7 @@ Every task must be executable by:
 - a strong sequential baseline agent
 - Celetixo
 
-Both systems receive the same repository state, task description, and relevant constraints.
+Both receive the same repository state, task description, and relevant constraints.
 
 Primary measurements:
 
@@ -177,7 +163,7 @@ Primary measurements:
 - latency per successful PR
 - regression rate
 - human intervention/fix rate
-- number of agent actions
+- agent actions
 - verification compute
 - semantic conflict rate
 
@@ -185,18 +171,18 @@ Primary measurements:
 
 # Explicitly Out
 
-The following are **not v0 deliverables**:
+The following are not v0 deliverables:
 
-- training a proprietary foundation model
+- proprietary foundation model training
 - reinforcement learning
 - GRPO/PPO infrastructure
 - large-scale synthetic task generation
 - millions of trajectories
 - model distillation
 - autonomous model improvement
-- a public marketplace
-- a polished consumer IDE
-- visual website generation as a primary capability
+- public marketplace
+- polished consumer IDE
+- visual website generation as the primary capability
 - messaging-platform integrations
 - autonomous production deployment
 - production incident remediation
@@ -206,17 +192,13 @@ The following are **not v0 deliverables**:
 - replacing every existing coding-agent feature
 - benchmark optimization without corresponding engineering outcomes
 
-These may become later capabilities. They do not belong in the first proof.
-
 ---
 
 # Day-90 Exit Criteria
 
-Day 90 is a **comparative engineering experiment**, not a feature-count milestone.
+Day 90 is a comparative engineering experiment, not a feature-count milestone.
 
-Celetixo exits v0 only if all of the following are true:
-
-### A. The core loop works end-to-end
+### A. End-to-end core loop
 
 A real repository can move through:
 
@@ -226,33 +208,36 @@ task
 → transaction planning
 → coordinated execution
 → verification
+→ commit/abort/rebase
 → trajectory
 → final result
 ```
 
 without manual orchestration between every stage.
 
-### B. Semantic coordination is demonstrable
+### B. Semantic coordination
 
-At least two workers can operate concurrently on related parts of a repository while the transaction system detects incompatible changes and prevents or resolves unsafe execution.
+At least two workers can operate concurrently on related repository areas while the transaction system detects incompatible changes and prevents or resolves unsafe execution.
 
-The system must report conflicts as semantic relationships, not only Git line conflicts.
+Conflicts must be reported as semantic relationships, not only Git line conflicts.
 
-### C. Verification is adaptive
+### C. Adaptive verification
 
-The system can select targeted verification for low-risk changes and escalate verification for higher-risk changes.
+Low-risk changes receive targeted verification.
 
-Every escalation must be observable.
+Higher-risk changes escalate.
 
-### D. Trajectories are complete
+Every escalation is observable.
 
-A replayable record exists for every evaluation run, including graph state, transaction state, actions, execution results, verification, and final diff.
+### D. Complete trajectories
 
-### E. The hierarchy earns its complexity
+Every evaluation run has a replayable record containing graph state, transaction state, actions, execution results, verification, and final diff.
 
-On the fixed Day-90 task suite, Celetixo must be compared directly against a strong sequential agent.
+### E. Complexity earns itself
 
-The result must report at minimum:
+Celetixo is compared directly with a strong sequential agent on the frozen task suite.
+
+Report at minimum:
 
 ```
 success rate
@@ -263,19 +248,17 @@ human fix rate
 semantic conflict rate
 ```
 
-There is **no arbitrary required percentage** before measurement.
+There is no arbitrary required percentage before measurement.
 
-The hierarchy remains in the architecture only if the measured evidence shows that coordination provides a meaningful engineering advantage.
+### F. Frozen evaluation
 
-### F. No hidden success criteria
-
-The task suite, baseline configuration, measurement definitions, and acceptance rules must be frozen before the final comparison.
+The task suite, baseline configuration, measurement definitions, and acceptance rules are frozen before the final comparison.
 
 ---
 
 # Architecture Direction After v0
 
-If v0 demonstrates that coordinated execution creates measurable value, development can expand in this order:
+If v0 demonstrates measurable value from coordinated execution:
 
 ```
 v0
@@ -297,27 +280,27 @@ v5
 Autonomous software lifecycle management
 ```
 
-The model layer is downstream of the engineering environment.
+The model layer remains downstream of the engineering environment.
 
-The long-term objective is not to build a larger coding chatbot. It is to build an engineering system in which:
+The long-term objective is not a larger coding chatbot. It is an engineering system in which:
 
 **models + code intelligence + coordination + execution + verification + memory + learning form a closed loop.**
 
 ---
 
-## Design Principles
+# Design Principles
 
 ### Engineering state over raw context
 
-The system should know what a repository means, not merely retrieve more of it.
+The system should understand repository state, not merely retrieve more text.
 
 ### Semantic coordination over file locking
 
-Conflicts are about dependencies and contracts, not only overlapping lines.
+Conflicts are about dependencies, contracts, and affected state, not only overlapping lines.
 
 ### Verification over confidence
 
-An agent's confidence is not evidence that a change works.
+Agent confidence is not evidence that a change works.
 
 ### Evidence over benchmark theater
 
@@ -333,9 +316,29 @@ Every additional agent, model tier, service, and orchestration layer must demons
 
 ---
 
+## Architecture
+
+**Frozen baseline:** [ADR-0001: Celetixo Engineering-State Coordination Architecture](docs/adr/0001-celetixo-engineering-state-coordination.md)
+
+The ADR defines:
+
+- semantic transactions and OCC
+- impact-set derivation
+- repository revision and commit semantics
+- Tree-sitter/LSP/SCIP code intelligence
+- language engineering harnesses
+- tiered execution
+- PostgreSQL / ClickHouse / object-storage boundaries
+- trajectory evidence
+- Chief Agent Protobuf contract
+- Temporal / NATS responsibilities
+- security and failure semantics
+
+---
+
 ## Repository Status
 
-**Current stage:** v0 specification / initial implementation
+**Current stage:** v1.0 architecture frozen / v0 implementation
 
 **Primary objective:** establish the coordination, verification, and trajectory loop.
 
