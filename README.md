@@ -1,350 +1,530 @@
 # Celetixo
 
-> Autonomous software engineering infrastructure built around code intelligence, semantic coordination, verification, and learning.
+> **An engineering-state engine for autonomous software development.**
 
-Celetixo is an engineering-state coordination system in which AI agents act as execution workers against shared software repositories.
+Celetixo is not another coding chatbot.
 
-The v0 objective is deliberately narrow:
+It is a coordination and verification system for running multiple AI workers against the same codebase without reducing concurrency to file locks, prompt routing, or blind Git merges.
 
-**Prove that a coordinated multi-agent system can outperform a strong sequential coding agent on the same engineering tasks, measured by verified outcomes rather than model benchmarks alone.**
+The central abstraction is a **semantic transaction**:
 
-The **v1.0 architecture is frozen in [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md)**.
+> **Intent → impact analysis → coordinated execution → verification → commit or rebase**
 
----
-
-## Core Loop
-
-```
-Engineering Task
-      ↓
-Code Intelligence
-      ↓
-Intent / Invariants
-      ↓
-Semantic Transaction
-      ↓
-Impact Analysis
-      ↓
-Coordinated Workers
-      ↓
-Tiered Verification
-      ↓
-Commit / Abort / Rebase
-      ↓
-Immutable Trajectory
-```
-
-The key abstraction is not a file edit. It is an **intent-driven, semantically analyzed, verifiably executed repository state transition**.
+AI models generate the changes. Celetixo owns the engineering state around those changes.
 
 ---
 
-# v0 Scope
+## Why Celetixo Exists
 
-## In
+Today's coding agents are increasingly capable at individual tasks. The harder problem begins when several agents work on one repository.
 
-### 1. Code Intelligence
+A worker can change a function while another changes its caller.  
+A third can modify a dependency while tests are running against the old dependency graph.  
+A patch can apply cleanly while its interface contract is already invalid.
 
-Build a deterministic representation of the repository:
+Git detects textual conflicts. It does not understand the engineering intent behind a change.
+
+Celetixo is built around the missing layer:
+
+```
+              SOFTWARE REPOSITORY
+                      │
+              ┌───────▼────────┐
+              │ Engineering    │
+              │ State Graph    │
+              └───────┬────────┘
+                      │
+              ┌───────▼────────┐
+              │   Semantic     │
+              │  Transactions  │
+              └───────┬────────┘
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+     Worker A      Worker B      Worker C
+        │             │             │
+        └─────────────┼─────────────┘
+                      ▼
+              Tiered Verification
+                      │
+             ┌────────┴────────┐
+             ▼                 ▼
+          COMMIT              ABORT
+                               │
+                             REBASE
+```
+
+The objective is not to make more agents talk to each other.
+
+The objective is to make **parallel software engineering safe, measurable, and economically useful**.
+
+---
+
+# The Core Primitive: Semantic Transactions
+
+A worker does not receive a file and start editing.
+
+The system first establishes what the worker intends to change.
+
+For example:
+
+```
+Transaction
+├── Intent
+│   └── Rotate refresh-token implementation
+│
+├── Explicit writes
+│   ├── AuthService.refreshToken
+│   └── TokenPayload
+│
+├── Explicit reads
+│   └── UserRepository.findById
+│
+├── Derived impact
+│   ├── TokenPayload consumers
+│   ├── refreshToken callers
+│   └── affected tests
+│
+├── Invariants
+│   ├── public authentication contract preserved
+│   └── type safety preserved
+│
+└── Verification
+    ├── targeted authentication tests
+    ├── type checking
+    └── downstream consumer tests
+```
+
+The worker may only know part of that footprint.
+
+The **Engineering State Engine derives the rest** from the repository graph.
+
+That distinction is fundamental.
+
+---
+
+# The Engineering State Engine
+
+The Rust core is the authoritative semantic layer.
+
+It maintains the relationship between:
+
+- repositories
+- revisions
+- files
+- symbols
+- references
+- calls
+- types
+- dependencies
+- configuration
+- transactions
+- verification state
+
+Its job is to answer questions such as:
+
+- What does this change actually affect?
+- Can these two transactions execute concurrently?
+- Which assumptions became invalid after another transaction committed?
+- What must be reverified?
+- Is this patch still valid against the current repository revision?
+
+The engine uses **optimistic concurrency control** with short-lived reservations.
+
+Reservations coordinate concurrent work.  
+**Verification establishes correctness.**
+
+---
+
+# Agent Hierarchy
+
+Celetixo separates strategic reasoning from execution.
+
+```
+                         CHIEF
+                           │
+             global objective / system DAG
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+     SUPERVISOR        SUPERVISOR        SUPERVISOR
+       backend           frontend          platform
+          │                │                │
+      ┌───┼───┐        ┌───┼───┐        ┌───┼───┐
+      ▼   ▼   ▼        ▼   ▼   ▼        ▼   ▼   ▼
+     W1  W2  W3       W4  W5  W6       W7  W8  W9
+```
+
+**Chief**
+
+Owns the global objective, architecture, task decomposition, invariants, and escalation.
+
+**Supervisors**
+
+Own domain execution, dependency ordering, worker allocation, and local recovery.
+
+**Workers**
+
+Perform bounded implementation and verification tasks.
+
+Supervisors and workers communicate through the event fabric. The Chief is not a message broker.
+
+---
+
+# Code Intelligence
+
+Celetixo treats repository structure as first-class state.
+
+### Structural layer
 
 - Tree-sitter parsing
 - symbol extraction
-- dependency relationships
-- references and call relationships
-- language-server-backed semantic information
+- scope and reference analysis
+- call/dependency relationships
 - incremental graph updates
-- dependency and configuration impact
 
-The model should query structural facts instead of repeatedly rediscovering them from raw files.
+### Semantic layer
 
-### 2. Semantic Transactions
+- shared language servers
+- versioned document state
+- LSP query multiplexing
+- SCIP-style static indexes where useful
 
-Celetixo uses intent-driven optimistic concurrency control.
+### Engineering layer
 
-The Chief/Supervisor declares:
+- package manifests
+- lockfiles
+- build graphs
+- CI configuration
+- Dockerfiles
+- YAML / JSON / TOML / HCL
+- generated artifacts and their provenance
 
+A language is not considered supported because an LLM can write its syntax.
+
+It is supported when Celetixo can **index, coordinate, execute, verify, and record work in that ecosystem**.
+
+---
+
+# Initial Language Wedge
+
+Celetixo starts with:
+
+**TypeScript / JavaScript · Python · Go · Rust**
+
+Each language receives an engineering harness covering:
+
+1. structural parsing and indexing
+2. semantic/LSP integration
+3. deterministic formatting and linting
+4. executable test and diagnostic adapters
+5. dependency/lockfile handling
+6. build-cache integration
+
+Examples:
+
+- **TypeScript / JavaScript:** TypeScript compiler, Biome, Vitest or repository-native tests
+- **Python:** Pyright/MyPy, Ruff, pytest
+- **Go:** gofmt, compiler diagnostics, go test
+- **Rust:** rustfmt, cargo check/test, structured rustc diagnostics
+
+The harness is the unit of language support.
+
+---
+
+# Verification Is Part of the Architecture
+
+Celetixo does not ask a model whether its code is correct.
+
+It progressively gathers evidence.
+
+```
+Tier 0  Parse / AST / patch validation
+   ↓
+Tier 1  Format / lint / type / static analysis
+   ↓
+Tier 2  Targeted tests
+   ↓
+Tier 3  Integration / subsystem verification
+   ↓
+Tier 4  Broad E2E when the impact requires it
+```
+
+A local variable rename should not trigger an entire production-scale test matrix.
+
+A public interface change should.
+
+The verification engine records **what ran, why it ran, and what evidence it produced**.
+
+---
+
+# Execution
+
+The sandbox is selected according to risk and workload.
+
+```
+T0  Rust-local deterministic operations
+    parsing • graph queries • patch checks
+
+T1  isolated process / container / gVisor
+    type checking • linting • unit tests
+
+T2  Firecracker microVM
+    untrusted execution • dependency installation
+    integration tests • stronger isolation
+
+T3  remote execution pools
+    future large builds • GPU workloads • test matrices
+```
+
+Firecracker is an implementation backend, not a dependency of the transaction model.
+
+Build caches and dependency caches are treated separately from VM snapshots because cache state, not only process warmness, determines verification economics.
+
+---
+
+# The Evidence Loop
+
+Every meaningful run becomes an engineering record.
+
+```
+Repository revision
+       ↓
+Transaction intent
+       ↓
+Derived impact set
+       ↓
+Worker actions
+       ↓
+Patch
+       ↓
+Execution
+       ↓
+Verification
+       ↓
+Commit / Abort / Rebase
+       ↓
+Human outcome
+```
+
+Celetixo stores enough information to reconstruct that trajectory.
+
+This produces the dataset required for later:
+
+- procedural skill extraction
+- learned routing
+- worker post-training
+- verifiable-reward training
+- model distillation
+
+**Training comes after evidence.**
+
+The system does not assume that collecting model conversations is equivalent to collecting useful training data.
+
+---
+
+# System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ CONTROL PLANE                                               │
+│ TypeScript / Next.js                                        │
+│ Review • execution views • administration • evaluation UI  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                         gRPC / WebSocket
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│ ORCHESTRATION                                               │
+│ Go / Temporal                                               │
+│ Durable workflows • DAGs • retries • compensation          │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│ EVENT FABRIC                                                │
+│ NATS JetStream                                              │
+│ Worker events • heartbeats • diagnostics • state signals   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                         gRPC / Protobuf
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│ ENGINEERING STATE ENGINE                                    │
+│ Rust                                                       │
+│ Transactions • graph • LSP • OCC • sandbox scheduling     │
+└──────────────┬───────────────────┬──────────────────────────┘
+               │                   │
+       ┌───────▼───────┐   ┌──────▼────────┐
+       │ PostgreSQL    │   │ ClickHouse    │
+       │ authoritative │   │ telemetry     │
+       │ state         │   │ + evaluation  │
+       └───────────────┘   └───────────────┘
+               │
+       ┌───────▼─────────────────────────┐
+       │ S3-compatible object storage    │
+       │ trajectories • patches • logs   │
+       │ diagnostics • artifacts         │
+       └─────────────────────────────────┘
+```
+
+The boundaries are intentional:
+
+- **Temporal** owns durable workflow execution.
+- **NATS** owns asynchronous event distribution.
+- **Rust** owns semantic repository coordination.
+- **PostgreSQL** owns authoritative current state.
+- **ClickHouse** owns historical analytics.
+- **Object storage** owns large immutable evidence.
+
+No component is allowed to become an accidental replacement for another.
+
+---
+
+# Chief Agent Protocol
+
+The Chief does not issue unconstrained instructions such as:
+
+> "Go fix authentication."
+
+It submits a typed intent.
+
+The internal contract carries:
+
+- repository and base revision
 - objective
-- explicit reads
-- explicit writes
+- explicit reads/writes
 - invariants
 - task dependencies
+- impact policy
 - verification requirements
-- resource constraints
+- resource budget
+- retry/rebase policy
+- escalation policy
+- model provenance
 
-The Engineering State Engine derives the transaction footprint and impact set, coordinates short-lived write reservations, validates against repository revisions, and controls commit, abort, or rebase.
+The Engineering State Engine decides the transaction mechanics.
 
-Workers do not directly manipulate semantic locks.
+The protocol is defined in **Protobuf v3** and documented in [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md).
 
-### 3. Coordinated Agent Runtime
+---
 
-```
-Chief
-  └── Supervisor
-        ├── Worker
-        ├── Worker
-        └── Worker
-```
+# What Is Deliberately Not Being Built Yet
 
-The Chief owns global objectives and task decomposition.
+Celetixo is intentionally not starting with:
 
-Supervisors own domain/task coordination.
+- training a proprietary foundation model
+- RL/GRPO/PPO
+- millions of synthetic tasks
+- model distillation
+- autonomous self-improvement
+- a consumer IDE
+- browser automation
+- autonomous production deployment
+- production incident remediation
+- marketplace integrations
+- enterprise multi-repository orchestration
 
-Workers perform bounded implementation and verification work.
+Those are downstream capabilities.
 
-Workers and supervisors publish relevant state changes through the event fabric without routing every event through the Chief.
+First, Celetixo must prove that its engineering substrate creates measurable advantage.
 
-### 4. Tiered Verification
+---
 
-Verification escalates according to the change:
+# Day 90: The Actual Test
 
-1. syntax / parse
-2. formatting / lint
-3. type checking / static analysis
-4. targeted tests
-5. subsystem/integration tests
-6. broader E2E verification when required
+The first milestone is not "the multi-agent system works."
 
-The system records which levels ran and why.
+The question is:
 
-### 5. Tiered Isolated Execution
+> **Does Celetixo produce better verified engineering outcomes than a strong sequential coding agent on the same work?**
 
-Execution uses the cheapest environment that provides sufficient safety and evidence:
+The task suite is frozen before evaluation.
 
-- Tier 0: deterministic local analysis
-- Tier 1: isolated process/container/gVisor
-- Tier 2: Firecracker microVM
-- Tier 3: future remote execution pool
+Both systems receive the same repository state and task constraints.
 
-Firecracker is an execution backend, not an architectural coupling point.
+Measure:
 
-### 6. Immutable Trajectory Logging
-
-Meaningful execution records include:
-
-- repository revision
-- relevant code graph state
-- transaction intent
-- derived impact set
-- reservations
-- model/configuration provenance
-- prompts/instructions
-- tool calls
-- patches
-- execution output
-- verification results
-- rollback/rebase events
-- final diff
-- human review outcome
-
-The trajectory is an engineering evidence record, not merely a chat transcript.
-
-### 7. Baseline Models
-
-Use existing models through a swappable model interface.
-
-**No Celetixo-specific weight training is required for v0.**
-
-Different models can fill Chief, Supervisor, and Worker roles without changing the coordination runtime.
-
-### 8. Comparative Evaluation
-
-Build a fixed task suite before Day 90.
-
-Every task must be executable by:
-
-- a strong sequential baseline agent
-- Celetixo
-
-Both receive the same repository state, task description, and relevant constraints.
-
-Primary measurements:
-
-- task success rate
+- success rate
 - cost per successful PR
 - latency per successful PR
 - regression rate
-- human intervention/fix rate
-- agent actions
-- verification compute
+- human fix rate
 - semantic conflict rate
+- verification compute
+- agent actions
+
+There is no arbitrary 50% threshold.
+
+If the hierarchy does not earn its complexity, the architecture changes.
+
+That is a feature of the design, not a failure condition.
 
 ---
 
-# Explicitly Out
+# Roadmap
 
-The following are not v0 deliverables:
+```
+v0  Semantic coordination + verification + evidence
+ │
+ ▼
+v1  Persistent engineering graph + procedural skills
+ │
+ ▼
+v2  Learned routing + specialized worker post-training
+ │
+ ▼
+v3  Verifiable-reward training + synthetic environments
+ │
+ ▼
+v4  Distilled engineering models + predictive coordination
+ │
+ ▼
+v5  Autonomous software lifecycle management
+```
 
-- proprietary foundation model training
-- reinforcement learning
-- GRPO/PPO infrastructure
-- large-scale synthetic task generation
-- millions of trajectories
-- model distillation
-- autonomous model improvement
-- public marketplace
-- polished consumer IDE
-- visual website generation as the primary capability
-- messaging-platform integrations
-- autonomous production deployment
-- production incident remediation
-- mobile-device farms
-- multi-repository enterprise orchestration
-- arbitrary browser automation
-- replacing every existing coding-agent feature
-- benchmark optimization without corresponding engineering outcomes
+The long-term system is not:
+
+```
+prompt → model → code
+```
+
+It is:
+
+```
+engineering state
+      ↓
+intent
+      ↓
+semantic coordination
+      ↓
+execution
+      ↓
+verification
+      ↓
+evidence
+      ↓
+learning
+      ↺
+```
 
 ---
 
-# Day-90 Exit Criteria
+## Architectural Rule
 
-Day 90 is a comparative engineering experiment, not a feature-count milestone.
+**Models are workers. Engineering state is the source of truth. Verification is the authority. Evidence is the learning substrate.**
 
-### A. End-to-end core loop
-
-A real repository can move through:
-
-```
-task
-→ graph analysis
-→ transaction planning
-→ coordinated execution
-→ verification
-→ commit/abort/rebase
-→ trajectory
-→ final result
-```
-
-without manual orchestration between every stage.
-
-### B. Semantic coordination
-
-At least two workers can operate concurrently on related repository areas while the transaction system detects incompatible changes and prevents or resolves unsafe execution.
-
-Conflicts must be reported as semantic relationships, not only Git line conflicts.
-
-### C. Adaptive verification
-
-Low-risk changes receive targeted verification.
-
-Higher-risk changes escalate.
-
-Every escalation is observable.
-
-### D. Complete trajectories
-
-Every evaluation run has a replayable record containing graph state, transaction state, actions, execution results, verification, and final diff.
-
-### E. Complexity earns itself
-
-Celetixo is compared directly with a strong sequential agent on the frozen task suite.
-
-Report at minimum:
-
-```
-success rate
-cost / successful PR
-latency / successful PR
-regression rate
-human fix rate
-semantic conflict rate
-```
-
-There is no arbitrary required percentage before measurement.
-
-### F. Frozen evaluation
-
-The task suite, baseline configuration, measurement definitions, and acceptance rules are frozen before the final comparison.
+See [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md) for the frozen v1.0 architectural decision.
 
 ---
 
-# Architecture Direction After v0
+## Status
 
-If v0 demonstrates measurable value from coordinated execution:
+**Architecture:** v1.0 frozen  
+**Implementation:** v0 foundation  
+**Training:** deferred  
+**Evaluation:** controlled benchmark under construction
 
-```
-v0
-Core coordination + verification + trajectories
-        ↓
-v1
-Persistent engineering state graph + procedural skills
-        ↓
-v2
-Learned routing + specialized worker post-training
-        ↓
-v3
-Verifiable-reward training + synthetic task generation
-        ↓
-v4
-Model distillation + predictive engineering
-        ↓
-v5
-Autonomous software lifecycle management
-```
-
-The model layer remains downstream of the engineering environment.
-
-The long-term objective is not a larger coding chatbot. It is an engineering system in which:
-
-**models + code intelligence + coordination + execution + verification + memory + learning form a closed loop.**
-
----
-
-# Design Principles
-
-### Engineering state over raw context
-
-The system should understand repository state, not merely retrieve more text.
-
-### Semantic coordination over file locking
-
-Conflicts are about dependencies, contracts, and affected state, not only overlapping lines.
-
-### Verification over confidence
-
-Agent confidence is not evidence that a change works.
-
-### Evidence over benchmark theater
-
-Performance is measured by verified engineering outcomes.
-
-### Data before training
-
-Do not train models until the environment produces high-quality verified trajectories.
-
-### Complexity must earn itself
-
-Every additional agent, model tier, service, and orchestration layer must demonstrate measurable value.
-
----
-
-## Architecture
-
-**Frozen baseline:** [ADR-0001: Celetixo Engineering-State Coordination Architecture](docs/adr/0001-celetixo-engineering-state-coordination.md)
-
-The ADR defines:
-
-- semantic transactions and OCC
-- impact-set derivation
-- repository revision and commit semantics
-- Tree-sitter/LSP/SCIP code intelligence
-- language engineering harnesses
-- tiered execution
-- PostgreSQL / ClickHouse / object-storage boundaries
-- trajectory evidence
-- Chief Agent Protobuf contract
-- Temporal / NATS responsibilities
-- security and failure semantics
-
----
-
-## Repository Status
-
-**Current stage:** v1.0 architecture frozen / v0 implementation
-
-**Primary objective:** establish the coordination, verification, and trajectory loop.
-
-**Training:** deferred.
-
-**Public benchmark claims:** intentionally avoided until Celetixo has its own controlled measurements.
+Celetixo will make performance claims only from its own reproducible engineering measurements.
 
 ---
 
