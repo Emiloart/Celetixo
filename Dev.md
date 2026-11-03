@@ -2,15 +2,16 @@
 
 ## Purpose
 
-This document is the practical build guide for Celetixo developers. It translates the frozen v1.0 architecture into implementation discipline, sequencing, and acceptance criteria.
+This document is the practical build guide for Celetixo developers. It translates ADR-0001 and ADR-0002 into implementation discipline, sequencing, and acceptance criteria.
 
-**The objective is to ship working, testable software quickly without weakening Celetixo's defining correctness guarantees.** Move in small vertical slices. Prefer executable behavior over additional planning documents.
+**The objective is to build the complete accepted architecture without weakening correctness, security, independence or scalability.** Implementation may proceed in validated stages, but build time is not an architectural constraint. Do not omit necessary capabilities or choose inferior permanent designs merely to shorten delivery.
 
 Read these documents before changing core behavior:
 
-1. `docs/adr/0001-celetixo-engineering-state-coordination.md` — accepted architectural baseline.
-2. `AGENTS.md` — repository-wide operating contract for AI and human contributors.
-3. `README.md` — public system description.
+1. `docs/adr/0001-celetixo-engineering-state-coordination.md` — engineering-state baseline.
+2. `docs/adr/0002-platform-brain-client-and-correctness-extensions.md` — accepted platform and correctness extensions.
+3. `AGENTS.md` — repository-wide operating contract.
+4. `README.md` — public system description.
 
 If this file conflicts with the ADR, the ADR wins. If implementation exposes a flaw in a frozen decision, document the evidence and propose an ADR amendment; do not silently redefine the architecture.
 
@@ -23,7 +24,7 @@ If this file conflicts with the ADR, the ADR wins. If implementation exposes a f
 3. **Keep the core deterministic.** Transaction validity, revision comparison, conflict detection, and state transitions must not depend on an LLM's opinion.
 4. **Use models as replaceable workers.** Provider-specific code belongs behind explicit interfaces; the Rust engine must remain model-agnostic.
 5. **Make correctness observable.** Important decisions must return structured outcomes and preserve enough evidence to explain them.
-6. **Prefer measured simplicity.** Do not introduce a service, database, queue, sandbox, or abstraction before a concrete slice needs it. Preserve the architecture's ownership boundaries as integrations are added.
+6. **Prefer measured simplicity.** Avoid accidental complexity, but do not omit a service, database, queue, sandbox or abstraction required by the accepted target architecture. Validate ownership and failure boundaries before integration.
 7. **Never fake completion.** No placeholder implementation presented as working, no success response without an operation, and no skipped verification hidden behind a green status.
 8. **Keep scope narrow and cadence high.** Every change should compile, have focused tests, and leave the repository in a known state.
 
@@ -231,7 +232,7 @@ Start with a correct baseline. Profile real workloads before introducing caches 
 
 Do not establish latency targets until representative measurements exist.
 
-## 8. Scope Control
+## 8. Architecture Scope and Sequencing
 
 Do not start v0/v1 by building:
 
@@ -242,7 +243,7 @@ Do not start v0/v1 by building:
 - a complex dashboard before there is real execution state to display;
 - every infrastructure service as a prerequisite for local transaction tests.
 
-Do build the minimum infrastructure needed to prove semantic coordination, OCC, verification, and evidence. Preserve future architectural boundaries without requiring every future service to exist in the first executable slice.
+Build the infrastructure required by the accepted architecture, with explicit dependency ordering and integration gates. Local deterministic tests do not substitute for the durable, distributed, isolated and observable production design.
 
 ## 9. Definition of Done
 
@@ -260,6 +261,6 @@ A change is ready to merge when:
 
 ## 10. Engineering Standard
 
-Celetixo must earn complexity through demonstrated results. Implement the smallest correct slice, measure it, and expand only when the evidence supports the next step.
+Every subsystem must have a clear responsibility, contract, threat model, failure semantics and validation plan. Build in coherent stages, but do not impose arbitrary time or capability ceilings. Preserve the complete accepted target architecture.
 
 > **Models propose changes. The state engine decides whether they are admissible. Verification establishes evidence. The commit boundary preserves repository correctness.**
