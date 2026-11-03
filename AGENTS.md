@@ -18,9 +18,9 @@ Read this file before modifying the repository.
 
 The following documents define the current architecture:
 
-1. `docs/adr/0001-celetixo-engineering-state-coordination.md`
-2. `README.md`
-3. This file, `AGENTS.md`
+1. `docs/adr/0001-celetixo-engineering-state-coordination.md` and all accepted superseding/extension ADRs, including `docs/adr/0002-platform-brain-client-and-correctness-extensions.md`
+2. This file, `AGENTS.md`
+3. `README.md`
 
 ### Authority order
 
@@ -925,7 +925,7 @@ Do not create duplicate engineering state merely because an orchestrator retried
 
 ---
 
-## 24. Changes to Frozen Architecture
+## 24. Changes to Accepted Architecture
 
 The following require an ADR or explicit ADR amendment:
 
@@ -1071,3 +1071,68 @@ A reservation is not correctness.
 A successful agent run is not a successful engineering outcome.
 
 Celetixo exists to make those distinctions executable.
+
+
+---
+
+# ADR-0002 Operating Addendum
+
+This addendum is normative and must be read with the preceding rules. Where it is more specific, it extends or supersedes the corresponding implementation guidance above. ADR-0001 remains in force except where ADR-0002 explicitly extends it.
+
+## A. Architecture quality is not time-boxed
+
+Do not reduce the target architecture, omit necessary correctness/security properties, or select an inferior permanent design to satisfy an arbitrary build-time target. Build sequencing is permitted to manage dependencies and integration risk. It is not permission to impose a capability ceiling. Prefer a complete, validated design with staged implementation over a rushed design that creates irreversible limitations.
+
+"Smallest coherent implementation" means the smallest implementation that preserves the complete accepted architecture and its invariants. It does not mean the smallest architecture that can be demoed.
+
+## B. Brain authority boundary
+
+Python is the primary runtime for model-facing intelligence: provider adapters, routing, context construction, planning, Chief/Supervisor policy, worker allocation, evaluation and future learning workflows.
+
+The Brain must communicate with the Engine through typed, versioned contracts. It must never independently decide that a transaction is conflict-free, verification-complete, authorized or committable. Do not duplicate authoritative OCC, impact or commit logic in Python.
+
+Rust remains the deterministic Engineering State Engine and may provide native libraries for profiled hot paths. C++ is optional and requires a concrete technical justification; it is not a default layer.
+
+## C. Client boundaries
+
+Theia is the preferred desktop workbench candidate, subject to explicit compatibility, licensing, extension, packaging, security and performance validation. It remains a client and must not own transaction correctness.
+
+Android is native Kotlin + Jetpack Compose. Flutter is not selected. Mobile actions are authenticated server requests, subject to authorization and Engine policy. Offline actions must be re-authorized and revalidated when received.
+
+## D. Snapshot identity is stronger than Git HEAD
+
+A task's base must identify the actual immutable workspace state, not merely a branch commit. Include all content participating in the task: tracked/untracked files, staged/unstaged changes, editor overlays and relevant mounted/generated inputs. Use a content manifest/digest and explicit construction provenance.
+
+Every impact result, patch, LSP result, verification record and commit attempt must bind to compatible snapshot identities. Never claim a dirty workspace is represented by HEAD alone.
+
+## E. Impact and verification provenance
+
+Impact results identify snapshot, index generation, parser/analyzer versions, language coverage and completeness. Unknown or partial analysis is explicit and must follow policy; never interpret unknown as no impact.
+
+Verification binds transaction, snapshot, patch digest, required/completed checks, toolchain, environment, configuration and evidence artifacts. Stale or mismatched evidence cannot satisfy current commit requirements. Verification is bounded evidence, not a claim of universal proof.
+
+## F. Commit, authorization and protocol safeguards
+
+Commit advancement must be atomic across distributed contenders, using a proven durable CAS/transactional gate. A process-local mutex is insufficient.
+
+The commit gate rechecks revision, snapshot, transaction state, conflict assumptions, patch digest, evidence applicability, authorization and idempotency. Duplicate or delayed requests must not create duplicate commits.
+
+Actor IDs are attribution, not authorization. Approval binds to the exact transaction, diff, snapshot and evidence. Force-rebase requests fresh semantic analysis and verification; it never means unconditional overwrite.
+
+Protobuf v3 remains canonical. Preserve the complete `celetixo.orchestration.v1.TaskIntent` meaning and compatibility discipline. Never reduce the contract by dropping dependencies, reads/writes, invariants, impact/verification policy, budgets, retry/rollback/escalation or provenance.
+
+## G. Execution, data and learning
+
+Preserve all four execution tiers: Tier 0 deterministic local operations; Tier 1 isolated process/container/gVisor; Tier 2 Firecracker microVM; Tier 3 remote execution pools. Select by workload and threat model. Containers are not equivalent to microVM isolation.
+
+Keep PostgreSQL authoritative for current state, ClickHouse analytical, and object storage for immutable large evidence. Trajectories require lineage and governance. Do not feed all collected data into training automatically; evaluate rights, privacy, secrets, quality, contamination and representativeness.
+
+## H. Performance and reliability
+
+Benchmark representative repository sizes, languages, concurrency, task classes and failure modes. Measure impact precision/recall, false conflict rates, indexing, commit contention, verification, cache correctness, tail latency, recovery and cost per successful verified outcome. Never invent targets or performance claims.
+
+Design for cancellation, backpressure, deadlines, idempotency, duplicate/out-of-order events, bounded retries, recovery, graceful shutdown and observable failure. No cache may bypass a required verification step.
+
+## I. Implementation completion
+
+A feature is not complete because a document describes it or a model claims it. Distinguish architectural target, implemented behavior and experimentally validated behavior. Update contracts, tests and documentation together. Do not mark unsupported analysis, isolation, persistence or verification as complete.
