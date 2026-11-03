@@ -424,13 +424,13 @@ Celetixo is intentionally not starting with:
 - marketplace integrations
 - enterprise multi-repository orchestration
 
-Those are downstream capabilities.
+These are downstream capabilities, not architectural exclusions. Their implementation may be sequenced behind foundational correctness, but the architecture must preserve clean extension points for them. Build time is not a reason to remove a capability from the target design.
 
-First, Celetixo must prove that its engineering substrate creates measurable advantage.
+First, Celetixo must establish the engineering substrate and prove its behavior with reproducible evidence.
 
 ---
 
-# Day 90: The Actual Test
+# Evaluation: The Actual Test
 
 The first milestone is not "the multi-agent system works."
 
@@ -453,11 +453,7 @@ Measure:
 - verification compute
 - agent actions
 
-There is no arbitrary 50% threshold.
-
-If the hierarchy does not earn its complexity, the architecture changes.
-
-That is a feature of the design, not a failure condition.
+There is no arbitrary pass threshold. Evaluation must be reproducible, representative and resistant to benchmark gaming. Results inform implementation and optimization; they do not justify weakening correctness guarantees.
 
 ---
 
@@ -519,14 +515,46 @@ See [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md) for the
 
 ## Status
 
-**Architecture:** v1.0 frozen  
-**Implementation:** v0 foundation  
-**Training:** deferred  
+**Architecture:** ADR-0001 baseline plus ADR-0002 accepted extensions  
+**Implementation:** foundation in progress; implemented capabilities must be distinguished from architectural targets  
+**Training:** deferred until trajectory quality, rights and governance are established  
 **Evaluation:** controlled benchmark under construction
 
 Celetixo will make performance claims only from its own reproducible engineering measurements.
 
 ---
+
+
+
+## Platform and Brain Architecture
+
+ADR-0002 extends the original architecture without replacing its transaction model.
+
+**Brain runtime:** Python owns model/provider adapters, routing, context assembly, planning, Chief/Supervisor reasoning, worker allocation, evaluation and future learning pipelines. The Brain submits typed intent; it does not own repository truth, OCC, verification admissibility or commit authority.
+
+**Native systems layer:** Rust remains authoritative for the Engineering State Engine and is used for deterministic, performance-sensitive operations. Python/Rust integration is justified at explicit boundaries. C++ is optional and requirement-driven, not a mandatory third language.
+
+**Desktop workbench:** Eclipse Theia is the preferred candidate, subject to extension compatibility, licensing, packaging, security and operational validation. The desktop is a client, never an alternate transaction authority.
+
+**Android:** Kotlin + Jetpack Compose is the native mobile direction. The mobile client provides secure monitoring, review, notifications and governed approvals; it does not replicate the Engine. Flutter is not part of the selected architecture.
+
+## Snapshot and Evidence Correctness
+
+A Git commit SHA alone does not identify a dirty workspace. Transactions must use immutable snapshot identity that accounts for included tracked/untracked content, staged and unstaged changes, editor buffers/overlays and relevant workspace inputs. Impact analysis and verification must identify the exact snapshot, index/analyzer version, patch digest, checks, toolchain and environment.
+
+Unknown or incomplete impact is explicit; it is never silently interpreted as safe. A stale verification result cannot authorize a current commit. The commit gate must atomically recheck revision, snapshot, patch, evidence, transaction state, authorization and idempotency.
+
+## Protocol and Security
+
+Protobuf v3 remains the canonical internal schema. Preserve the full ADR-0001 TaskIntent semantics during evolution; schema compatibility does not establish transaction correctness. gRPC serves typed RPC, NATS JetStream asynchronous events, HTTPS/JSON external APIs, and authenticated bidirectional channels interactive updates.
+
+An actor identifier is attribution, not authorization. Human approvals bind to the exact transaction, snapshot, diff and evidence. Force-rebase requests semantic reanalysis and revalidation; they never bypass commit checks.
+
+## Long-term Architecture Rule
+
+Implementation sequencing may reduce integration risk, but must not impose an arbitrary time ceiling or permanently exclude capabilities from the architecture. Additions must strengthen or preserve correctness, security, operability and scalability. A proposal is not accepted merely because it is fashionable; it must have a clear responsibility, contract, threat model, failure semantics and validation plan.
+
+See [ADR-0002](docs/adr/0002-platform-brain-client-and-correctness-extensions.md) for the accepted extensions. ADR-0001 remains authoritative wherever ADR-0002 does not explicitly extend it.
 
 ## License
 
