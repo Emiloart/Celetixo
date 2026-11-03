@@ -1,0 +1,265 @@
+# Dev.md
+
+## Purpose
+
+This document is the practical build guide for Celetixo developers. It translates the frozen v1.0 architecture into implementation discipline, sequencing, and acceptance criteria.
+
+**The objective is to ship working, testable software quickly without weakening Celetixo's defining correctness guarantees.** Move in small vertical slices. Prefer executable behavior over additional planning documents.
+
+Read these documents before changing core behavior:
+
+1. `docs/adr/0001-celetixo-engineering-state-coordination.md` — accepted architectural baseline.
+2. `AGENTS.md` — repository-wide operating contract for AI and human contributors.
+3. `README.md` — public system description.
+
+If this file conflicts with the ADR, the ADR wins. If implementation exposes a flaw in a frozen decision, document the evidence and propose an ADR amendment; do not silently redefine the architecture.
+
+---
+
+## 1. Build Principles
+
+1. **Start with the state engine.** Celetixo's differentiator is correct coordination of repository state transitions, not its UI, agent hierarchy, or infrastructure count.
+2. **Build an end-to-end vertical slice early.** A small real transaction that can be proposed, validated, committed or rejected is more valuable than many disconnected subsystems.
+3. **Keep the core deterministic.** Transaction validity, revision comparison, conflict detection, and state transitions must not depend on an LLM's opinion.
+4. **Use models as replaceable workers.** Provider-specific code belongs behind explicit interfaces; the Rust engine must remain model-agnostic.
+5. **Make correctness observable.** Important decisions must return structured outcomes and preserve enough evidence to explain them.
+6. **Prefer measured simplicity.** Do not introduce a service, database, queue, sandbox, or abstraction before a concrete slice needs it. Preserve the architecture's ownership boundaries as integrations are added.
+7. **Never fake completion.** No placeholder implementation presented as working, no success response without an operation, and no skipped verification hidden behind a green status.
+8. **Keep scope narrow and cadence high.** Every change should compile, have focused tests, and leave the repository in a known state.
+
+## 2. First Build Target
+
+The first milestone is a runnable Rust Engineering State Engine prototype with a deterministic concurrency test harness.
+
+The initial executable slice should prove that Celetixo can:
+
+1. Register a repository state identified by an immutable revision.
+2. Accept a transaction intent with explicit reads, writes, and invariants.
+3. Validate the intent and derive a minimal, explicit impact representation.
+4. Compare transactions for compatibility.
+5. Execute two transactions against a known base revision.
+6. Reject a stale or incompatible commit using compare-and-swap semantics.
+7. Accept a compatible transaction only when required validation evidence is tied to the state being committed.
+8. Return a structured decision and a traceable reason for commit, abort, or revalidation.
+
+Start with an in-memory implementation where it makes the semantics easier to test. Keep interfaces clean enough to replace the in-memory repository and transaction store with durable implementations later. Do not claim persistence, distributed coordination, semantic indexing, or sandbox isolation until those capabilities actually exist.
+
+### Minimum proof scenario
+
+Create a deterministic test where two transactions start from revision R:
+
+- Transaction A writes a state element that Transaction B also depends on.
+- A validates and commits, advancing the repository revision.
+- B attempts to commit using its old assumptions.
+- The engine rejects B's stale commit or requires explicit revalidation; it must never silently overwrite A.
+- A second test proves that compatible transactions are not rejected merely because they started from the same revision.
+
+The tests must assert final state and transaction outcomes, not only that a function returned without error.
+
+## 3. Implementation Sequence
+
+Deliver each phase as runnable code with tests. Reorder only when a concrete dependency requires it.
+
+### Phase 0 — Establish the executable baseline
+
+- Inspect the actual repository tree and toolchain before choosing paths or adding files.
+- Record the current branch, working-tree state, installed compiler/tool versions, and existing test commands.
+- Establish the smallest reproducible build and test command.
+- Add a concise contributor quick-start once commands are verified.
+- Do not replace existing structure or configuration without a demonstrated need.
+
+**Exit gate:** a clean checkout can run the documented baseline checks.
+
+### Phase 1 — Rust domain core
+
+Implement typed domain models for repository revisions, transaction IDs, intents, read/write sets, impact sets, invariants, verification evidence, and transaction states.
+
+Requirements:
+
+- Explicit state machine; reject illegal transitions.
+- Typed errors with actionable context.
+- Deterministic behavior for equivalent inputs.
+- No model calls, network dependencies, or database requirements in pure transaction logic.
+- Unit tests for valid and invalid transitions.
+
+**Exit gate:** core transaction semantics are testable without external services.
+
+### Phase 2 — OCC and conflict semantics
+
+Implement base-revision validation, read/write compatibility, stale transaction detection, compare-and-swap commit boundaries, and explicit revalidation outcomes.
+
+Test at least:
+
+- read/read compatibility;
+- write/write conflict;
+- read/write conflict;
+- stale base revision;
+- two concurrent commit attempts;
+- incompatible repository advancement;
+- idempotent retry behavior;
+- illegal commit before verification;
+- reservation expiry and recovery when reservations are introduced.
+
+Do not use path-level locks as a substitute for semantic conflict analysis. Reservations are coordination aids, not correctness proofs.
+
+**Exit gate:** deterministic concurrency tests establish that invalid state transitions cannot be committed.
+
+### Phase 3 — Patch and verification evidence
+
+Add versioned patch representation and a verification record tied to the exact transaction and repository revision.
+
+- Reject malformed or wrong-base patches.
+- Distinguish verification status from transaction status.
+- Record what ran, why it ran, the environment/tool version, exit status, and relevant artifact references.
+- Reject stale verification results.
+- Preserve failed patches and diagnostics when configured to do so.
+- Never treat model confidence or successful patch application as proof of correctness.
+
+**Exit gate:** commit decisions require the correct evidence for the correct state.
+
+### Phase 4 — Repository intelligence
+
+Introduce Tree-sitter parsing, file/symbol identity, reference edges, and incremental updates in measured increments.
+
+- Begin with one representative language harness, then expand to TypeScript/JavaScript, Python, Go, and Rust.
+- Treat configuration, manifests, lockfiles, generated artifacts, tests, and CI files as engineering dependencies.
+- Keep semantic indexing separate from source mutation.
+- Use explicit versioned patches; do not adopt universal AST rendering as the canonical writer.
+- Label unsupported or incomplete analysis honestly. Unknown impact must not be reported as proven safe.
+
+**Exit gate:** a repository change can produce a reproducible structural impact result and tests cover index invalidation.
+
+### Phase 5 — Durable services and execution
+
+Integrate the remaining architectural components when the preceding contracts are stable:
+
+1. PostgreSQL for authoritative current state.
+2. NATS JetStream for asynchronous events, heartbeats, and streamed diagnostics.
+3. Temporal for durable workflows, retries, compensation, and DAG state.
+4. Shared, version-aware LSP services.
+5. Tiered execution adapters, adding stronger isolation for untrusted workloads.
+6. Immutable trajectory/evidence storage and analytical pipelines.
+
+Keep component responsibilities separate. Do not use NATS as a workflow engine, Temporal as a high-frequency event bus, ClickHouse as authoritative state, or object storage as a transactional database.
+
+**Exit gate:** service failures, retries, duplicate events, stale results, and worker crashes have explicit tested behavior.
+
+### Phase 6 — Real worker integration and evaluation
+
+Connect one real coding worker through a provider-neutral adapter. Run bounded tasks against isolated repository snapshots and pass its patches through the same transaction and verification path as every other worker.
+
+Build a reproducible comparison against a strong sequential coding-agent baseline. Measure task success, cost and latency per successful verified change, regressions, human correction rate, conflicts, verification compute, and agent actions.
+
+**Exit gate:** results can be reproduced from preserved evidence; performance claims are supported by controlled measurements.
+
+---
+
+## 4. Working Agreement
+
+### Before implementation
+
+- Read the relevant ADR and the existing code around the change.
+- Identify the behavior, invariant, and acceptance test before editing.
+- Inspect the current branch and working tree; do not overwrite unrelated user changes.
+- Confirm the actual module/API shape rather than assuming a file or function exists.
+- Split work into bounded tasks with explicit dependencies and file ownership.
+
+### During implementation
+
+- Make the smallest complete change that advances a defined milestone.
+- Prefer domain types, explicit state transitions, pure functions, and narrow interfaces.
+- Keep error handling explicit; never swallow errors to keep a workflow moving.
+- Keep external side effects at clear boundaries.
+- Use deterministic fixtures and controlled clocks for time-sensitive state-machine tests.
+- Keep dependencies justified and pinned according to the repository's package manager.
+- Update protocol definitions and generated bindings from their canonical source.
+- Do not mix unrelated refactors with a correctness-critical change.
+
+### Before marking a task complete
+
+1. Run formatting and linting supported by the changed component.
+2. Run focused tests, then relevant package or workspace tests.
+3. Run type checking/build checks where applicable.
+4. Inspect the complete diff, including generated files and lockfiles.
+5. Confirm no test, assertion, authorization rule, or verification step was weakened to force a pass.
+6. Document checks that could not run and the exact reason.
+7. Record remaining limitations as limitations, not as implemented capabilities.
+
+A task is complete only when its acceptance criteria and verification evidence are explicit.
+
+## 5. Parallel Development
+
+Parallelism should accelerate implementation without creating unreviewable integration work.
+
+- Give each worker a bounded deliverable, clear acceptance criteria, and explicit ownership.
+- Avoid concurrent edits to the same core contract or shared files unless a coordinator has defined the integration sequence.
+- Assign protocol/schema ownership to one task at a time.
+- Integrate small changes frequently; do not allow long-lived speculative branches to drift.
+- A worker's claim that its code passes tests is not sufficient; the integrating path must verify the resulting repository state.
+- Keep model, worker, transaction, and repository revision identities available in execution records.
+- Never grant workers commit authority over the authoritative engineering state simply because they produced a patch.
+
+The Chief owns global objectives, architecture, task decomposition, invariants, and escalation. Supervisors own bounded-domain execution and recovery. Workers implement and verify bounded tasks. The transaction engine remains authoritative for repository-state decisions.
+
+## 6. Security and Isolation
+
+- Treat generated code, patches, dependencies, and tool output as untrusted.
+- Do not expose production credentials to workers or test processes.
+- Default sandbox network access to denied; grant only explicit, task-scoped access.
+- Apply time, CPU, memory, disk, process, and output limits to untrusted execution.
+- Keep repository operations inside the intended worktree/snapshot.
+- Record provenance for model calls, tool calls, patches, execution environments, and verification.
+- Make retries idempotent or guard side effects with durable idempotency keys.
+- Do not execute untrusted code on the host merely to simplify the first demo.
+
+## 7. Performance Discipline
+
+Optimize for **cost per successful, verified engineering outcome**, not raw token speed, worker count, or benchmark theater.
+
+Measure separately:
+
+- model inference;
+- queue and event delivery;
+- orchestration;
+- impact analysis;
+- sandbox startup;
+- build and test execution;
+- verification;
+- commit/revalidation.
+
+Start with a correct baseline. Profile real workloads before introducing caches or concurrency optimizations. Cache keys must account for all inputs that can change correctness, including relevant source state, dependency locks, toolchain, configuration, platform, and environment. A cache hit must never bypass a required verification step.
+
+Do not establish latency targets until representative measurements exist.
+
+## 8. Scope Control
+
+Do not start v0/v1 by building:
+
+- proprietary foundation-model training or RL pipelines;
+- a polished IDE or consumer chat experience;
+- browser automation or autonomous production deployment;
+- enterprise multi-repository orchestration;
+- a complex dashboard before there is real execution state to display;
+- every infrastructure service as a prerequisite for local transaction tests.
+
+Do build the minimum infrastructure needed to prove semantic coordination, OCC, verification, and evidence. Preserve future architectural boundaries without requiring every future service to exist in the first executable slice.
+
+## 9. Definition of Done
+
+A change is ready to merge when:
+
+- [ ] Its purpose and acceptance criteria are clear.
+- [ ] It preserves the accepted architecture or includes an explicit ADR proposal.
+- [ ] State transitions and failure cases are covered by tests where relevant.
+- [ ] Verification is tied to the correct repository/transaction revision.
+- [ ] Formatting, lint, type checks, and relevant tests pass, or blockers are documented precisely.
+- [ ] No secrets, credentials, or unintended artifacts are committed.
+- [ ] The diff is scoped and reviewed.
+- [ ] Documentation matches actual behavior.
+- [ ] Remaining gaps are stated plainly.
+
+## 10. Engineering Standard
+
+Celetixo must earn complexity through demonstrated results. Implement the smallest correct slice, measure it, and expand only when the evidence supports the next step.
+
+> **Models propose changes. The state engine decides whether they are admissible. Verification establishes evidence. The commit boundary preserves repository correctness.**
