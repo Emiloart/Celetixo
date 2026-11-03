@@ -432,28 +432,25 @@ First, Celetixo must establish the engineering substrate and prove its behavior 
 
 # Evaluation: The Actual Test
 
-The first milestone is not "the multi-agent system works."
+The primary question is whether semantic transaction coordination improves verified engineering outcomes beyond both sequential execution and ordinary parallel worktrees.
 
-The question is:
+The evaluation has three comparison arms:
 
-> **Does Celetixo produce better verified engineering outcomes than a strong sequential coding agent on the same work?**
+1. **Sequential agent:** one strong coding agent completes the task sequentially.
+2. **Parallel worktrees:** multiple agents work in isolated Git worktrees and integrate through ordinary Git merge/review, without Celetixo semantic transactions.
+3. **Celetixo:** workers use semantic impact analysis, reservations, OCC validation, evidence-gated commit and semantic revalidation/rebase.
 
-The task suite is frozen before evaluation.
+The second arm isolates the value of Celetixo's coordination model from the generic effects of parallel execution.
 
-Both systems receive the same repository state and task constraints.
+The task suite must be frozen before confirmatory evaluation. Arms receive equivalent repository snapshots, task constraints, tools and resource policies. Stochastic runs are repeated, and results report distributions and uncertainty rather than best-case anecdotes.
 
-Measure:
+Measure verified task success, cost and time per verified outcome, regressions, human correction, throughput, impact precision/recall, false-negative impact, conflict precision/recall, false-positive conflicts, abort reasons, wasted execution cost, wasted-token ratio, verification cost and recovery correctness. Safety violations are reported separately and cannot be offset by speed or cost improvements.
 
-- success rate
-- cost per successful PR
-- latency per successful PR
-- regression rate
-- human fix rate
-- semantic conflict rate
-- verification compute
-- agent actions
+High abort rate is not inherently bad: correct safety aborts must be distinguished from false-positive conflicts and avoidable wasted work.
 
-There is no arbitrary pass threshold. Evaluation must be reproducible, representative and resistant to benchmark gaming. Results inform implementation and optimization; they do not justify weakening correctness guarantees.
+The protocol, task-suite requirements, controls, metric definitions and decision rule are maintained in [EVALUATION.md](EVALUATION.md). Transaction-oracle and failure-injection requirements are specified in [ADR-0003](docs/adr/0003-transaction-consistency-and-validation-model.md) and [the failure model](docs/spec/failure-model.md).
+
+There is no arbitrary pass threshold. Confirmatory decision rules must be published before the evaluation runs. This repository currently defines the protocol; it does not claim that Celetixo has passed it.
 
 ---
 
@@ -509,7 +506,7 @@ learning
 
 **Models are workers. Engineering state is the source of truth. Verification is the authority. Evidence is the learning substrate.**
 
-See [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md) for the frozen v1.0 architectural decision.
+See [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md), [ADR-0002](docs/adr/0002-platform-brain-client-and-correctness-extensions.md) and [ADR-0003](docs/adr/0003-transaction-consistency-and-validation-model.md) for the accepted architectural decisions.
 
 ---
 
@@ -554,7 +551,9 @@ An actor identifier is attribution, not authorization. Human approvals bind to t
 
 Implementation sequencing may reduce integration risk, but must not impose an arbitrary time ceiling or permanently exclude capabilities from the architecture. Additions must strengthen or preserve correctness, security, operability and scalability. A proposal is not accepted merely because it is fashionable; it must have a clear responsibility, contract, threat model, failure semantics and validation plan.
 
-See [ADR-0002](docs/adr/0002-platform-brain-client-and-correctness-extensions.md) for the accepted extensions. ADR-0001 remains authoritative wherever ADR-0002 does not explicitly extend it.
+See [ADR-0002](docs/adr/0002-platform-brain-client-and-correctness-extensions.md) and [ADR-0003](docs/adr/0003-transaction-consistency-and-validation-model.md) for accepted extensions. ADR-0001 remains authoritative wherever later ADRs do not explicitly extend it.
+
+Detailed contracts: [transaction semantics](docs/spec/transaction-semantics.md), [engineering identity](docs/spec/engineering-identity.md), [trajectory governance](docs/spec/trajectory-governance.md), [failure and recovery](docs/spec/failure-model.md), and [comparative evaluation](EVALUATION.md).
 
 ## License
 
