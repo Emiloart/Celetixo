@@ -2,1137 +2,184 @@
 
 ## Purpose
 
-This file is the repository-level operating contract for AI coding agents working on Celetixo.
+This is the repository-level operating contract for AI coding agents working on Celetixo. Read it before modifying the repository.
 
-Celetixo is not being built as a conventional coding chatbot, IDE wrapper, or prompt-routing layer. It is an engineering-state coordination and verification system for autonomous software development.
+**Models are workers. Engineering state is the source of truth. Verification is the authority. Evidence is the learning substrate.**
 
-The architectural thesis is:
+## 1. Authority and required reading
 
-> Models are workers. Engineering state is the source of truth. Verification is the authority. Evidence is the learning substrate.
+Accepted architectural decisions are authoritative. Read the relevant documents before changing the affected subsystem:
 
-Read this file before modifying the repository.
+1. [ADR-0001: Engineering-state coordination](docs/adr/0001-celetixo-engineering-state-coordination.md)
+2. [ADR-0002: Platform, Brain, clients and correctness extensions](docs/adr/0002-platform-brain-client-and-correctness-extensions.md)
+3. [ADR-0003: Transaction consistency and validation](docs/adr/0003-transaction-consistency-and-validation-model.md)
+4. [Dev.md](Dev.md) for implementation discipline and build sequence
+5. The applicable specifications under [docs/spec](docs/spec)
 
----
+When documents disagree, accepted ADRs govern architecture; this file governs agent behavior; Dev.md governs implementation workflow; README.md describes the public system. Source code describes implemented behavior but does not silently supersede an accepted decision.
 
-## 1. Source of Truth
+If implementation evidence exposes a flaw in an accepted decision, stop and propose an ADR amendment. Do not quietly weaken or reinterpret the contract.
 
-The following documents define the current architecture:
+## 2. System boundary
 
-1. `docs/adr/0001-celetixo-engineering-state-coordination.md` and all accepted superseding/extension ADRs, including `docs/adr/0002-platform-brain-client-and-correctness-extensions.md`
-2. This file, `AGENTS.md`
-3. `README.md`
+Celetixo coordinates intent-driven, semantically analyzed and verifiably executed repository-state transitions.
 
-### Authority order
+The Rust Engineering State Engine is authoritative for:
+- immutable repository/workspace snapshot identity;
+- semantic state and impact analysis;
+- transaction admission and lifecycle;
+- access/conflict analysis;
+- reservations and leases;
+- OCC validation and commit serialization;
+- rebase/revalidation requirements;
+- verification-evidence admissibility;
+- final commit decisions.
 
-When documents disagree:
+The Python Brain owns model/provider adapters, routing, context assembly, planning, Chief/Supervisor reasoning, worker allocation, evaluation and future learning workflows. It submits typed intent and consumes Engine decisions. It must not duplicate or assume Engine authority.
 
-1. Accepted ADRs govern architectural decisions.
-2. This file governs agent behavior and implementation discipline.
-3. README explains the system publicly and should remain consistent with the ADR.
-4. Source code is authoritative for behavior already implemented, but not a reason to silently violate an accepted architectural decision.
+Go/Temporal owns durable workflow execution. NATS JetStream distributes asynchronous events. PostgreSQL owns authoritative current operational state. ClickHouse owns analytics. S3-compatible object storage owns immutable large evidence and artifacts. Keep these responsibilities distinct.
 
-If implementation requires changing a frozen architectural invariant, stop and propose an ADR amendment instead of quietly changing the design.
+Desktop and mobile applications are clients, not transaction authorities. Theia is the preferred desktop candidate subject to validation. Android is native Kotlin + Jetpack Compose. Mobile and desktop actions use authenticated APIs and server-side policy.
 
----
+## 3. Non-negotiable correctness rules
 
-## 2. What Celetixo Is
+### Semantic coordination
+Do not use file locks as the primary correctness model. Account for symbols, references, calls, types, dependencies, configuration, generated artifacts, predicates, tests and invariant scopes.
 
-Celetixo is an engineering-state coordination and optimistic-concurrency engine in which AI agents act as execution workers.
+### Transaction consistency
+Follow ADR-0003: accepted histories must be conflict-serializable with respect to the declared and derived dependency model, with invariant preservation and atomic revision advancement. Do not claim strict serializability or universal program correctness.
 
-The core operation is a semantic transaction:
+Explicit and derived reads/writes must retain provenance. Include predicate/range and invariant dependencies where they affect behavior. Unknown, unsupported, ambiguous or incomplete impact is not an empty impact set and must never silently be treated as safe.
 
-```
-Intent
-  ↓
-Impact analysis
-  ↓
-Coordination
-  ↓
-Execution
-  ↓
-Verification
-  ↓
-Commit / Abort / Rebase
-```
+### Reservations
+Reservations coordinate work; they do not prove correctness. Implement leases, expiry, renewal, cancellation, deterministic acquisition and crash recovery. An expired or revoked owner cannot commit.
 
-The important abstraction is not "agent conversation."
+### Snapshot identity
+Git HEAD alone does not identify a dirty workspace. Transactions must bind to immutable snapshots that account for all included tracked/untracked content, staged/unstaged changes, editor overlays and relevant generated, mounted, submodule and workspace inputs. Follow [engineering identity](docs/spec/engineering-identity.md).
 
-It is the repository state transition.
+### Verification
+Evidence binds to transaction, snapshot, patch digest, exact check identity/configuration, toolchain/environment, result, diagnostics, artifacts and provenance. Stale or mismatched evidence cannot satisfy current requirements. A green boolean, successful patch application or model confidence is insufficient.
 
-A worker may generate a patch. Celetixo determines whether that patch is compatible with the current engineering state and whether sufficient evidence exists to accept it.
+### Commit and rebase
+The commit gate must atomically validate admissibility and advance authoritative revision across distributed Engine instances. Recheck snapshot, revision, transaction state, access/conflict assumptions, invariants, patch digest, evidence, authorization, lease policy and idempotency. A process-local mutex is insufficient.
 
----
+Rebase means fresh semantic analysis and revalidation, not unconditional overwrite. A lost commit response must be recoverable through durable idempotency; it must not create a second commit.
 
-## 3. Non-Negotiable Architectural Rules
+### Source mutation
+Use explicit versioned patches. Tree-sitter, LSP and indexes provide analysis; they are not universal canonical source writers. Preserve comments, formatting, macros, language-specific syntax and source trivia. AST-aware edits are appropriate only where demonstrably safer.
 
-Do not introduce an implementation that violates these rules without an ADR.
+### LSP and indexes
+Use shared, multiplexed, version-aware language services. Bind results to exact document/snapshot versions. Stale LSP results, partial indexes and unsupported language regions must be explicit and cannot authorize a complete-impact claim.
 
-### 3.1 Semantic coordination, not file locking
+## 4. Agent authority
 
-Do not implement concurrency around file locks as the primary correctness mechanism.
+**Chief:** global objective, architecture, task decomposition, DAG, invariants, escalation and system tradeoffs.
 
-Files are useful physical units. They are not sufficient semantic units.
+**Supervisors:** bounded-domain decomposition, worker allocation, dependency ordering, local recovery and coordination.
 
-A change can affect:
+**Workers:** bounded implementation and verification tasks; produce patches and evidence.
 
-- symbols
-- callers
-- references
-- interfaces
-- types
-- dependencies
-- generated artifacts
-- configuration
-- tests
-- build behavior
+No model, worker, supervisor, client or orchestration component may grant itself reservation, authorization, verification-pass or commit authority. Actor IDs are attribution, not authorization.
 
-The Engineering State Engine derives semantic impact from repository state.
+Cross-service instructions use canonical typed Protobuf contracts. Preserve the full TaskIntent semantics: dependencies, explicit reads/writes, invariants, impact policy, verification requirements, budgets, retry/rollback/escalation and provenance. Do not create competing protocol definitions.
 
-### 3.2 Reservations are coordination, not correctness
+## 5. Security and execution
 
-Write reservations prevent conflicting work from executing concurrently.
+Generated code, patches, dependencies and tool output are untrusted.
 
-They do not prove correctness.
+Preserve the four execution tiers:
+- **T0:** deterministic local operations that do not execute untrusted repository code.
+- **T1:** isolated process/container/gVisor for bounded checks.
+- **T2:** Firecracker microVM for stronger isolation and untrusted execution.
+- **T3:** remote execution pools for scale and specialized workloads.
 
-Correctness requires validation against the relevant repository state and transaction invariants.
+A container is not equivalent to a microVM. Enforce least privilege and bounded CPU, memory, disk, network, process count, time and output. Network egress is denied by default and granted only for an explicit task requirement. Workers receive no implicit production credentials.
 
-Reservations must support:
+Authenticate and authorize every sensitive API operation. Scope access by tenant/repository. Human approval binds to the exact transaction, snapshot, diff and evidence. Offline client actions must be re-authorized and revalidated when received.
 
-- read/write compatibility
-- leases
-- expiration
-- heartbeat renewal
-- deterministic acquisition ordering
-- cancellation
-- upgrade handling
-- crash recovery
+## 6. Data and trajectory governance
 
-A crashed worker must never permanently block a repository.
+A trajectory is a structured engineering record, not an unfiltered chat dump. Preserve lineage across intent, snapshot, impact, model/configuration, tool calls, patches, execution, checks, evidence, retries, rebase/rollback and human outcome.
 
-### 3.3 Optimistic concurrency control
+Storage does not imply permission to train. Follow [trajectory governance](docs/spec/trajectory-governance.md): rights, repository authorization, purpose, privacy, secrets, quality, contamination, retention, deletion and dataset lineage must be evaluated separately. Keep evaluation data isolated from training and retrieval.
 
-Transactions operate against an explicit repository revision.
+## 7. Reliability and failure behavior
 
-Commit must verify:
+Assume process crashes, partitions, timeouts after successful side effects, duplicate/delayed/reordered events, stale indexes, worker compromise and storage unavailability.
 
-1. declared invariants pass;
-2. verification corresponds to the transaction snapshot;
-3. the repository base is still valid, or the transaction has been semantically revalidated;
-4. no incompatible committed transaction invalidated the transaction's assumptions;
-5. the final patch applies cleanly to the validated state.
+Follow [the failure model](docs/spec/failure-model.md). Design for idempotency, durable recovery, backpressure, cancellation, deadlines, bounded retries, circuit breakers, graceful shutdown and reconciliation. Event publication is not commit. Analytics/UI failure must not mutate transaction truth. Required evidence is not complete until durable persistence is confirmed.
 
-Repository revision advancement uses compare-and-swap semantics at the commit boundary.
+## 8. Code and protocol discipline
 
-### 3.4 Rebase is semantic
+Prefer typed domain models, explicit state machines, immutable evidence, deterministic pure logic, narrow interfaces, explicit errors, idempotent side effects and structured telemetry.
 
-Never treat rebase as merely:
+Avoid hidden global state, duplicated protocol definitions, stringly typed transaction states, unbounded retries, silent fallbacks, catch-all error suppression and model-specific business logic inside the Engine.
 
-```
-git rebase
-```
+Protobuf v3 is canonical for internal typed contracts. Evolve schemas compatibly, reserve removed field numbers/names, never reuse field meaning, and test compatibility. Generated bindings derive from canonical schemas.
 
-A Celetixo rebase means:
+Initial language wedge: TypeScript/JavaScript, Python, Go and Rust. A language is supported only when its harness can index, coordinate, execute, verify and record work in that ecosystem. Tool choices remain repository-configurable.
 
-1. identify the newer repository revision;
-2. recompute relevant semantic state;
-3. re-evaluate transaction assumptions;
-4. adapt or regenerate the patch when necessary;
-5. rerun the minimum verification required to re-establish invariants.
+## 9. Testing requirements
 
-If the original intent is no longer compatible, abort or escalate.
+Test semantics and failure behavior, not only line coverage.
 
-### 3.5 Semantic state is separate from source mutation
+Transaction tests include:
+- read/read, write/write, read/write and predicate conflicts;
+- invariant-scope overlap;
+- compatible concurrent transactions;
+- stale revisions and atomic CAS;
+- idempotency and lost responses;
+- leases, expiry, renewal, cancellation and recovery;
+- rebase and evidence invalidation;
+- illegal state transitions.
 
-Tree-sitter, symbol graphs, LSP, and static indexes provide semantic intelligence.
+Use an independently structured reference model and generated transaction histories with deterministic seeds and shrinking. Test commits across multiple Engine instances. The oracle validates the declared consistency model; it does not prove that semantic extraction discovers every program dependency.
 
-Workers mutate source through explicit, versioned patches.
+Identity/index tests include rename/move continuity, ambiguous matches, path reuse, staged/unstaged/untracked content, editor overlays, canonical manifests, stale occurrences and analyzer-version changes.
 
-Do not make universal AST rendering the canonical source-writing mechanism. Source mutation must preserve comments, trivia, formatting conventions, macros, configuration syntax, and language-specific constructs.
+Verification tests include snapshot/patch/environment binding, stale result rejection, cache invalidation, required-check enforcement and durable artifact capture.
 
-AST-aware edits are allowed where they are demonstrably safer or more precise.
+Orchestration/failure tests include worker crashes, duplicate/out-of-order events, retries, cancellation races, service interruption, interrupted rebase and crash injection around the commit linearization point.
 
-### 3.6 Shared LSP
+## 10. Evaluation and completion claims
 
-Do not create one LSP process per worker for the same repository.
+Follow [EVALUATION.md](EVALUATION.md). Compare:
+1. sequential coding agent;
+2. parallel Git worktrees with ordinary integration and no Celetixo transactions;
+3. Celetixo semantic transactions and evidence-gated commit.
 
-Use shared, multiplexed, version-aware language services.
+Measure verified outcomes, cost/time, regressions, human correction, impact precision/recall, false-negative impact, conflict errors, abort reasons, wasted execution/tokens, verification cost and recovery correctness. A safety violation cannot be offset by performance.
 
-LSP results must be associated with an explicit document/repository version. Stale results must not silently influence commit decisions.
+Distinguish:
+- **architectural target** — accepted design;
+- **implemented** — code exists and works under stated conditions;
+- **validated** — tests/experiments establish stated behavior.
 
-Tree-sitter remains the first structural read path for dirty or temporarily invalid source.
+Do not claim a capability, test, benchmark, security property, persistence guarantee or deployment exists unless verified in the repository and execution evidence. State unrun checks and limitations explicitly.
 
-### 3.7 Tiered execution
+## 11. Working procedure
 
-Do not execute every operation inside Firecracker.
+Before editing:
+1. inspect branch, working tree and repository structure;
+2. read relevant ADR/spec and existing implementation;
+3. identify invariants, dependencies and acceptance tests;
+4. avoid overwriting unrelated work;
+5. define bounded file ownership for parallel tasks.
 
-Use the cheapest environment that provides sufficient safety and evidence:
+During editing:
+1. make a complete, scoped change;
+2. keep external side effects at explicit boundaries;
+3. use deterministic fixtures and controlled clocks;
+4. update canonical schemas before generated bindings;
+5. avoid mixing unrelated refactors into correctness-critical changes.
 
-- T0: deterministic local Rust operations
-- T1: isolated process/container/gVisor
-- T2: Firecracker microVM
-- T3: future remote execution pools
+Before completion:
+1. format and lint changed components;
+2. run focused and relevant workspace tests;
+3. run type/build checks where applicable;
+4. inspect the full diff and generated files;
+5. confirm no assertions, tests, authorization or verification requirements were weakened;
+6. report exact checks run, checks not run and why;
+7. update documentation to match actual behavior.
 
-Firecracker is an execution backend, not a dependency of transaction semantics.
-
-### 3.8 Separate workflow orchestration from events
-
-Temporal owns durable workflows, retries, compensation, long-running execution, and DAG state.
-
-NATS JetStream owns asynchronous event distribution, heartbeats, streamed diagnostics, and state signals.
-
-Do not turn NATS into a workflow engine.
-
-Do not turn Temporal into a high-frequency event bus.
-
-### 3.9 Separate state from analytics and evidence
-
-PostgreSQL is authoritative current engineering state.
-
-ClickHouse is historical telemetry and evaluation analytics.
-
-S3-compatible object storage plus Parquet is immutable evidence.
-
-Do not use ClickHouse or object storage as an accidental transactional source of truth.
-
-### 3.10 Evidence is first-class
-
-A meaningful execution must be reconstructable.
-
-Record, directly or by durable references:
-
-- repository revision
-- semantic graph/version
-- transaction intent
-- derived impact set
-- reservations
-- model identity/version
-- prompt/configuration provenance
-- tool calls
-- patches
-- execution environment
-- verification results
-- failures and retries
-- rollback/rebase events
-- final diff
-- human review outcome
-
-Do not optimize away evidence that is required to reproduce or evaluate a decision.
-
----
-
-## 4. Agent Hierarchy
-
-Celetixo uses a hierarchy of responsibilities.
-
-### Chief
-
-The Chief owns:
-
-- global objective
-- architecture
-- task decomposition
-- global DAG
-- invariants
-- escalation
-- system-level tradeoffs
-
-The Chief does not directly edit arbitrary source code as its primary role.
-
-### Supervisors
-
-Supervisors own bounded domains.
-
-They:
-
-- decompose domain work
-- allocate workers
-- manage local dependencies
-- coordinate parallel execution
-- recover from local failures
-- communicate laterally through the event fabric
-
-The Chief is not a message broker.
-
-### Workers
-
-Workers perform bounded implementation and verification tasks.
-
-A worker should receive enough context to act, but should not be trusted as the final authority on:
-
-- repository-wide impact
-- concurrency correctness
-- commit validity
-- security boundaries
-- verification sufficiency
-
-The Engineering State Engine remains authoritative.
-
----
-
-## 5. Chief / Supervisor / Worker Contract
-
-Agent instructions should be represented as structured intent rather than unconstrained prose whenever they cross a system boundary.
-
-The canonical internal protocol is Protobuf v3.
-
-A task intent should carry, as applicable:
-
-- task ID
-- parent task ID
-- repository ID
-- base revision
-- objective
-- explicit reads
-- explicit writes
-- invariant contracts
-- dependencies
-- impact policy
-- verification requirements
-- resource budget
-- retry policy
-- rollback policy
-- escalation policy
-- model/agent provenance
-
-The DSL requests a transaction.
-
-It does not grant the requester reservation or commit authority.
-
----
-
-## 6. Repository Revision Discipline
-
-Every implementation task that mutates source must have a known repository base.
-
-Never assume the working tree is unchanged merely because a file still looks familiar.
-
-At minimum, a transaction must be able to identify:
-
-```
-repository_id
-base_revision
-transaction_id
-```
-
-When another transaction advances the repository:
-
-- invalidate stale assumptions;
-- recompute affected semantic state;
-- decide whether the transaction remains compatible;
-- revalidate or rebase before commit.
-
-Never silently apply a patch generated against an obsolete state.
-
----
-
-## 7. Engineering State Engine
-
-The Rust Engineering State Engine is the semantic core.
-
-It is responsible for capabilities such as:
-
-- repository revision tracking
-- semantic transactions
-- explicit and derived impact sets
-- reservation compatibility
-- conflict analysis
-- OCC validation
-- symbol/reference graphs
-- Tree-sitter integration
-- incremental graph updates
-- LSP multiplexing
-- execution scheduling
-- build/dependency cache coordination
-
-Keep this layer independent of model-specific behavior.
-
-The engine should be able to reason about a transaction even if the underlying model changes from one provider to another.
-
----
-
-## 8. Code Intelligence
-
-Repository intelligence has multiple layers.
-
-### Structural
-
-Use Tree-sitter for:
-
-- parsing
-- symbol discovery
-- scopes
-- references where available
-- structural relationships
-- incremental syntax state
-
-### Semantic
-
-Use language servers and static indexes for:
-
-- type information
-- definitions
-- references
-- diagnostics
-- semantic queries
-
-Use SCIP-style indexing where it provides durable repository-level value.
-
-### Engineering
-
-Track relationships involving:
-
-- package manifests
-- lockfiles
-- build graphs
-- generated files
-- CI configuration
-- Dockerfiles
-- YAML
-- JSON
-- TOML
-- HCL
-- shell
-- SQL
-- scripts and tooling
-
-A configuration change can be a semantic dependency even when it is not represented as a conventional programming-language symbol.
-
----
-
-## 9. Initial Language Wedge
-
-The initial supported languages are:
-
-- TypeScript / JavaScript
-- Python
-- Go
-- Rust
-
-A language is supported only when its engineering harness provides the required capabilities.
-
-### TypeScript / JavaScript
-
-Expected integration points include:
-
-- TypeScript compiler
-- Biome or repository-native formatter/linter
-- Vitest or repository-native test runner
-- package manager and lockfile
-- build cache
-
-### Python
-
-Expected integration points include:
-
-- Pyright or Mypy
-- Ruff
-- pytest
-- package/dependency manager
-- build/test cache
-
-### Go
-
-Expected integration points include:
-
-- gofmt
-- compiler diagnostics
-- go test
-- go.mod / go.sum
-- build cache
-
-### Rust
-
-Expected integration points include:
-
-- rustfmt
-- cargo check
-- cargo test
-- structured rustc diagnostics
-- Cargo.lock
-- Cargo build cache
-
-Exact tools must remain repository-configurable.
-
-Do not hard-code a tool as universally correct when a repository declares another valid toolchain.
-
----
-
-## 10. Verification Policy
-
-Verification is an architectural primitive.
-
-Never treat:
-
-- model confidence
-- generated-code plausibility
-- patch application
-- successful process exit
-
-as sufficient proof of correctness by themselves.
-
-Use adaptive verification.
-
-Typical progression:
-
-```
-T0  parse / AST / patch validation
- ↓
-T1  format / lint / type / static analysis
- ↓
-T2  targeted tests
- ↓
-T3  subsystem / integration tests
- ↓
-T4  broad E2E where impact requires it
-```
-
-The engine should prefer the smallest verification set that proves the required invariants.
-
-However, a cheap verification result must not be used to avoid a required expensive verification.
-
-Every verification decision should answer:
-
-1. What changed?
-2. What could that change affect?
-3. Which invariant is being established?
-4. What evidence establishes it?
-5. Is the evidence tied to the correct repository/environment revision?
-
----
-
-## 11. Patch Discipline
-
-Workers should produce explicit patches against a known base revision.
-
-Before acceptance:
-
-1. patch must apply to the expected state;
-2. syntax must be valid;
-3. formatting policy must be satisfied;
-4. relevant semantic state must be updated;
-5. LSP/type diagnostics must correspond to the correct revision;
-6. required verification must pass;
-7. transaction invariants must hold.
-
-Do not rewrite source merely to make a textual diff disappear.
-
-Do not delete tests, weaken assertions, bypass type checks, or alter verification configuration to manufacture success.
-
-Such behavior is a correctness failure.
-
----
-
-## 12. Dependency and Build Cache Discipline
-
-Dependency changes can invalidate more than a single package.
-
-When a transaction modifies:
-
-- dependency manifests
-- lockfiles
-- compiler configuration
-- build configuration
-- generated code
-- package-manager configuration
-
-recompute the appropriate dependency/build state.
-
-Build caches should be keyed by enough environmental state to prevent false reuse.
-
-At minimum consider:
-
-- repository revision or relevant source digest
-- dependency lock state
-- toolchain version
-- build configuration
-- target platform/architecture
-- relevant environment inputs
-
-Never trade correctness for cache hit rate.
-
----
-
-## 13. Sandbox and Security Rules
-
-Generated code is untrusted until verified.
-
-Workers must not receive implicit production credentials.
-
-Sandbox execution must enforce bounded:
-
-- CPU
-- memory
-- disk
-- network
-- process count
-- execution time
-
-Network access should be denied by default and explicitly granted only when the task requires it.
-
-Do not introduce a path by which worker-generated code can silently reach production systems.
-
-Execution artifacts should remain attributable to:
-
-- task
-- transaction
-- worker
-- model
-- sandbox
-- repository revision
-
----
-
-## 14. Failure Semantics
-
-Design for failure as the normal operating condition.
-
-Expected failures include:
-
-- worker crash
-- model timeout
-- malformed patch
-- invalid syntax
-- stale LSP result
-- test failure
-- dependency failure
-- sandbox failure
-- reservation expiry
-- transaction conflict
-- repository advancement
-- partial execution
-- orchestration retry
-
-A retry must not accidentally duplicate a committed side effect.
-
-A failed transaction must not become committed state.
-
-A worker crash must not permanently hold a reservation.
-
-A stale result must not satisfy a current verification requirement.
-
-A rebase must not preserve assumptions that have become invalid.
-
----
-
-## 15. Storage Boundaries
-
-### PostgreSQL
-
-Authoritative current state:
-
-- repositories
-- revisions
-- tasks
-- transactions
-- reservations
-- workers
-- supervisors
-- symbols/edges as appropriate
-- verification runs
-- architecture decisions
-- provenance
-
-### ClickHouse
-
-Historical analytics:
-
-- agent actions
-- model calls
-- token usage
-- execution latency
-- verification events
-- transaction conflicts
-- failures
-- evaluation metrics
-
-### Object storage + Parquet
-
-Immutable large evidence:
-
-- trajectories
-- patches
-- stdout/stderr
-- compiler diagnostics
-- test artifacts
-- snapshots
-- large execution outputs
-
-Keep these ownership boundaries explicit.
-
----
-
-## 16. Observability
-
-Use structured telemetry.
-
-Prefer OpenTelemetry-compatible traces, metrics, and logs where practical.
-
-Important dimensions include:
-
-- repository
-- revision
-- transaction
-- task
-- supervisor
-- worker
-- model
-- execution tier
-- verification stage
-- outcome
-- retry count
-- conflict reason
-- resource usage
-
-Every important latency measurement should have enough context to distinguish:
-
-- model latency
-- orchestration latency
-- queue/event latency
-- graph analysis latency
-- sandbox startup latency
-- build/test latency
-- verification latency
-- commit/rebase latency
-
-Do not collapse the entire system into one "agent latency" number.
-
----
-
-## 17. Evaluation Rules
-
-The primary question is not whether Celetixo can execute a multi-agent workflow.
-
-The question is whether the architecture produces better verified engineering outcomes than a strong sequential coding-agent baseline on the same work.
-
-Evaluation should measure at least:
-
-- task success rate
-- cost per successful PR
-- latency per successful PR
-- regression rate
-- human intervention/fix rate
-- semantic conflict rate
-- verification compute
-- agent actions
-
-When adding an optimization, identify which metric it is expected to improve.
-
-Do not claim performance improvements without controlled measurements.
-
-Do not optimize for benchmark scores at the expense of actual repository correctness.
-
-The evaluation harness must preserve enough evidence to reproduce a result.
-
----
-
-## 18. Training and Learning
-
-Do not train a proprietary model merely because the architecture contains agents.
-
-The intended progression is:
-
-```
-v0  semantic coordination + verification + evidence
- ↓
-v1  persistent engineering graph + procedural skills
- ↓
-v2  learned routing + worker post-training
- ↓
-v3  verifiable-reward training + synthetic environments
- ↓
-v4  distilled engineering models + predictive coordination
- ↓
-v5  autonomous software lifecycle management
-```
-
-The evidence loop comes before model training.
-
-Useful learning data is not simply chat history. It includes:
-
-- repository state
-- intent
-- impact analysis
-- chosen worker
-- model/version
-- tools
-- patches
-- verification
-- failures
-- retries
-- conflicts
-- rebases
-- final outcome
-- human judgment
-
-Reward hacking must be treated as a first-class threat.
-
-Protected tests, hidden evaluation cases, and human acceptance signals should be considered where appropriate.
-
----
-
-## 19. Code Quality Rules
-
-Prefer:
-
-- small composable modules
-- explicit state machines
-- typed contracts
-- deterministic behavior where possible
-- immutable event/evidence records
-- idempotent operations
-- explicit error types
-- bounded retries
-- structured logging
-- dependency inversion at execution boundaries
-- testable pure logic for state transitions
-
-Avoid:
-
-- hidden global state
-- implicit cross-service coupling
-- model-specific business logic inside the state engine
-- unbounded retry loops
-- magic timeouts
-- silent fallbacks
-- catch-all error suppression
-- duplicated protocol definitions
-- stringly typed transaction states
-- architecture hidden inside prompt text
-
-Prefer explicit state transitions over boolean soup.
-
-Prefer domain types over primitive strings when a value has semantic meaning.
-
----
-
-## 20. Type and Protocol Discipline
-
-Protobuf is the canonical internal contract where the architecture specifies Protobuf.
-
-Do not create competing definitions of the same protocol in:
-
-- TypeScript
-- Rust
-- Go
-- Python
-
-Generated bindings should derive from the canonical schema.
-
-External JSON APIs may use JSON Schema, but the internal contract must remain unambiguous.
-
-When changing a protocol:
-
-1. identify all consumers;
-2. preserve compatibility where required;
-3. update generated code;
-4. update tests;
-5. update documentation;
-6. record architectural implications.
-
----
-
-## 21. Testing Expectations
-
-Tests should validate system semantics, not merely line coverage.
-
-For transaction code, test:
-
-- compatible reads
-- incompatible writes
-- read/write conflicts
-- lease expiry
-- heartbeat renewal
-- cancellation
-- deterministic acquisition ordering
-- stale revisions
-- successful CAS commit
-- failed CAS commit
-- semantic rebase
-- abort
-- retry idempotency
-- crash recovery
-
-For code intelligence, test:
-
-- parsing
-- incremental updates
-- symbol identity
-- reference updates
-- dependency changes
-- generated artifacts
-- stale index rejection
-
-For verification, test:
-
-- correct tier selection
-- stale result rejection
-- environment identity
-- cache invalidation
-- evidence capture
-- failure propagation
-
-For orchestration, test:
-
-- retry behavior
-- compensation
-- worker replacement
-- supervisor recovery
-- event ordering assumptions
-- duplicate event handling
-
----
-
-## 22. Determinism
-
-Where deterministic behavior is possible, prefer it.
-
-Examples:
-
-- transaction IDs where externally supplied
-- reservation acquisition ordering
-- impact-set ordering
-- graph traversal rules
-- verification-plan generation
-- event schemas
-- state transition rules
-
-Do not rely on LLM output for a decision that can be expressed deterministically from repository state.
-
-Models propose.
-
-The system decides.
-
----
-
-## 23. Idempotency
-
-Every operation that can be retried must define its idempotency behavior.
-
-Examples:
-
-- event consumers
-- task creation
-- transaction reservation
-- verification execution
-- artifact upload
-- commit requests
-- rebase requests
-- workflow callbacks
-
-Use stable operation/task/transaction IDs.
-
-Do not create duplicate engineering state merely because an orchestrator retried a message.
-
----
-
-## 24. Changes to Accepted Architecture
-
-The following require an ADR or explicit ADR amendment:
-
-- transaction semantics
-- repository revision/commit semantics
-- Engineering State Engine ownership
-- Chief DSL contract
-- storage ownership
-- Temporal/NATS boundaries
-- execution isolation model
-- fundamental agent hierarchy
-- semantic impact model
-
-Implementation details can evolve without an ADR when the architectural invariants remain intact.
-
-When uncertain, preserve the current boundary and document the proposed change before implementing it.
-
----
-
-## 25. Repository Workflow for Coding Agents
-
-Before changing code:
-
-1. Read this file.
-2. Read the relevant ADR.
-3. Inspect the current implementation.
-4. Identify the architectural boundary being changed.
-5. Find existing tests and contracts.
-6. Determine the smallest coherent implementation.
-
-During implementation:
-
-1. Keep changes scoped.
-2. Preserve public contracts unless the task explicitly changes them.
-3. Do not mix unrelated refactors with feature work.
-4. Add or update tests with behavioral changes.
-5. Keep error and state semantics explicit.
-6. Record architectural decisions when required.
-
-Before committing:
-
-1. Run the narrowest relevant checks.
-2. Run broader checks when the change crosses subsystem boundaries.
-3. Inspect the final diff.
-4. Confirm no tests or validation logic were weakened.
-5. Confirm generated files and protocol bindings are synchronized.
-6. Confirm documentation remains consistent.
-
-Commit messages should describe the actual change, for example:
-
-```
-feat(state): add semantic transaction reservations
-fix(lsp): reject stale diagnostics
-test(state): cover CAS commit conflicts
-docs(adr): record transaction rebase semantics
-```
-
-Do not use vague messages such as:
-
-```
-update stuff
-fix things
-changes
-agent work
-```
-
----
-
-## 26. What Not to Build by Accident
-
-Do not allow Celetixo to become:
-
-- a chat UI with tools
-- a collection of prompt templates
-- a wrapper around existing coding agents
-- a file-locking system with multiple workers
-- a Git merge automation layer
-- a benchmark-specific hack
-- a model-training project without an engineering substrate
-- an orchestration system with no semantic repository state
-- an observability dashboard mistaken for the core product
-
-If an implementation could be described as "send better prompts to more agents," it is probably below Celetixo's intended abstraction level.
-
----
-
-## 27. Architectural Test
-
-When deciding whether a proposed feature belongs in Celetixo, ask:
-
-### Does it improve one of these?
-
-1. representation of engineering state;
-2. semantic impact analysis;
-3. safe concurrent execution;
-4. verification quality or efficiency;
-5. durable orchestration;
-6. evidence quality;
-7. measurable engineering outcomes;
-8. later learning from verified trajectories.
-
-If not, it is probably not core infrastructure.
-
----
-
-## 28. Final Rule
-
-Celetixo is built around a strict separation:
-
-```
-MODEL
-  proposes
-
-ENGINEERING STATE
-  describes what is true
-
-TRANSACTION ENGINE
-  determines what may change
-
-SANDBOX
-  executes untrusted work
-
-VERIFICATION
-  establishes evidence
-
-COMMIT
-  accepts a validated state transition
-
-EVIDENCE
-  records what happened
-```
-
-Do not reverse these responsibilities.
-
-The model is not the source of truth.
-
-A green test is not automatically sufficient evidence.
-
-A clean Git merge is not semantic correctness.
-
-A reservation is not correctness.
-
-A successful agent run is not a successful engineering outcome.
-
-Celetixo exists to make those distinctions executable.
-
-
----
-
-# ADR-0002 Operating Addendum
-
-This addendum is normative and must be read with the preceding rules. Where it is more specific, it extends or supersedes the corresponding implementation guidance above. ADR-0001 remains in force except where ADR-0002 explicitly extends it.
-
-## A. Architecture quality is not time-boxed
-
-Do not reduce the target architecture, omit necessary correctness/security properties, or select an inferior permanent design to satisfy an arbitrary build-time target. Build sequencing is permitted to manage dependencies and integration risk. It is not permission to impose a capability ceiling. Prefer a complete, validated design with staged implementation over a rushed design that creates irreversible limitations.
-
-"Smallest coherent implementation" means the smallest implementation that preserves the complete accepted architecture and its invariants. It does not mean the smallest architecture that can be demoed.
-
-## B. Brain authority boundary
-
-Python is the primary runtime for model-facing intelligence: provider adapters, routing, context construction, planning, Chief/Supervisor policy, worker allocation, evaluation and future learning workflows.
-
-The Brain must communicate with the Engine through typed, versioned contracts. It must never independently decide that a transaction is conflict-free, verification-complete, authorized or committable. Do not duplicate authoritative OCC, impact or commit logic in Python.
-
-Rust remains the deterministic Engineering State Engine and may provide native libraries for profiled hot paths. C++ is optional and requires a concrete technical justification; it is not a default layer.
-
-## C. Client boundaries
-
-Theia is the preferred desktop workbench candidate, subject to explicit compatibility, licensing, extension, packaging, security and performance validation. It remains a client and must not own transaction correctness.
-
-Android is native Kotlin + Jetpack Compose. Flutter is not selected. Mobile actions are authenticated server requests, subject to authorization and Engine policy. Offline actions must be re-authorized and revalidated when received.
-
-## D. Snapshot identity is stronger than Git HEAD
-
-A task's base must identify the actual immutable workspace state, not merely a branch commit. Include all content participating in the task: tracked/untracked files, staged/unstaged changes, editor overlays and relevant mounted/generated inputs. Use a content manifest/digest and explicit construction provenance.
-
-Every impact result, patch, LSP result, verification record and commit attempt must bind to compatible snapshot identities. Never claim a dirty workspace is represented by HEAD alone.
-
-## E. Impact and verification provenance
-
-Impact results identify snapshot, index generation, parser/analyzer versions, language coverage and completeness. Unknown or partial analysis is explicit and must follow policy; never interpret unknown as no impact.
-
-Verification binds transaction, snapshot, patch digest, required/completed checks, toolchain, environment, configuration and evidence artifacts. Stale or mismatched evidence cannot satisfy current commit requirements. Verification is bounded evidence, not a claim of universal proof.
-
-## F. Commit, authorization and protocol safeguards
-
-Commit advancement must be atomic across distributed contenders, using a proven durable CAS/transactional gate. A process-local mutex is insufficient.
-
-The commit gate rechecks revision, snapshot, transaction state, conflict assumptions, patch digest, evidence applicability, authorization and idempotency. Duplicate or delayed requests must not create duplicate commits.
-
-Actor IDs are attribution, not authorization. Approval binds to the exact transaction, diff, snapshot and evidence. Force-rebase requests fresh semantic analysis and verification; it never means unconditional overwrite.
-
-Protobuf v3 remains canonical. Preserve the complete `celetixo.orchestration.v1.TaskIntent` meaning and compatibility discipline. Never reduce the contract by dropping dependencies, reads/writes, invariants, impact/verification policy, budgets, retry/rollback/escalation or provenance.
-
-## G. Execution, data and learning
-
-Preserve all four execution tiers: Tier 0 deterministic local operations; Tier 1 isolated process/container/gVisor; Tier 2 Firecracker microVM; Tier 3 remote execution pools. Select by workload and threat model. Containers are not equivalent to microVM isolation.
-
-Keep PostgreSQL authoritative for current state, ClickHouse analytical, and object storage for immutable large evidence. Trajectories require lineage and governance. Do not feed all collected data into training automatically; evaluate rights, privacy, secrets, quality, contamination and representativeness.
-
-## H. Performance and reliability
-
-Benchmark representative repository sizes, languages, concurrency, task classes and failure modes. Measure impact precision/recall, false conflict rates, indexing, commit contention, verification, cache correctness, tail latency, recovery and cost per successful verified outcome. Never invent targets or performance claims.
-
-Design for cancellation, backpressure, deadlines, idempotency, duplicate/out-of-order events, bounded retries, recovery, graceful shutdown and observable failure. No cache may bypass a required verification step.
-
-## I. Implementation completion
-
-A feature is not complete because a document describes it or a model claims it. Distinguish architectural target, implemented behavior and experimentally validated behavior. Update contracts, tests and documentation together. Do not mark unsupported analysis, isolation, persistence or verification as complete.
+> **Models propose changes. The Engine decides admissibility. Verification supplies evidence. The atomic commit boundary protects repository state.**
