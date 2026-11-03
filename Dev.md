@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document is the practical build guide for Celetixo developers. It translates ADR-0001 and ADR-0002 into implementation discipline, sequencing, and acceptance criteria.
+This document is the practical build guide for Celetixo developers. It translates ADR-0001 through ADR-0004 into implementation discipline, sequencing, and acceptance criteria.
 
 **The objective is to build the complete accepted architecture without weakening correctness, security, independence or scalability.** Implementation may proceed in validated stages, but build time is not an architectural constraint. Do not omit necessary capabilities or choose inferior permanent designs merely to shorten delivery.
 
@@ -11,15 +11,28 @@ Read these documents before changing core behavior:
 1. `docs/adr/0001-celetixo-engineering-state-coordination.md` — engineering-state baseline.
 2. `docs/adr/0002-platform-brain-client-and-correctness-extensions.md` — accepted platform and correctness extensions.
 3. `docs/adr/0003-transaction-consistency-and-validation-model.md` — transaction consistency and commit validation.
-4. `docs/spec/transaction-semantics.md` and `docs/spec/engineering-identity.md` — Engine contracts.
-5. `docs/spec/failure-model.md` and `docs/spec/trajectory-governance.md` — reliability and data governance.
-6. `EVALUATION.md` — controlled comparative evaluation.
-7. `AGENTS.md` — repository-wide operating contract.
-8. `README.md` — public system description.
+4. `docs/adr/0004-internal-first-public-capable-architecture.md` — initial operating model and non-deferred engineering standard.
+5. `docs/spec/transaction-semantics.md`, `docs/spec/engineering-identity.md` and `docs/spec/deployment-and-product-boundaries.md` — Engine and deployment contracts.
+6. `docs/spec/failure-model.md` and `docs/spec/trajectory-governance.md` — reliability and data governance.
+7. `EVALUATION.md` — controlled comparative evaluation.
+8. `AGENTS.md` — repository-wide operating contract.
+9. `README.md` — public system description.
 
 If this file conflicts with the ADR, the ADR wins. If implementation exposes a flaw in a frozen decision, document the evidence and propose an ADR amendment; do not silently redefine the architecture.
 
 ---
+
+## Internal-First Operating Rule
+
+Internal-first defines the initial operator, deployment configuration and data-governance policies. It does not lower the engineering standard or reduce the accepted target architecture.
+
+Build the complete platform to the highest technically justified standard. Stage work according to dependencies and evidence, not arbitrary time limits. Do not defer foundational correctness, security, isolation, scalability, reliability, observability, testing or evaluation because the first deployment is internal.
+
+The initial Emilo Labs deployment must use the same Engine transaction, immutable snapshot, semantic analysis, evidence-gated verification, sandbox and atomic commit path intended for future public operation. No internal-only fast path or trusted-network exception may bypass these controls.
+
+Keep organization, principal, workspace and repository scopes explicit from the beginning. Apply Emilo Labs' initial data policies through enforceable policy and deployment configuration. Public-facing onboarding, billing, customer administration and support surfaces may be staged, but their foundational identity, authorization, isolation, governance and integration boundaries must not be omitted.
+
+Follow [ADR-0004](docs/adr/0004-internal-first-public-capable-architecture.md) and [deployment-and-product-boundaries.md](docs/spec/deployment-and-product-boundaries.md). A documented target is not an implemented or validated capability; report those states separately.
 
 ## 1. Build Principles
 
