@@ -506,13 +506,13 @@ learning
 
 **Models are workers. Engineering state is the source of truth. Verification is the authority. Evidence is the learning substrate.**
 
-See [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md), [ADR-0002](docs/adr/0002-platform-brain-client-and-correctness-extensions.md) and [ADR-0003](docs/adr/0003-transaction-consistency-and-validation-model.md) for the accepted architectural decisions.
+See [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md), [ADR-0002](docs/adr/0002-platform-brain-client-and-correctness-extensions.md), [ADR-0003](docs/adr/0003-transaction-consistency-and-validation-model.md) and [ADR-0004](docs/adr/0004-internal-first-public-capable-architecture.md) for the accepted architectural decisions. [Deployment and product boundaries](docs/spec/deployment-and-product-boundaries.md) defines the internal-first operating model and future public-release requirements.
 
 ---
 
 ## Status
 
-**Architecture:** ADR-0001 baseline plus ADR-0002 accepted extensions  
+**Architecture:** ADR-0001 baseline plus ADR-0002, ADR-0003 and ADR-0004 accepted extensions  
 **Implementation:** foundation in progress; implemented capabilities must be distinguished from architectural targets  
 **Training:** deferred until trajectory quality, rights and governance are established  
 **Evaluation:** controlled benchmark under construction
@@ -534,6 +534,16 @@ ADR-0002 extends the original architecture without replacing its transaction mod
 **Desktop workbench:** Eclipse Theia is the preferred candidate, subject to extension compatibility, licensing, packaging, security and operational validation. The desktop is a client, never an alternate transaction authority.
 
 **Android:** Kotlin + Jetpack Compose is the native mobile direction. The mobile client provides secure monitoring, review, notifications and governed approvals; it does not replicate the Engine. Flutter is not part of the selected architecture.
+
+## Internal-First Operating Boundary
+
+Celetixo is initially operated internally by Emilo Labs under Emilo Labs' data-governance policies. **Internal-first is an operating and data-policy decision, not a reduced engineering target.**
+
+The complete accepted architecture remains the target: transaction correctness, security, isolation, distributed execution, multiple repositories/workspaces, evidence integrity, provider neutrality, testing and evaluation are not downgraded or deferred because the first deployment is internal.
+
+The core platform must not hardcode a single organization or create internal-only paths that bypass authentication, authorization, semantic analysis, verification, sandboxing or atomic commit. Public-facing onboarding, billing and customer administration may be staged; their foundational identity, scope, policy and isolation boundaries must be designed into the platform.
+
+See [ADR-0004](docs/adr/0004-internal-first-public-capable-architecture.md) and the [deployment and product boundaries specification](docs/spec/deployment-and-product-boundaries.md). Internal deployment is the first operating configuration of the same platform, not a separate prototype or architecture.
 
 ## Snapshot and Evidence Correctness
 
