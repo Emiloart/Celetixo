@@ -10,8 +10,12 @@ Read these documents before changing core behavior:
 
 1. `docs/adr/0001-celetixo-engineering-state-coordination.md` — engineering-state baseline.
 2. `docs/adr/0002-platform-brain-client-and-correctness-extensions.md` — accepted platform and correctness extensions.
-3. `AGENTS.md` — repository-wide operating contract.
-4. `README.md` — public system description.
+3. `docs/adr/0003-transaction-consistency-and-validation-model.md` — transaction consistency and commit validation.
+4. `docs/spec/transaction-semantics.md` and `docs/spec/engineering-identity.md` — Engine contracts.
+5. `docs/spec/failure-model.md` and `docs/spec/trajectory-governance.md` — reliability and data governance.
+6. `EVALUATION.md` — controlled comparative evaluation.
+7. `AGENTS.md` — repository-wide operating contract.
+8. `README.md` — public system description.
 
 If this file conflicts with the ADR, the ADR wins. If implementation exposes a flaw in a frozen decision, document the evidence and propose an ADR amendment; do not silently redefine the architecture.
 
@@ -120,7 +124,7 @@ Add versioned patch representation and a verification record tied to the exact t
 
 ### Phase 4 — Repository intelligence
 
-Introduce Tree-sitter parsing, file/symbol identity, reference edges, and incremental updates in measured increments.
+Introduce Tree-sitter parsing, stable file/symbol identity, reference edges, and incremental updates in measured increments. Follow [engineering identity](docs/spec/engineering-identity.md); paths and names are attributes, and heuristic rename/move continuity must not silently authorize OCC decisions.
 
 - Begin with one representative language harness, then expand to TypeScript/JavaScript, Python, Go, and Rust.
 - Treat configuration, manifests, lockfiles, generated artifacts, tests, and CI files as engineering dependencies.
@@ -147,15 +151,27 @@ Keep component responsibilities separate. Do not use NATS as a workflow engine, 
 
 ### Phase 6 — Real worker integration and evaluation
 
-Connect one real coding worker through a provider-neutral adapter. Run bounded tasks against isolated repository snapshots and pass its patches through the same transaction and verification path as every other worker.
+Connect real coding workers through provider-neutral adapters. Run tasks against immutable repository snapshots and pass every patch through the same transaction and verification path.
 
-Build a reproducible comparison against a strong sequential coding-agent baseline. Measure task success, cost and latency per successful verified change, regressions, human correction rate, conflicts, verification compute, and agent actions.
+Build the three-arm comparison defined in [EVALUATION.md](EVALUATION.md): (A) a strong sequential coding agent, (B) parallel Git worktrees with ordinary integration and no Celetixo semantic transactions, and (C) Celetixo semantic transactions. Freeze the task suite and decision rule before confirmatory runs. Measure verified outcomes, impact precision/recall, false-negative impact, false-positive conflicts, abort reasons, wasted execution/tokens, human correction, verification cost and recovery correctness.
 
-**Exit gate:** results can be reproduced from preserved evidence; performance claims are supported by controlled measurements.
+**Exit gate:** the reference transaction oracle and failure-injection suite pass; comparative results can be reproduced from preserved evidence; performance claims are supported by the frozen task suite and controlled measurements.
 
 ---
 
-## 4. Working Agreement
+## 4. Contract and validation specifications
+
+The implementation must conform to the detailed contracts in:
+
+- [Transaction semantics](docs/spec/transaction-semantics.md)
+- [Engineering identity](docs/spec/engineering-identity.md)
+- [Failure and recovery model](docs/spec/failure-model.md)
+- [Trajectory governance](docs/spec/trajectory-governance.md)
+- [Evaluation protocol](EVALUATION.md)
+
+These specifications operationalize accepted ADR decisions. If implementation reveals a new architectural choice or contradiction, record it through an ADR rather than allowing a specification or code change to silently redefine authority.
+
+## 5. Working Agreement
 
 ### Before implementation
 
@@ -188,7 +204,7 @@ Build a reproducible comparison against a strong sequential coding-agent baselin
 
 A task is complete only when its acceptance criteria and verification evidence are explicit.
 
-## 5. Parallel Development
+## 6. Parallel Development
 
 Parallelism should accelerate implementation without creating unreviewable integration work.
 
@@ -202,7 +218,7 @@ Parallelism should accelerate implementation without creating unreviewable integ
 
 The Chief owns global objectives, architecture, task decomposition, invariants, and escalation. Supervisors own bounded-domain execution and recovery. Workers implement and verify bounded tasks. The transaction engine remains authoritative for repository-state decisions.
 
-## 6. Security and Isolation
+## 7. Security and Isolation
 
 - Treat generated code, patches, dependencies, and tool output as untrusted.
 - Do not expose production credentials to workers or test processes.
@@ -213,7 +229,7 @@ The Chief owns global objectives, architecture, task decomposition, invariants, 
 - Make retries idempotent or guard side effects with durable idempotency keys.
 - Do not execute untrusted code on the host merely to simplify the first demo.
 
-## 7. Performance Discipline
+## 8. Performance Discipline
 
 Optimize for **cost per successful, verified engineering outcome**, not raw token speed, worker count, or benchmark theater.
 
@@ -232,7 +248,7 @@ Start with a correct baseline. Profile real workloads before introducing caches 
 
 Do not establish latency targets until representative measurements exist.
 
-## 8. Architecture Scope and Sequencing
+## 9. Architecture Scope and Sequencing
 
 Do not start v0/v1 by building:
 
@@ -245,7 +261,7 @@ Do not start v0/v1 by building:
 
 Build the infrastructure required by the accepted architecture, with explicit dependency ordering and integration gates. Local deterministic tests do not substitute for the durable, distributed, isolated and observable production design.
 
-## 9. Definition of Done
+## 10. Definition of Done
 
 A change is ready to merge when:
 
@@ -259,7 +275,7 @@ A change is ready to merge when:
 - [ ] Documentation matches actual behavior.
 - [ ] Remaining gaps are stated plainly.
 
-## 10. Engineering Standard
+## 11. Engineering Standard
 
 Every subsystem must have a clear responsibility, contract, threat model, failure semantics and validation plan. Build in coherent stages, but do not impose arbitrary time or capability ceilings. Preserve the complete accepted target architecture.
 
