@@ -13,8 +13,10 @@ Accepted architectural decisions are authoritative. Read the relevant documents 
 1. [ADR-0001: Engineering-state coordination](docs/adr/0001-celetixo-engineering-state-coordination.md)
 2. [ADR-0002: Platform, Brain, clients and correctness extensions](docs/adr/0002-platform-brain-client-and-correctness-extensions.md)
 3. [ADR-0003: Transaction consistency and validation](docs/adr/0003-transaction-consistency-and-validation-model.md)
-4. [Dev.md](Dev.md) for implementation discipline and build sequence
-5. The applicable specifications under [docs/spec](docs/spec)
+4. [ADR-0004: Internal-first, public-capable architecture](docs/adr/0004-internal-first-public-capable-architecture.md)
+5. [Deployment and product boundaries](docs/spec/deployment-and-product-boundaries.md)
+6. [Dev.md](Dev.md) for implementation discipline and build sequence
+7. The applicable specifications under [docs/spec](docs/spec)
 
 When documents disagree, accepted ADRs govern architecture; this file governs agent behavior; Dev.md governs implementation workflow; README.md describes the public system. Source code describes implemented behavior but does not silently supersede an accepted decision.
 
@@ -40,6 +42,18 @@ The Python Brain owns model/provider adapters, routing, context assembly, planni
 Go/Temporal owns durable workflow execution. NATS JetStream distributes asynchronous events. PostgreSQL owns authoritative current operational state. ClickHouse owns analytics. S3-compatible object storage owns immutable large evidence and artifacts. Keep these responsibilities distinct.
 
 Desktop and mobile applications are clients, not transaction authorities. Theia is the preferred desktop candidate subject to validation. Android is native Kotlin + Jetpack Compose. Mobile and desktop actions use authenticated APIs and server-side policy.
+
+## Internal-first operating boundary
+
+Internal-first means that the initial deployment is operated by Emilo Labs under Emilo Labs' data-governance policies. It does not authorize reduced engineering quality, deferred foundational security, weaker correctness, a smaller target architecture or temporary bypasses.
+
+Agents must preserve the complete accepted architecture and build to the highest technically justified standard. Staging implementation by dependency and validation evidence is acceptable; omitting necessary capabilities or choosing inferior permanent designs to save time is not.
+
+The initial deployment and any future public product use the same authoritative Engine transaction, verification, evidence and commit path. Do not introduce internal-only bypasses around authentication, authorization, immutable snapshots, semantic impact analysis, sandboxing, evidence admissibility, OCC or atomic commit.
+
+Keep organization, principal, workspace and repository scopes explicit. Do not hardcode Emilo Labs as a global owner in core contracts. Apply the initial Emilo Labs data policies through explicit, enforceable configuration and policy boundaries. Public-facing onboarding, billing and customer administration may be staged, but foundational identity, authorization, isolation, governance and integration contracts must not be deferred.
+
+Follow [ADR-0004](docs/adr/0004-internal-first-public-capable-architecture.md) and [deployment-and-product-boundaries.md](docs/spec/deployment-and-product-boundaries.md). Never claim public readiness, multi-tenant isolation or a security property without implementation and validation evidence.
 
 ## 3. Non-negotiable correctness rules
 
