@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install pinned Rust toolchain
-        run: rustup show active-toolchain
+        run: rustup toolchain install 1.94.1 --profile minimal --component rustfmt --component clippy
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Lint all targets
@@ -22,3 +22,5 @@ jobs:
         run: cargo test --workspace --locked
       - name: Build workspace
         run: cargo build --workspace --locked
+      - name: Run concurrent transaction example
+        run: cargo run --locked -p celetixo-engine --example concurrent_transactions

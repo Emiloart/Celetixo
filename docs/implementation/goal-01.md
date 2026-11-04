@@ -24,6 +24,22 @@ This representation makes OCC histories executable without coupling correctness 
 
 Unknown, stale, ambiguous or incomplete analysis must reject admission or validation. Empty impact is permissible only when analysis establishes an empty impact for the supported model. An externally supplied actor ID or an analysis assertion does not grant commit authority.
 
+The graph derives reads from explicit reads, writes, declared invariant scopes and matching predicate roots. It follows dependency edges transitively and includes transitive downstream consumers of written interfaces and their dependencies. Prefix predicates also conflict with writes that add or remove matching identities, including identities absent from the base. Overlapping invariant scopes conservatively conflict; these extra rejections are an efficiency limitation, not a claim that all rejected programs would be incorrect.
+
+The native `TransactionIntent` is an in-process Engine admission record. There is no RPC service, cross-service schema, Brain or Chief DSL implementation here. A later Protobuf adapter must preserve the full ADR-0001 `TaskIntent` semantics; the native record is not a replacement wire definition.
+
+## Module ownership
+
+| Module | Responsibility |
+|---|---|
+| `ids` | Scoped opaque identities and domain-separated SHA-256 digests |
+| `snapshot` | Immutable canonical manifests and reference state |
+| `access`, `model` | Declared/derived dependencies, predicates, executable invariants and completeness |
+| `patch` | Versioned mutations with exact before-images and atomic application |
+| `evidence` | Exact checks, immutable results, artifacts and execution provenance |
+| `transaction` | Native admission types and the legal lifecycle table |
+| `engine` | Scoped capabilities, authoritative store, leases, attempts, OCC and atomic publication |
+
 ## Identity and snapshots
 
 Organization, principal, workspace and repository scope remain explicit. Transactions, patches, snapshots and evidence have typed identities. A snapshot binds a canonical manifest to the engineering state and authoritative revision it represents. Snapshot content is immutable after registration.
@@ -43,6 +59,8 @@ PROPOSED → ANALYZED → RESERVED → EXECUTING → VALIDATING → COMMITTED
 
 The Engine validates every transition. A reservation is an expiring coordination lease, not proof of compatibility. Expiry, renewal, cancellation and reclaiming abandoned work must use the authoritative clock and must never revive authority for an expired owner.
 
+Reservations acquire the entire sorted write set atomically. The footprint is frozen after analysis; there is no partial acquisition or in-place upgrade API. A footprint change needs a new proposal and analysis. Lease acquisition, renewal, expiry, revocation and release events retain scope, owner and authoritative time and are available through `lease_history()`. Replacement workers use new transaction identities and leases; they cannot renew or reuse expired authority. `attempts()` exposes immutable previous analysis, patch, candidate and evidence references.
+
 An advance of the repository revision returns `RevalidationRequired` before mutation. Explicit `revalidate()` checks intervening commits against the original effective accesses and recomputes graph closure and its analysis stamp. A compatible transaction retains its transaction identity and starts a versioned attempt, reanchors the patch to the current snapshot after checking before-images, clears previous evidence and produces a new exact candidate snapshot. Prior attempts remain part of history. Fresh verification is required for the new attempt, and evidence bindings include the attempt number. A conflicting transaction must be rejected rather than overwrite prior work. This implementation has no evidence-reuse equivalence rule.
 
 `COMMITTED` and `ABORTED` are terminal. Retry of an already completed operation uses the same operation identity and returns its recorded result. A retry or rebase representing new work uses a new transaction identity or an explicitly versioned attempt, fresh analysis, a current snapshot and renewed evidence. It cannot revive an aborted transaction.
@@ -59,6 +77,8 @@ This is an explicit proposal, not a change to ADR status. Implementation follows
 
 The embedding application is trusted to manage administrator and verifier capabilities. Actor-facing operations require an unforgeable in-process session capability scoped to the authorized resources. Administrative grant/revoke operations serialize with commit so revoked authority cannot pass a later gate. This is an explicit library boundary; no network service or network authentication protocol is exposed or claimed.
 
+Only `Register` can establish a repository, and `ManageModel` can change its accepted dependency facts. Ordinary `Analyze` requests run deterministic Engine analysis and cannot supply a replacement graph. Reservation requires the proposal owner's principal; execution, renewal and commit require the exact live capability that acquired the lease. Cross-principal execution delegation is unavailable. A scoped `Cancel` grant deliberately permits cancellation; it does not grant commit authority. The authorized proposer establishes the immutable required checks and invariants for each admitted intent. Workers without `Verify` cannot satisfy those checks themselves.
+
 The reference commit boundary must check all of the following against one authoritative state before advancing a revision:
 
 1. Authenticated capability and current authorization for the scoped operation.
@@ -72,9 +92,13 @@ The reference commit boundary must check all of the following against one author
 
 Successful publication changes state, revision, transaction outcome and idempotency outcome together. Rejection changes none of the repository content or authoritative revision. Read/read compatibility permits useful concurrency; write conflicts, invalidated reads, phantom changes and unsafe invariant overlap must not silently produce an accepted history.
 
+Idempotency keys are scoped to repository and immutable attempt. Repeating a completed operation for that attempt returns its recorded success or rejection. A new attempt or a corrected operation uses a new key; reusing a prior attempt's key returns `IdempotencyConflict`. Replay still requires current caller authorization. Receipt recovery after a published commit does not require recreating its old lease or rerunning checks, because it performs no new mutation.
+
 ## Evidence contract
 
 Evidence binds transaction, snapshot, patch digest, exact required check identity/configuration, toolchain and execution environment, result, diagnostics, artifact digests and provenance. Required evidence must exist in the authoritative evidence store before it can satisfy the gate. The Engine must reject missing, failed, stale, mismatched or incomplete evidence. Evidence for one transaction cannot authorize another, and a caller-supplied successful boolean is insufficient.
+
+Bindings also identify the exact candidate snapshot, versioned attempt and full impact-analysis digest. The Engine authenticates the recording verifier against its provenance and rechecks that verifier's scoped grant at a new commit. Revocation prevents new commits from relying on that grant's attestations. The example's trusted verifier actually evaluates candidate invariants and retains its transcript; this is not an external command runner or independent proof of an arbitrary verifier's honesty.
 
 This reference environment stores evidence and artifacts in memory. Their capture is authoritative only within the lifetime and trust boundary of that store. It does not claim object-store durability, isolated execution, trustworthy external worker attestation or secure capture of artifacts from arbitrary processes. The reference harness's trusted verification boundary must remain separate from transaction actors.
 

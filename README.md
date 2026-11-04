@@ -12,6 +12,19 @@ The central abstraction is a **semantic transaction**:
 
 AI models generate the changes. Celetixo owns the engineering state around those changes.
 
+## Run the current Engine
+
+Install Rust through rustup; this repository pins the toolchain and dependency lockfile. From the repository root:
+
+```sh
+cargo test --workspace --locked
+cargo run --locked -p celetixo-engine --example concurrent_transactions
+```
+
+The example demonstrates compatible transactions committing after explicit revalidation and fresh evidence, and an invalidated read being rejected. The current Engine is an in-memory reference implementation over declared integer-valued engineering elements. Snapshots preserve supplied workspace-input manifests; real repository capture, source intelligence and distributed durability remain separate implementation work.
+
+See the [Goal 01 implementation contract](docs/implementation/goal-01.md) for all build checks, the trust and atomicity boundaries, and the [validation record](docs/implementation/validation.md) for actual results.
+
 ---
 
 ## Why Celetixo Exists
@@ -513,7 +526,7 @@ See [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md), [ADR-0
 ## Status
 
 **Architecture:** ADR-0001 baseline plus ADR-0002, ADR-0003 and ADR-0004 accepted extensions  
-**Implementation:** foundation in progress; implemented capabilities must be distinguished from architectural targets  
+**Implementation:** runnable in-memory Rust transaction Engine; [validated scope and limits](docs/implementation/goal-01.md) are separate from the full architectural target<br>
 **Training:** deferred until trajectory quality, rights and governance are established  
 **Evaluation:** controlled benchmark under construction
 
