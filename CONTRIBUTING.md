@@ -10,14 +10,14 @@ Git commit authorship and co-authorship must represent human contributors.
 - AI-assisted implementation does not require a Git co-author trailer.
 - This policy concerns Git attribution metadata. It does not prohibit accurate disclosure of AI assistance in engineering records where appropriate.
 
-### Local enforcement
+### Install local enforcement
 
-Celetixo provides a repository-managed `commit-msg` hook in `.githooks/`. Configure Git to use it from the repository root:
+After cloning the repository, run this once from the repository root using Git Bash:
 
 ```sh
-git config --local core.hooksPath .githooks
+bash scripts/install-git-hooks.sh
 ```
 
-The hook rejects recognized automated identities in `Co-authored-by` trailers. It does not rewrite commit messages or silently remove attribution. If a legitimate human identity is incorrectly flagged, review the hook's deny patterns and update them deliberately.
+The installer marks `.githooks/commit-msg` executable and configures this checkout to use `.githooks`. The hook rejects recognized automated identities in `Co-authored-by` trailers. It does not rewrite commit messages or silently remove attribution.
 
-Git hooks are local safeguards and can be bypassed by changing local Git configuration or explicitly disabling hooks. Contributors must keep the configured hook enabled. Repository automation should independently enforce this policy where commit metadata is available.
+Git hooks are local safeguards and can be bypassed by changing local Git configuration or explicitly disabling hooks. The CI workflow independently checks commit messages on pushes and pull requests. Branch protection must require the attribution check for the policy to be mandatory before merging.
