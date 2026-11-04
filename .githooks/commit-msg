@@ -8,12 +8,11 @@ if [[ ! -f "$message_file" ]]; then
   exit 1
 fi
 
-# Inspect Git trailer lines only. Match common AI products, agents, bot
-# markers, and automated noreply identities without rejecting ordinary
-# mentions of AI in the commit subject or body.
-pattern='^[[:space:]]*Co-authored-by:[[:space:]]*.*([[:<:]](bot|ai|agent|assistant|copilot|claude|chatgpt|openai|codex|cursor|gemini|devin|swe-agent)[[:>:]]|\[bot\]|noreply\+.*\[bot\])'
+# Match only Co-authored-by trailers. Delimiters avoid partial-word matches
+# and keep ordinary references to AI in the subject/body out of scope.
+identity_pattern='(^|[^[:alnum:]_])(bot|ai|agent|assistant|copilot|claude|chatgpt|openai|codex|cursor|gemini|devin|swe-agent)([^[:alnum:]_]|$)|\[bot\]|noreply\+[^[:space:]]*\[bot\]'
 
-if grep -Eiq "$pattern" "$message_file"; then
+if grep -Eiq "^[[:space:]]*Co-authored-by:[[:space:]].*${identity_pattern}" "$message_file"; then
   echo "Commit rejected: AI tools, agents, and bots must not be Git co-authors." >&2
   echo "Remove the automated Co-authored-by trailer. Human co-authors are permitted." >&2
   exit 1
