@@ -12,7 +12,7 @@ The initial repository inspection found branch `main` at `c667e10`, a clean work
 |---|---|---|
 | Reproducible Rust workspace and domain foundation | `3a27fa6` | Format, strict Clippy, locked test and build checks passed; 15 unit + 11 snapshot tests |
 | Transaction authority, OCC and evidence-gated reference commit | `24b32f8` | Format, strict Clippy, locked test and build checks passed; core integration suite: 23 tests |
-| Deterministic histories, adversarial review and executable example | This milestone (hash recorded in audit record) | Full suite: 62 tests passed, including 192 generated histories; strict Clippy/build/format and example passed |
+| Deterministic histories, adversarial review and executable example | `2a55387` | Full suite: 62 tests passed, including 192 generated histories; strict Clippy/build/format and example passed |
 
 Populate this table only with actual commit identities and completed checks. A milestone may cite detailed results below. Do not infer passing status from a configured CI file or a previous command run against different code.
 
@@ -42,7 +42,15 @@ The example performs actual in-process invariant evaluation and retains the eval
 | `cargo build --workspace --locked` | Passed |
 | `cargo run --locked -p celetixo-engine --example concurrent_transactions` | Passed; all scenario assertions |
 
-These results were observed in the development worktree using Rust/Cargo 1.94.1. A committed, detached-checkout verification is recorded in the completion audit below once executed.
+These results were observed in the development worktree using Rust/Cargo 1.94.1 and independently repeated against a clean detached checkout as described below.
+
+## Completion audit
+
+A separate detached Git worktree at committed source revision `2a55387` started clean with no build artifacts. All five documented commands above passed there using the pinned toolchain and lockfile. The complete suite again reported 62 passed, zero failed or ignored; the example produced both expected final states and all assertions passed. The check rebuilt the dependencies and Engine in that checkout, establishing that no uncommitted development file or existing target directory was needed.
+
+Local links in the changed documentation resolve, and staged changes passed `git diff --cached --check`. The subsequent completion-record commit changes only this validation document; runtime code and CI configuration remain exactly the source revision checked above. The development working tree is clean after the implementation commits. Commits are local; remote CI has not been executed.
+
+Goal 01 is validated within the documented in-memory reference environment. Source indexing, external execution, durable storage and production distributed atomicity are outside that environment and are not presented as completed capabilities.
 
 ## Requirement audit
 
