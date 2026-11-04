@@ -10,8 +10,8 @@ The initial repository inspection found branch `main` at `c667e10`, a clean work
 
 | Milestone | Commit | Checks and result |
 |---|---|---|
-| Reproducible Rust workspace and domain foundation | This milestone (hash recorded in next milestone) | Format, strict Clippy, locked test and build checks passed; 15 unit + 11 snapshot tests |
-| Transaction authority, OCC and evidence-gated reference commit | Pending | Not yet recorded |
+| Reproducible Rust workspace and domain foundation | `3a27fa6` | Format, strict Clippy, locked test and build checks passed; 15 unit + 11 snapshot tests |
+| Transaction authority, OCC and evidence-gated reference commit | This milestone (hash recorded in next milestone) | Format, strict Clippy, locked test and build checks passed; core integration suite: 23 tests |
 | Deterministic histories, failure recovery, example and final documentation | Pending | Not yet recorded |
 
 Populate this table only with actual commit identities and completed checks. A milestone may cite detailed results below. Do not infer passing status from a configured CI file or a previous command run against different code.
@@ -19,6 +19,10 @@ Populate this table only with actual commit identities and completed checks. A m
 ### Foundation evidence
 
 Ran `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --locked -- -D warnings`, `cargo test --workspace --locked`, and `cargo build --workspace --locked` successfully. Tests: 15 domain unit tests and 11 snapshot integration tests, no failures. The initially attempted locked test correctly refused to create an absent lockfile; `cargo generate-lockfile --offline` established the committed lockfile before the successful locked checks. The Engine and runnable concurrency example are subsequent milestones; they are not part of this foundation result.
+
+### Engine evidence
+
+The same four workspace commands passed after integrating the Engine. The core integration suite contains 23 passing tests: compatible commits and repeated revalidation, write/read/predicate/invariant conflicts, exact evidence checks, scoped authorization and revocation, lease expiry/renewal/reclamation/audit, idempotent outcomes, cancellation schedules, simultaneous commits through independent Engine handles, and five named commit failpoints. Together with foundation tests, this milestone contains 49 passing tests. Additional independent oracle/adversarial tests and the example passed in the development worktree and are committed in the next milestone; they are not counted as artifacts of this Engine commit.
 
 ## Final commands
 
