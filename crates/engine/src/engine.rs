@@ -8,6 +8,7 @@ use crate::evidence::{EvidenceBindings, VerificationEvidence};
 use crate::ids::*;
 use crate::model::EngineeringModel;
 use crate::patch::{Patch, PatchError};
+use crate::repository::{RepositoryAnalysis, RepositoryAnalysisError, RepositoryImpact};
 use crate::snapshot::{Snapshot, SnapshotError};
 use crate::transaction::{TransactionIntent, TransactionState, TransactionView};
 use std::collections::{BTreeMap, BTreeSet};
@@ -211,6 +212,12 @@ pub enum EngineError {
     InjectedFailure(CommitFault),
     #[error("commit published but response was lost; retry the same key")]
     ResponseLost,
+    #[error("repository analysis rejected: {0}")]
+    RepositoryAnalysis(#[from] RepositoryAnalysisError),
+    #[error("source repositories require a snapshot-bound analysis artifact")]
+    SourceAnalysisRequired,
+    #[error("integer reference patches cannot mutate a captured source repository")]
+    SourceMutationUnsupported,
 }
 
 #[derive(Clone)]
@@ -327,6 +334,7 @@ struct Repository {
     snapshots: BTreeMap<SnapshotId, Snapshot>,
     model: EngineeringModel,
     history: Vec<CommittedChange>,
+    source_analysis: Option<RepositoryAnalysis>,
 }
 
 #[derive(Clone)]
@@ -478,6 +486,11 @@ impl Engine {
     ) -> Result<(), EngineError> {
         let mut db = self.store.lock()?;
         self.authorize(&db, session, snapshot.scope(), Permission::Register)?;
+        // The integer reference harness has no source inputs. Captured workspaces
+        // must enter through the artifact-bound repository registration path.
+        if captured_workspace(&snapshot) {
+            return Err(EngineError::SourceAnalysisRequired);
+        }
         validate_model(&model)?;
         if snapshot.revision() != Revision(0) {
             return Err(EngineError::InvalidIntent(
@@ -494,9 +507,106 @@ impl Engine {
                 current: snapshot,
                 model,
                 history: vec![],
+                source_analysis: None,
             },
         );
         Ok(())
+    }
+    /// Register captured source state with an exact analysis artifact. This does not
+    /// execute or mutate source. The reference integer-patch path remains unavailable.
+    pub fn register_repository(
+        &self,
+        session: &Session,
+        snapshot: Snapshot,
+        analysis: RepositoryAnalysis,
+    ) -> Result<(), EngineError> {
+        let mut db = self.store.lock()?;
+        self.authorize(&db, session, snapshot.scope(), Permission::Register)?;
+        self.authorize(&db, session, snapshot.scope(), Permission::ManageModel)?;
+        analysis.validate(&snapshot, analysis.index_generation())?;
+        if snapshot.revision() != Revision(0) {
+            return Err(EngineError::InvalidIntent(
+                "initial revision must be zero".into(),
+            ));
+        }
+        if db.repositories.contains_key(snapshot.scope()) {
+            return Err(EngineError::AlreadyExists);
+        }
+        db.repositories.insert(
+            snapshot.scope().clone(),
+            Repository {
+                snapshots: BTreeMap::from([(snapshot.id(), snapshot.clone())]),
+                current: snapshot,
+                model: analysis.model(1),
+                history: vec![],
+                source_analysis: Some(analysis),
+            },
+        );
+        Ok(())
+    }
+    /// A fresh analysis may replace facts only for the exact current captured snapshot.
+    /// It cannot advance repository revision or import an unverified workspace mutation.
+    /// `expected_artifact` is a compare-and-swap precondition, not an analyzer's
+    /// claim that its own generation is current. Exact installation retries are
+    /// idempotent; a delayed competing update cannot replace newer facts.
+    pub fn install_repository_analysis(
+        &self,
+        session: &Session,
+        scope: &Scope,
+        expected_artifact: Digest,
+        analysis: RepositoryAnalysis,
+    ) -> Result<(), EngineError> {
+        let mut db = self.store.lock()?;
+        self.authorize(&db, session, scope, Permission::ManageModel)?;
+        let repo = db
+            .repositories
+            .get_mut(scope)
+            .ok_or(EngineError::NotFound)?;
+        if repo.source_analysis.is_none() {
+            return Err(EngineError::SourceAnalysisRequired);
+        }
+        analysis.validate(&repo.current, analysis.index_generation())?;
+        if repo.source_analysis.as_ref() == Some(&analysis) {
+            return Ok(());
+        }
+        if repo
+            .source_analysis
+            .as_ref()
+            .is_none_or(|current| current.digest() != expected_artifact)
+        {
+            return Err(RepositoryAnalysisError::StaleGeneration.into());
+        }
+        let generation = repo
+            .model
+            .generation
+            .checked_add(1)
+            .ok_or(EngineError::CounterExhausted)?;
+        repo.model = analysis.model(generation);
+        repo.source_analysis = Some(analysis);
+        Ok(())
+    }
+    /// Query even an incomplete graph. Returned uncertainty does not authorize admission
+    /// or commit, and requested snapshot/generation must match authoritative registration.
+    pub fn inspect_repository_impact(
+        &self,
+        session: &Session,
+        scope: &Scope,
+        snapshot: SnapshotId,
+        index_generation: Digest,
+        explicit: &AccessSet,
+    ) -> Result<RepositoryImpact, EngineError> {
+        let db = self.store.lock()?;
+        self.authorize(&db, session, scope, Permission::Analyze)?;
+        let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
+        let analysis = repo
+            .source_analysis
+            .as_ref()
+            .ok_or(EngineError::SourceAnalysisRequired)?;
+        if repo.current.id() != snapshot {
+            return Err(RepositoryAnalysisError::SnapshotMismatch.into());
+        }
+        analysis.validate(&repo.current, index_generation)?;
+        Ok(analysis.inspect(repo.model.generation, explicit)?)
     }
     pub fn current(&self, session: &Session, scope: &Scope) -> Result<Snapshot, EngineError> {
         let db = self.store.lock()?;
@@ -575,6 +685,9 @@ impl Engine {
             .repositories
             .get_mut(scope)
             .ok_or(EngineError::NotFound)?;
+        if repository.source_analysis.is_some() {
+            return Err(EngineError::SourceAnalysisRequired);
+        }
         if model.generation <= repository.model.generation {
             return Err(EngineError::ModelChanged);
         }
@@ -661,7 +774,7 @@ impl Engine {
         if tx.attempt().model != repo.model {
             return Err(EngineError::ModelChanged);
         }
-        analyze_attempt(&mut tx)?;
+        analyze_attempt(&mut tx, repo.source_analysis.as_ref())?;
         let accesses = tx
             .attempt()
             .effective
@@ -776,6 +889,15 @@ impl Engine {
     ) -> Result<EvidenceBindings, EngineError> {
         let mut db = self.store.lock()?;
         self.authorize(&db, session, scope, Permission::Execute)?;
+        if db
+            .repositories
+            .get(scope)
+            .ok_or(EngineError::NotFound)?
+            .source_analysis
+            .is_some()
+        {
+            return Err(EngineError::SourceMutationUnsupported);
+        }
         let key = (scope.clone(), id.clone());
         let mut tx = db
             .transactions
@@ -931,6 +1053,15 @@ impl Engine {
     ) -> Result<EvidenceBindings, EngineError> {
         let mut db = self.store.lock()?;
         self.authorize(&db, session, scope, Permission::Analyze)?;
+        if db
+            .repositories
+            .get(scope)
+            .ok_or(EngineError::NotFound)?
+            .source_analysis
+            .is_some()
+        {
+            return Err(EngineError::SourceMutationUnsupported);
+        }
         let key = (scope.clone(), id.clone());
         let mut tx = db
             .transactions
@@ -968,7 +1099,7 @@ impl Engine {
             candidate: Some(candidate),
             evidence: BTreeMap::new(),
         });
-        analyze_attempt(&mut tx)?;
+        analyze_attempt(&mut tx, repo.source_analysis.as_ref())?;
         tx.last_reason = Some("compatible revision advance; fresh evidence required".into());
         let bindings = tx.bindings()?;
         db.transactions.insert(key, tx);
@@ -1100,6 +1231,20 @@ impl Engine {
     }
 }
 
+/// Fail closed for every nonempty source/input layer, capture provenance and
+/// capture metadata (including an empty captured Git repository). This does not
+/// establish the truth of a producer's census; snapshot producers remain trusted.
+fn captured_workspace(snapshot: &Snapshot) -> bool {
+    let manifest = snapshot.manifest();
+    !manifest.inputs.is_empty()
+        || !manifest.inclusion_policy.excluded_paths.is_empty()
+        || manifest.provenance.starts_with("celetixo/git-capture/")
+        || manifest
+            .environment
+            .keys()
+            .any(|key| key.starts_with("celetixo.capture.") || key.starts_with("celetixo.overlay."))
+}
+
 fn validate_model(model: &EngineeringModel) -> Result<(), EngineError> {
     if model.generation == 0 || model.analyzer.trim().is_empty() || model.version.trim().is_empty()
     {
@@ -1133,17 +1278,26 @@ fn validate_intent(intent: &TransactionIntent) -> Result<(), EngineError> {
     Ok(())
 }
 
-fn analyze_attempt(tx: &mut Transaction) -> Result<(), EngineError> {
+fn analyze_attempt(
+    tx: &mut Transaction,
+    source: Option<&RepositoryAnalysis>,
+) -> Result<(), EngineError> {
     let mut explicit = tx.intent.accesses.clone();
     for invariant in &tx.intent.invariants {
         explicit.invariant_scopes.extend(invariant.scope());
         // Invariants are actual dependencies, even if a requester omits their read set.
         explicit.reads.extend(invariant.scope());
     }
-    let analysis = tx
-        .attempt()
-        .model
-        .analyze(tx.attempt().base.id(), &explicit);
+    let analysis = if let Some(source) = source {
+        source.validate(&tx.attempt().base, source.index_generation())?;
+        source
+            .inspect(tx.attempt().model.generation, &explicit)?
+            .analysis
+    } else {
+        tx.attempt()
+            .model
+            .analyze(tx.attempt().base.id(), &explicit)
+    };
     if !matches!(
         analysis.completeness(),
         crate::access::Completeness::Complete
@@ -1242,6 +1396,13 @@ fn validate_commit(
     tx: &Transaction,
     session: &Session,
 ) -> Result<CommitReceipt, EngineError> {
+    let repo = db
+        .repositories
+        .get(&tx.scope)
+        .ok_or(EngineError::NotFound)?;
+    if repo.source_analysis.is_some() || captured_workspace(&repo.current) {
+        return Err(EngineError::SourceMutationUnsupported);
+    }
     if tx.state != TransactionState::Validating {
         return Err(EngineError::IllegalTransition {
             from: tx.state,
@@ -1249,10 +1410,6 @@ fn validate_commit(
         });
     }
     require_lease(db, tx, session)?;
-    let repo = db
-        .repositories
-        .get(&tx.scope)
-        .ok_or(EngineError::NotFound)?;
     let attempt = tx.attempt();
     if attempt.model != repo.model {
         return Err(EngineError::ModelChanged);
