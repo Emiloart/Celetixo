@@ -88,10 +88,11 @@ fingerprint stands in for a dirty-workspace snapshot identity.
 
 ## Results and limits
 
-The completed **baseline** below predates the planned lexical-lookup optimization
-and the separate identity non-recycling correction. Those later measurements and
-final performance targets are still pending. These values are accepted
-observations of the baseline implementation, not claims about unmeasured code.
+The completed **baseline** below predates the lexical-lookup optimization and the
+separate identity non-recycling correction. The artifact-neutral optimization
+comparison is now complete below. Measurements after the identity correction and
+final performance targets are still pending. Each table identifies the measured
+implementation rather than implying that earlier measurements cover later code.
 
 All four baseline reports identify compiled implementation fingerprint
 `b4ddcec88f989e78f24f132663d25a88fb69fbf0e8afa4982f9bb78ebe2ffc70`.
@@ -146,14 +147,49 @@ Python's missed `dynamic.py` remains part of the reference denominator. Every
 quality result remains incomplete, including scenarios with 100% observed recall.
 Those percentages describe this small oracle, not a language-wide recall claim.
 
-The forthcoming artifact-neutral optimization comparison will preserve separate
-`goal-02-optimized-*.json` reports. `goal-02-compare.py` rejects different corpus,
-build settings, snapshot/index generations, graph counts or quality results
-before showing timing pairs. Final records after the separate identity-namespace
-correction will use `goal-02-*.json`; their changed semantic generation must not
-be presented as artifact-equal to this baseline. `goal-02-summary.py --targets`
-derives local investigation ceilings from the observed maxima, rounded upward,
-after those final measurements. No production SLO or timing gate is inferred.
+## Artifact-neutral lookup comparison
+
+The optimized implementation precomputes path/scope/name lookup rather than
+repeatedly scanning all nodes. Its original-scan test oracle and full index tests
+passed before measurements. The frozen optimized executable reports implementation
+fingerprint `fd0a39e63eec257cc1ef16ae73b2f3cef7556fbbedac4deebbd7a43b2a100f8d`.
+It used the same corpus, fixture/reference bytes, compiler flags, toolchain,
+parser/analyzer versions and machine as the baseline. Source edits for the later
+identity correction began only after this executable and its embedded source
+fingerprint were frozen; other builds remained held during its timings.
+
+The [comparison verifier](goal-02-compare.py), also run with `python3 -O`, rejected
+altered artifact data in a controlled check. It accepted all four real pairs with
+exactly equal clean/changed snapshot IDs, index-generation digests, configuration,
+graph/issue counts and full quality observations. Each generation binds the full
+validated index, so equality is stronger than comparing counts alone. Every
+iteration again matched its independent clean rebuild.
+
+| Corpus and optimized raw data | Baseline / optimized cold median ms | Baseline / optimized incremental median ms |
+|---|---:|---:|
+| [1 copy](goal-02-optimized-copies-1.json) | 7.785 / 10.690 | 5.379 / 8.453 |
+| [5 copies](goal-02-optimized-copies-5.json) | 33.426 / 28.771 | 34.154 / 26.719 |
+| [20 copies](goal-02-optimized-copies-20.json) | 246.639 / 131.641 | 253.935 / 130.475 |
+| [Actual Celetixo](goal-02-optimized-actual-celetixo.json) | 3591.137 / 1009.132 | 3651.163 / 1011.453 |
+
+These exploratory medians each contain three observations and do not establish
+statistical significance or overall performance. The smallest workload was slower. Capture and query
+measurements also vary despite their algorithms being unchanged; all timings and
+outliers remain in the linked raw data. The lookup change preserves the same known
+dynamic-reference miss, semantic uncertainty and validated outputs as the original
+scan oracle.
+
+Recheck the complete artifact comparison with:
+
+```sh
+python3 -O docs/benchmarks/goal-02-compare.py docs/benchmarks
+```
+
+Final records after the separate identity-namespace correction will use
+`goal-02-*.json`; their deliberately changed semantic generation must not be
+presented as artifact-equal to this baseline. `goal-02-summary.py --targets`
+derives local investigation ceilings from observed maxima, rounded upward, after
+those final measurements. No production SLO or timing gate is inferred.
 
 Live generated-workspace capture explicitly retains `LiveSourceNotAtomic`, even
 when its two-pass census is complete. Verified immutable Git-tree capture can be
