@@ -6,7 +6,15 @@ Goal 02 remains active until the remaining performance measurements and final cl
 
 Commit `53d50ebed98476878a48503a9d9d159d56974c14` contains the immutable artifact, scoped registration/query/CAS installation and source/reference separation. The coordinator reran all 75 Engine tests, strict package Clippy across all targets, owned-file formatting and diff whitespace checks before committing. The 13 added repository tests cover exact snapshot/index/configuration/content binding, unknown/dangling identities, transitive checks, capability scopes/revocation, incomplete analysis rejection, concurrent replacement CAS, predicate membership and integer mutation bypasses. The original 62 tests, including generated histories and atomic failure/recovery schedules, still pass.
 
+The milestone was pushed under the repository owner's established human identity. [GitHub CI](https://github.com/Emiloart/Celetixo/actions/runs/42047298783) completed successfully for that exact commit.
+
 Commands on the WSL/Zig development environment use task-local `CRATE_CC_NO_DEFAULTS=1 CFLAGS='-target x86_64-linux-gnu -fPIC'`. No global compiler or authorization policy was changed.
+
+## Published core and attribution milestones
+
+`036d8b10f1766e9978799fc1f776ee8c1368aa70` strengthens the upstream human-attribution policy with author/committer checks and 25 independently rerun temporary-repository regression cases. It preserves the owner's remote policy documents. Local hooks and repository-local identity are configured; CI checks raw metadata and co-author declarations. Recognition cannot authenticate a person or replace required branch protection.
+
+`fdc0bed50d5b2eddf331d9d6c681f4a86dd9d65b` publishes the capture/index/LSP/impact core, fixtures, inspection and measurement harnesses, developer instructions and CI integration after the 177-test workspace verification below. [Core CI](https://github.com/Emiloart/Celetixo/actions/runs/42050087402) and [attribution milestone CI](https://github.com/Emiloart/Celetixo/actions/runs/42049435137) both passed. Benchmark results and the final performance/clean-checkout audit remain a later milestone. Each published milestone was checked for human attribution and pushed; no unverified performance claim is implied by the core commit.
 
 ## Scope-to-evidence audit
 
@@ -43,4 +51,10 @@ All passed. The test total is **177**: 75 Engine, 38 capture, 26 index, 28 LSP (
 
 The trusted actual-Rust probe builds a real snapshot/index from the materialized fixture, applies definition/reference responses and validates analyzer-proven caller relationships against that snapshot. Actual TS/JS, Python and Go server processes remain unrun; their protocol fixtures do not establish full language support.
 
-An immutable-tree CLI smoke over the Engine milestone passed capture, structural indexing, Engine artifact installation and impact query. Its semantic gaps remained explicit and integer source mutation remained disabled. The larger live-worktree debug smoke exposed reference-resolution scaling cost; the performance milestone must measure and address that before final completion. Release measurements and clean-checkout verification remain pending. See [implementation boundaries](goal-02.md) for limitations that cannot be replaced by a green test count.
+## Baseline measurement evidence
+
+Four release/native-O3 runs completed sequentially: generated 1/5/20-copy mixed-language repositories and the immutable actual Engine milestone `53d50ebed98476878a48503a9d9d159d56974c14`. Each has three iterations and 100 impact queries per iteration. The coordinator independently parsed all reports, checked the summary invariants and query counts, and reconstructed the compiled implementation fingerprint from the committed `fdc0bed` source and lockfile: `b4ddcec88f989e78f24f132663d25a88fb69fbf0e8afa4982f9bb78ebe2ffc70`. All four reports match. Each labeled iteration records 15 true positives, zero false positives and one false negative; actual Celetixo has no quality oracle.
+
+The actual corpus contains 42 files and 462,750 effective bytes. Its baseline median cold/incremental indexing times were 3,591.137/3,651.163 ms. These observations justify investigating repeated whole-index reference scans; they are not final optimized targets or evidence of full semantic coverage. Raw reports and methodology are in [the benchmark record](../benchmarks/goal-02.md).
+
+An immutable-tree CLI smoke over the Engine milestone passed capture, structural indexing, Engine artifact installation and impact query. Its semantic gaps remained explicit and integer source mutation remained disabled. The larger live-worktree debug attempt produced no accepted result. Optimized measurements, identity-recreation regression verification and clean-checkout verification remain pending. See [implementation boundaries](goal-02.md) for limitations that cannot be replaced by a green test count.

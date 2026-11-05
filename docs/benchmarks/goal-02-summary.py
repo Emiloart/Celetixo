@@ -12,6 +12,11 @@ def percentile(values, fraction):
     return sorted(values)[max(0, math.ceil(len(values) * fraction) - 1)]
 
 
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--targets", action="store_true", help="also derive rounded same-machine investigation ceilings from every observed maximum")
@@ -22,15 +27,23 @@ def main():
     targets = []
     for path in args.reports:
         report = json.loads(path.read_text())
-        assert report["schema"] == "celetixo/repository-benchmark/v1"
+        require(report["schema"] == "celetixo/repository-benchmark/v1", f"{path}: unsupported report schema")
         samples = report["samples"]
-        assert len(samples) == report["iterations"]
-        assert all(s["rebuild_equivalent"] and s["repeat_capture_equivalent"] for s in samples)
-        assert all(s["immutable_git_capture_complete"] and not s["impact_query_complete"] for s in samples)
+        require(len(samples) == report["iterations"] and samples, f"{path}: missing iterations")
+        require(all(s["rebuild_equivalent"] and s["repeat_capture_equivalent"] for s in samples), f"{path}: capture/rebuild equivalence failed")
+        require(all(s["immutable_git_capture_complete"] and not s["impact_query_complete"] for s in samples), f"{path}: incorrect capture/impact completeness")
         if report["copies"] is not None:
-            assert all(s["live_capture_complete"] is False and s["live_capture_census_complete"] for s in samples)
+            require(all(s["live_capture_complete"] is False and s["live_capture_census_complete"] for s in samples), f"{path}: live capture uncertainty missing")
         else:
-            assert all(s["live_capture_complete"] is None and s["live_capture_census_complete"] is None and not s["quality"] for s in samples)
+            require(all(s["live_capture_complete"] is None and s["live_capture_census_complete"] is None and not s["quality"] for s in samples), f"{path}: actual corpus must not claim live capture or labeled quality")
+        for sample in samples:
+            require(sample["incremental_parsed_files"] == 1, f"{path}: expected one changed syntax tree")
+            require(sample["incremental_reused_files"] == sample["cold_parsed_files"] - 1, f"{path}: incorrect unchanged-tree reuse")
+            require(len(sample["cached_impact_query_ns"]) == report["queries_per_iteration"], f"{path}: missing query samples")
+            for quality in sample["quality"]:
+                require(quality["incomplete"], f"{path}: structural quality cannot certify completeness")
+                require(quality["false_positives"] == 0, f"{path}: unexpected reference false positive")
+                require(quality["false_negatives"] == (1 if quality["case"] == "python-base-with-dynamic-consumer" else 0), f"{path}: unexpected reference false negative")
         median = lambda field: statistics.median(s[field] for s in samples) / 1e6
         clean = [s["capture_clean_ns"] / 1e6 for s in samples]
         queries = [timing / 1e6 for s in samples for timing in s["cached_impact_query_ns"]]
@@ -41,13 +54,6 @@ def main():
         round_ms = lambda field: math.ceil(max(s[field] for s in samples) / 100_000_000) * 100
         capture_max = max(s[field] for s in samples for field in ("capture_clean_ns", "capture_repeat_ns", "capture_git_tree_ns", "capture_dirty_ns"))
         targets.append((label, math.ceil(capture_max / 100_000_000) * 100, round_ms("cold_index_ns"), round_ms("incremental_index_ns"), round_ms("rebuild_index_ns"), math.ceil(max(queries)), math.ceil(max(peaks))))
-        for sample in samples:
-            assert sample["incremental_parsed_files"] == 1
-            assert sample["incremental_reused_files"] == sample["cold_parsed_files"] - 1
-            for quality in sample["quality"]:
-                assert quality["incomplete"]
-                assert quality["false_positives"] == 0
-                assert quality["false_negatives"] == (1 if quality["case"] == "python-base-with-dynamic-consumer" else 0)
     print("\nTimes are observed wall times. Query percentiles pool all recorded queries at each scale; no outliers are removed.")
     if args.targets:
         print("\n| Corpus / copies | Capture ceiling ms | Cold index ceiling ms | Incremental ceiling ms | Rebuild ceiling ms | Single-query ceiling ms | Process peak ceiling MiB |")

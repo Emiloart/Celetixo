@@ -14,7 +14,7 @@ CELETIXO_BENCH_RUSTC_VERSION="$(rustc --version)" CELETIXO_BENCH_CC_VERSION="$(c
 target/release/examples/repository_bench --copies 1 --iterations 3 --queries 100 > /tmp/goal-02-copies-1.json
 target/release/examples/repository_bench --copies 5 --iterations 3 --queries 100 > /tmp/goal-02-copies-5.json
 target/release/examples/repository_bench --copies 20 --iterations 3 --queries 100 > /tmp/goal-02-copies-20.json
-target/release/examples/repository_bench --repository . --commit 0dd142e2567adc74f6e96b73a50579a74b0e0c73 --change-path crates/engine/src/engine.rs --iterations 3 --queries 100 > /tmp/goal-02-actual-celetixo.json
+target/release/examples/repository_bench --repository . --commit 53d50ebed98476878a48503a9d9d159d56974c14 --change-path crates/engine/src/engine.rs --iterations 3 --queries 100 > /tmp/goal-02-actual-celetixo.json
 python3 docs/benchmarks/goal-02-summary.py /tmp/goal-02-copies-1.json /tmp/goal-02-copies-5.json /tmp/goal-02-copies-20.json /tmp/goal-02-actual-celetixo.json
 cargo test -p celetixo-repository --test benchmark_quality --locked
 ```
@@ -88,9 +88,72 @@ fingerprint stands in for a dirty-workspace snapshot identity.
 
 ## Results and limits
 
-Final baseline measurements are recorded after the capture/index integrity audit
-settles. The checked-in JSON and the table derived by `goal-02-summary.py` are the
-authoritative observations; no unmeasured throughput claim is made here.
+The completed **baseline** below predates the planned lexical-lookup optimization
+and the separate identity non-recycling correction. Those later measurements and
+final performance targets are still pending. These values are accepted
+observations of the baseline implementation, not claims about unmeasured code.
+
+All four baseline reports identify compiled implementation fingerprint
+`b4ddcec88f989e78f24f132663d25a88fb69fbf0e8afa4982f9bb78ebe2ffc70`.
+The machine is x86_64 WSL2, kernel `6.18.54.1-microsoft-standard-WSL2`, Intel
+Core i7-7600U. The raw data records Rust 1.94.1 and the Zig-wrapper Clang 20.1.2
+build metadata with native `-O3`. Generated repositories use the WSL ext4
+filesystem (`stat` reports `ext2/ext3`); the actual repository uses the Windows
+mount (`v9fs`). Storage differs, so capture timings are not a controlled comparison
+between those two storage types. Other developer builds/semantic servers were
+held during these sequential runs; this was not a dedicated benchmark machine.
+
+Each workload has three iterations and 100 full impact queries per iteration.
+Times below are milliseconds, with no outlier removal. Capture, cold/incremental
+index and rebuild columns are medians. Query percentiles pool all 300 queries for
+that workload. Peak memory is the maximum sampled lifetime process high-water
+mark, in MiB, with the limits described above.
+
+| Baseline corpus | Files / bytes | Clean capture median [min, max] ms | Changed capture median ms | Git-tree capture median ms | Cold index median ms | Incremental median ms | Rebuild median ms | Query p50 / p95 ms | Process peak MiB |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| [1 copy](goal-02-baseline-copies-1.json) | 30 / 2064 | 691.077 [582.905, 764.463] | 641.778 | 158.283 | 7.785 | 5.379 | 5.231 | 0.378 / 0.830 | 9.81 |
+| [5 copies](goal-02-baseline-copies-5.json) | 122 / 7716 | 2306.939 [2274.874, 2595.304] | 2244.208 | 592.588 | 33.426 | 34.154 | 32.475 | 0.560 / 1.022 | 16.97 |
+| [20 copies](goal-02-baseline-copies-20.json) | 467 / 28911 | 9808.025 [8212.139, 12060.328] | 10189.207 | 2711.145 | 246.639 | 253.935 | 326.993 | 2.026 / 3.986 | 43.07 |
+| [Actual Celetixo](goal-02-baseline-actual-celetixo.json) | 42 / 462750 | 4335.238 [4291.335, 4658.421] | 4820.095 | 4335.238 | 3591.137 | 3651.163 | 3610.057 | 12.430 / 22.438 | 115.14 |
+
+For actual Celetixo, clean capture and Git-tree capture columns describe the same
+measured operation, and changed capture is the overlay-based Git-tree operation.
+The exact corpus is commit `53d50ebed98476878a48503a9d9d159d56974c14`: 16 Rust
+files, 2025 indexed elements and 6354 edges. Its impact query remains incomplete
+with 3725 gaps. Its predicted affected-file count is descriptive, with no
+adjudicated precision or recall. All iterations passed repeat-capture identity,
+changed-snapshot identity, exact incremental/rebuild equality and one-file parse
+reuse checks. Actual-source incremental indexing reused 15 unchanged syntax
+trees; generated 20-copy indexing reused 460.
+
+The independently authored reference has five unique scenarios, totaling 16
+potentially affected files across those scenarios. This file-level unit includes
+the five directly changed root files and eleven expected consumer files; pooled
+recall below is not downstream-only recall. Every repetition at every
+generated scale produced these counts; repetitions do not enlarge the independent
+reference set.
+
+| Reference scenario | True positives | False positives | False negatives | Precision | Recall |
+|---|---:|---:|---:|---:|---:|
+| TypeScript base change | 3 | 0 | 0 | 100% | 100% |
+| JavaScript base change | 3 | 0 | 0 | 100% | 100% |
+| Python base change, including dynamic consumer | 3 | 0 | 1 | 100% | 75% |
+| Go base change | 3 | 0 | 0 | 100% | 100% |
+| Rust base change | 3 | 0 | 0 | 100% | 100% |
+| Aggregate over these five scenarios | 15 | 0 | 1 | 100% | 93.75% |
+
+Python's missed `dynamic.py` remains part of the reference denominator. Every
+quality result remains incomplete, including scenarios with 100% observed recall.
+Those percentages describe this small oracle, not a language-wide recall claim.
+
+The forthcoming artifact-neutral optimization comparison will preserve separate
+`goal-02-optimized-*.json` reports. `goal-02-compare.py` rejects different corpus,
+build settings, snapshot/index generations, graph counts or quality results
+before showing timing pairs. Final records after the separate identity-namespace
+correction will use `goal-02-*.json`; their changed semantic generation must not
+be presented as artifact-equal to this baseline. `goal-02-summary.py --targets`
+derives local investigation ceilings from the observed maxima, rounded upward,
+after those final measurements. No production SLO or timing gate is inferred.
 
 Live generated-workspace capture explicitly retains `LiveSourceNotAtomic`, even
 when its two-pass census is complete. Verified immutable Git-tree capture can be
