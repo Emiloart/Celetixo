@@ -1,4 +1,4 @@
-name: Rust engine
+name: Rust engine and repository intelligence
 
 on:
   push:
@@ -32,20 +32,28 @@ jobs:
             range="$BEFORE_SHA..$HEAD_SHA"
           fi
           bash .github/scripts/check-commit-attribution.sh "$range"
+      - name: Test attribution enforcement
+        run: bash .github/scripts/test-commit-attribution.sh
 
   engine:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.94.1 --profile minimal --component rustfmt --component clippy
+        run: rustup toolchain install 1.94.1 --profile minimal --component rustfmt --component clippy --component rust-analyzer
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Lint all targets
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
-      - name: Test engine and reference histories
+      - name: Test engine, repository intelligence and reference histories
         run: cargo test --workspace --locked
+      - name: Probe actual rust-analyzer on a trusted fixture
+        run: cargo test --locked -p celetixo-repository --test lsp real_rust_analyzer_definition_and_references -- --ignored --exact
       - name: Build workspace
-        run: cargo build --workspace --locked
+        run: cargo build --workspace --examples --locked
       - name: Run concurrent transaction example
         run: cargo run --locked -p celetixo-engine --example concurrent_transactions
+      - name: Inspect exact repository tree through the Engine
+        run: cargo run --locked -p celetixo-repository --example inspect_repository -- . --git-tree "$(git rev-parse HEAD)" --changed crates/engine/src/engine.rs > /tmp/goal02-inspection.json
+      - name: Check reproducible benchmark harness
+        run: cargo run --locked -p celetixo-repository --example repository_bench -- --copies 1 --iterations 1 --queries 3 > /tmp/goal02-benchmark-smoke.json

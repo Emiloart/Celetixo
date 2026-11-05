@@ -1,0 +1,31 @@
+[package]
+name = "celetixo-repository"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Versioned repository capture, source indexing and semantic impact analysis"
+
+[dependencies]
+celetixo-engine = { path = "../engine" }
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha1 = "=0.10.6"
+sha2.workspace = true
+toml = "0.9"
+tree-sitter = "=0.26.13"
+tree-sitter-typescript = "=0.23.2"
+tree-sitter-javascript = "=0.25.0"
+tree-sitter-python = "=0.25.0"
+tree-sitter-go = "=0.25.0"
+tree-sitter-rust = "=0.24.0"
+
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1.1", features = ["fs"] }
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

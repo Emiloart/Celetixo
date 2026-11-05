@@ -21,9 +21,17 @@ cargo test --workspace --locked
 cargo run --locked -p celetixo-engine --example concurrent_transactions
 ```
 
-The example demonstrates compatible transactions committing after explicit revalidation and fresh evidence, and an invalidated read being rejected. The current Engine is an in-memory reference implementation over declared integer-valued engineering elements. Snapshots preserve supplied workspace-input manifests; real repository capture, source intelligence and distributed durability remain separate implementation work.
+The example demonstrates compatible transactions committing after explicit revalidation and fresh evidence, and an invalidated read being rejected. Its mutation model remains an in-memory reference over declared integer-valued engineering elements. The repository-intelligence crate captures real Git/workspace inputs, builds versioned Tree-sitter indexes, supplements supported LSP relationships and derives deterministic impact with explicit uncertainty. Source integer patches are rejected; source publication and distributed durability remain separate contracts.
 
 See the [Goal 01 implementation contract](docs/implementation/goal-01.md) for all build checks, the trust and atomicity boundaries, and the [validation record](docs/implementation/validation.md) for actual results.
+
+Inspect a repository without executing its source:
+
+```sh
+cargo run --locked -p celetixo-repository --example inspect_repository -- /path/to/repository --changed src/example.ts
+```
+
+Git and a C compiler are required. Live capture reports its atomicity limitation; syntax parsing and individual LSP queries retain semantic coverage gaps. See [Goal 02 instructions and limitations](docs/implementation/goal-02.md), [validation](docs/implementation/goal-02-validation.md) and [measured benchmarks](docs/benchmarks/goal-02.md).
 
 ---
 
@@ -526,9 +534,9 @@ See [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md), [ADR-0
 ## Status
 
 **Architecture:** ADR-0001 baseline plus ADR-0002, ADR-0003 and ADR-0004 accepted extensions  
-**Implementation:** runnable in-memory Rust transaction Engine; [validated scope and limits](docs/implementation/goal-01.md) are separate from the full architectural target<br>
+**Implementation:** in-memory Rust transaction Engine plus repository capture, versioned structural/LSP indexes and impact analysis; [Goal 01](docs/implementation/goal-01.md) and [Goal 02](docs/implementation/goal-02.md) describe validated scope and limits separately from the full architectural target<br>
 **Training:** deferred until trajectory quality, rights and governance are established  
-**Evaluation:** controlled benchmark under construction
+**Evaluation:** repository-intelligence measurements and manual impact labels; the three-arm agent evaluation remains future work
 
 Celetixo will make performance claims only from its own reproducible engineering measurements.
 

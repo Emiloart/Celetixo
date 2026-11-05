@@ -147,6 +147,8 @@ Introduce Tree-sitter parsing, stable file/symbol identity, reference edges, and
 
 **Exit gate:** a repository change can produce a reproducible structural impact result and tests cover index invalidation.
 
+The implementation commands, capture policies, source-analysis authority contract, supported structural/LSP relationships and limitations are documented in [Goal 02](docs/implementation/goal-02.md). Reproduce the [recorded benchmarks](docs/benchmarks/goal-02.md) before changing performance targets. Tests must preserve known dynamic-reference misses and their incomplete-coverage result; passing a parser or a single language-server query cannot clear that result.
+
 ### Phase 5 — Durable services and execution
 
 Integrate the remaining architectural components when the preceding contracts are stable:

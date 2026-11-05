@@ -1,0 +1,41 @@
+{
+  "version": "celetixo-manual-impact-reference/v1",
+  "unit": "unit000",
+  "cases": [
+    {
+      "name": "typescript-base",
+      "changed_path": "typescript/unit000/math.ts",
+      "changed_symbol": "base",
+      "affected_files": ["typescript/unit000/math.ts", "typescript/unit000/app.ts", "typescript/unit000/app.test.ts"],
+      "rationale": "app directly calls base; test_app calls app; unrelated has no dependency."
+    },
+    {
+      "name": "javascript-base",
+      "changed_path": "javascript/unit000/math.js",
+      "changed_symbol": "base",
+      "affected_files": ["javascript/unit000/math.js", "javascript/unit000/app.js", "javascript/unit000/app.test.js"],
+      "rationale": "app directly calls base; test_app calls app; unrelated has no dependency."
+    },
+    {
+      "name": "python-base-with-dynamic-consumer",
+      "changed_path": "python/unit000/math_ops.py",
+      "changed_symbol": "base",
+      "affected_files": ["python/unit000/math_ops.py", "python/unit000/app.py", "python/unit000/test_app.py", "python/unit000/dynamic.py"],
+      "rationale": "app calls base; test_app calls app. dynamic_entry retrieves the string-named base attribute and calls it, so dynamic.py is affected even if structural extraction cannot resolve it. unrelated has no dependency."
+    },
+    {
+      "name": "go-base",
+      "changed_path": "go/unit000/math.go",
+      "changed_symbol": "Base",
+      "affected_files": ["go/unit000/math.go", "go/unit000/app.go", "go/unit000/app_test.go"],
+      "rationale": "App calls Base in the same Go package; TestApp calls App; Unrelated has no dependency."
+    },
+    {
+      "name": "rust-base",
+      "changed_path": "src/unit000/math.rs",
+      "changed_symbol": "base",
+      "affected_files": ["src/unit000/math.rs", "src/unit000/app.rs", "src/unit000/test_app.rs"],
+      "rationale": "app imports and calls math::base; test_app imports and calls app; unrelated has no dependency."
+    }
+  ]
+}

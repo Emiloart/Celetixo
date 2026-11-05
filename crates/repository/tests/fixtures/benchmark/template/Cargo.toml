@@ -1,0 +1,4 @@
+[package]
+name = "celetixo-impact-fixture"
+version = "1.0.0"
+edition = "2024"
