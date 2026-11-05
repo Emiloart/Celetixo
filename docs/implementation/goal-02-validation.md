@@ -57,4 +57,12 @@ Four release/native-O3 runs completed sequentially: generated 1/5/20-copy mixed-
 
 The actual corpus contains 42 files and 462,750 effective bytes. Its baseline median cold/incremental indexing times were 3,591.137/3,651.163 ms. These observations justify investigating repeated whole-index reference scans; they are not final optimized targets or evidence of full semantic coverage. Raw reports and methodology are in [the benchmark record](../benchmarks/goal-02.md).
 
+The accepted baseline reports were committed and pushed as `3187eaa468fbc421a95cd6827d92d650c9c3effd` under the owner's identity. The summary and comparison scripts reject failed equivalence and altered generations even with Python optimization enabled; their checks do not depend on Python assertions.
+
+## Reference-lookup optimization evidence
+
+Per-file ordered scopes, per-scope/name declarations, top-level declarations and Go package membership replace repeated global declaration scans. Lookups are rebuilt for every generation, and resolution rules and provenance remain unchanged. A retained test-only scan resolver independently checks exact ordered candidates and full index artifacts across 35 language/state transitions, plus shadowing, ambiguity, syntax errors, unsupported/generated inputs and package boundaries.
+
+The coordinator reviewed the complete source diff and independently reran workspace formatting plus `cargo test --locked --offline -p celetixo-repository --lib --test index --test benchmark_quality` with the documented local compiler settings. All **29** focused tests passed: two scan oracles, 26 index regressions and the manual quality case. The implementation worker also passed strict focused Clippy. Optimized measurements remain separate evidence; no speedup is inferred from these correctness checks.
+
 An immutable-tree CLI smoke over the Engine milestone passed capture, structural indexing, Engine artifact installation and impact query. Its semantic gaps remained explicit and integer source mutation remained disabled. The larger live-worktree debug attempt produced no accepted result. Optimized measurements, identity-recreation regression verification and clean-checkout verification remain pending. See [implementation boundaries](goal-02.md) for limitations that cannot be replaced by a green test count.

@@ -516,6 +516,13 @@ impl Indexer {
         self.update(snapshot)
     }
     pub fn update(&mut self, snapshot: &Snapshot) -> Result<SourceIndex, IndexError> {
+        self.update_with_resolution(snapshot, resolve_references)
+    }
+    fn update_with_resolution(
+        &mut self,
+        snapshot: &Snapshot,
+        resolve: fn(&mut SourceIndex, &[Pending]),
+    ) -> Result<SourceIndex, IndexError> {
         let inputs = effective_inputs(snapshot)?;
         let mut index = SourceIndex {
             snapshot: snapshot.id(),
@@ -727,7 +734,7 @@ impl Indexer {
             );
         }
         resolve_imports(&mut index, &pending, &inputs);
-        resolve_references(&mut index, &pending);
+        resolve(&mut index, &pending);
         configuration_edges(&mut index, &inputs, &self.config);
         go_package_edges(&mut index);
         index.occurrences.sort();
@@ -1831,7 +1838,8 @@ fn source_candidates(
     }
     candidates.into_iter().collect()
 }
-fn top_level_symbol(index: &SourceIndex, path: &str, name: &str) -> Vec<ElementId> {
+#[cfg(test)]
+fn top_level_symbol_by_scan(index: &SourceIndex, path: &str, name: &str) -> Vec<ElementId> {
     index
         .nodes
         .values()
@@ -1905,7 +1913,8 @@ fn resolve_imports(
         }
     }
 }
-fn lexical_candidates(index: &SourceIndex, p: &PendingReference) -> Vec<ElementId> {
+#[cfg(test)]
+fn lexical_candidates_by_scan(index: &SourceIndex, p: &PendingReference) -> Vec<ElementId> {
     let name = p.name.as_str();
     let mut scopes = index
         .nodes
@@ -1954,13 +1963,155 @@ fn lexical_candidates(index: &SourceIndex, p: &PendingReference) -> Vec<ElementI
                 && file.path.rsplit_once('/').map_or("", |v| v.0) == directory
                 && &index.nodes[&file.module].name == package
         }) {
-            candidates.extend(top_level_symbol(index, &file.path, &p.name));
+            candidates.extend(top_level_symbol_by_scan(index, &file.path, &p.name));
         }
         return candidates;
     }
     Vec::new()
 }
+#[derive(Default)]
+struct FileDeclarations {
+    /// Sorted by width, preserving the original node-ID iteration order on
+    /// ties. Equal-width scopes must retain the scan resolver's exact order.
+    scopes: Vec<(SourceSpan, ElementId)>,
+    by_scope: BTreeMap<ElementId, BTreeMap<String, Vec<ElementId>>>,
+    top_level: BTreeMap<String, Vec<ElementId>>,
+}
+
+/// Ephemeral lookup for one immutable set of declarations. This is rebuilt for
+/// every index generation: syntax-tree reuse never reuses resolution decisions.
+struct LexicalLookup {
+    files: BTreeMap<String, FileDeclarations>,
+    go_membership: BTreeMap<String, (String, String)>,
+    go_packages: BTreeMap<(String, String), Vec<String>>,
+}
+
+impl LexicalLookup {
+    fn new(index: &SourceIndex) -> Self {
+        let mut files: BTreeMap<String, FileDeclarations> = BTreeMap::new();
+        for node in index.nodes.values() {
+            let file = files.entry(node.path.clone()).or_default();
+            if matches!(
+                node.kind,
+                NodeKind::Scope
+                    | NodeKind::Module
+                    | NodeKind::Function
+                    | NodeKind::Method
+                    | NodeKind::Class
+            ) {
+                file.scopes.push((node.span, node.id.clone()));
+            }
+            if !matches!(
+                node.kind,
+                NodeKind::Module | NodeKind::File | NodeKind::Scope
+            ) && let Some(parent) = &node.parent
+            {
+                file.by_scope
+                    .entry(parent.clone())
+                    .or_default()
+                    .entry(node.name.clone())
+                    .or_default()
+                    .push(node.id.clone());
+                if node.kind != NodeKind::Parameter
+                    && index
+                        .nodes
+                        .get(parent)
+                        .is_some_and(|parent| parent.kind == NodeKind::Module)
+                {
+                    file.top_level
+                        .entry(node.name.clone())
+                        .or_default()
+                        .push(node.id.clone());
+                }
+            }
+        }
+        for file in files.values_mut() {
+            file.scopes
+                .sort_by_key(|(span, _)| span.end_byte - span.start_byte);
+        }
+        let mut go_membership = BTreeMap::new();
+        let mut go_packages: BTreeMap<_, Vec<_>> = BTreeMap::new();
+        for file in index
+            .files
+            .values()
+            .filter(|file| file.language == Some(Language::Go))
+        {
+            let directory = file.path.rsplit_once('/').map_or("", |value| value.0);
+            let package = &index.nodes[&file.module].name;
+            let key = (directory.to_owned(), package.clone());
+            go_packages
+                .entry(key.clone())
+                .or_default()
+                .push(file.path.clone());
+            go_membership.insert(file.path.clone(), key);
+        }
+        Self {
+            files,
+            go_membership,
+            go_packages,
+        }
+    }
+
+    fn top_level(&self, path: &str, name: &str) -> Vec<ElementId> {
+        self.files
+            .get(path)
+            .and_then(|file| file.top_level.get(name))
+            .cloned()
+            .unwrap_or_default()
+    }
+
+    fn candidates(&self, reference: &PendingReference) -> Vec<ElementId> {
+        if let Some(file) = self.files.get(&reference.path) {
+            for (span, scope) in &file.scopes {
+                if span.contains(&reference.span)
+                    && let Some(candidates) = file
+                        .by_scope
+                        .get(scope)
+                        .and_then(|names| names.get(&reference.name))
+                {
+                    return candidates.clone();
+                }
+            }
+        }
+        if let Some(package) = self.go_membership.get(&reference.path) {
+            let mut candidates = Vec::new();
+            for path in &self.go_packages[package] {
+                if path != &reference.path {
+                    candidates.extend(self.top_level(path, &reference.name));
+                }
+            }
+            return candidates;
+        }
+        Vec::new()
+    }
+}
+
 fn resolve_references(index: &mut SourceIndex, pending: &[Pending]) {
+    let lookup = LexicalLookup::new(index);
+    resolve_references_using(
+        index,
+        pending,
+        |_, reference| lookup.candidates(reference),
+        |_, path, name| lookup.top_level(path, name),
+    );
+}
+
+#[cfg(test)]
+fn resolve_references_by_scan(index: &mut SourceIndex, pending: &[Pending]) {
+    resolve_references_using(
+        index,
+        pending,
+        lexical_candidates_by_scan,
+        top_level_symbol_by_scan,
+    );
+}
+
+fn resolve_references_using(
+    index: &mut SourceIndex,
+    pending: &[Pending],
+    lexical_candidates: impl Fn(&SourceIndex, &PendingReference) -> Vec<ElementId>,
+    top_level_candidates: impl Fn(&SourceIndex, &str, &str) -> Vec<ElementId>,
+) {
     // Import facts are intentionally recomputed from resolved module occurrences, so reuse
     // of a syntax tree never reuses a dependency decision from an earlier snapshot.
     for reference in pending.iter().filter_map(|p| {
@@ -1975,11 +2126,15 @@ fn resolve_references(index: &mut SourceIndex, pending: &[Pending]) {
         let (alias, member) = name
             .split_once('.')
             .map_or((name.as_str(), None), |(a, b)| (a, Some(b)));
-        let alias_reference = PendingReference {
-            name: alias.into(),
-            ..reference.clone()
+        let alias_candidates = if alias == reference.name {
+            candidates.clone()
+        } else {
+            let alias_reference = PendingReference {
+                name: alias.into(),
+                ..reference.clone()
+            };
+            lexical_candidates(index, &alias_reference)
         };
-        let alias_candidates = lexical_candidates(index, &alias_reference);
         let rank = |id: &ElementId| {
             let node = &index.nodes[id];
             (
@@ -2050,7 +2205,7 @@ fn resolve_references(index: &mut SourceIndex, pending: &[Pending]) {
                                 candidates.push(file.module.clone());
                             }
                         } else {
-                            candidates.extend(top_level_symbol(index, &path, target_name));
+                            candidates.extend(top_level_candidates(index, &path, target_name));
                         }
                     }
                 }
@@ -2756,5 +2911,220 @@ fn go_package_edges(index: &mut SourceIndex) {
                 Resolution::StructuralModule,
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod lexical_lookup_tests {
+    use super::*;
+    use celetixo_engine::ids::{OrganizationId, RepositoryId, Revision, WorkspaceId};
+    use celetixo_engine::snapshot::{
+        FileMode, InclusionPolicy, InputLayer, SnapshotManifest, State, WorkspaceInput,
+    };
+
+    fn snapshot(files: Vec<(String, Vec<u8>)>) -> Snapshot {
+        Snapshot::new(
+            Scope {
+                organization: OrganizationId::new("lookup-oracle-org").unwrap(),
+                workspace: WorkspaceId::new("lookup-oracle-workspace").unwrap(),
+                repository: RepositoryId::new("lookup-oracle-repository").unwrap(),
+            },
+            Revision(0),
+            SnapshotManifest {
+                base_commit: "lookup-oracle-fixture".into(),
+                canonicalization_version: 1,
+                inclusion_policy: InclusionPolicy::complete(),
+                provenance: "lookup-oracle/v1".into(),
+                inputs: files
+                    .into_iter()
+                    .map(|(path, bytes)| WorkspaceInput {
+                        path,
+                        bytes: Some(bytes),
+                        layer: InputLayer::WorkingTree,
+                        kind: InputKind::File,
+                        mode: FileMode::Regular,
+                    })
+                    .collect(),
+                environment: BTreeMap::new(),
+            },
+            State::new(),
+        )
+        .unwrap()
+    }
+
+    fn fixture_files(language: &str) -> Vec<(String, Vec<u8>)> {
+        fn read(
+            root: &std::path::Path,
+            directory: &std::path::Path,
+            files: &mut Vec<(String, Vec<u8>)>,
+        ) {
+            let mut entries = std::fs::read_dir(directory)
+                .unwrap()
+                .map(|entry| entry.unwrap().path())
+                .collect::<Vec<_>>();
+            entries.sort();
+            for path in entries {
+                if path.is_dir() {
+                    read(root, &path, files);
+                } else {
+                    files.push((
+                        path.strip_prefix(root)
+                            .unwrap()
+                            .to_str()
+                            .unwrap()
+                            .replace('\\', "/"),
+                        std::fs::read(&path).unwrap(),
+                    ));
+                }
+            }
+        }
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/index")
+            .join(language);
+        let mut files = Vec::new();
+        read(&root, &root, &mut files);
+        files
+    }
+
+    fn compare_candidates(index: &SourceIndex) {
+        let lookup = LexicalLookup::new(index);
+        let mut queries = BTreeSet::new();
+        for occurrence in &index.occurrences {
+            queries.insert((
+                occurrence.path.clone(),
+                occurrence.span,
+                occurrence.name.clone(),
+            ));
+            let name = occurrence.name.replace("::", ".");
+            queries.insert((
+                occurrence.path.clone(),
+                occurrence.span,
+                name.split('.').next().unwrap().into(),
+            ));
+        }
+        let mut names = BTreeSet::from(["not_declared".to_owned()]);
+        for node in index.nodes.values() {
+            names.insert(node.name.clone());
+            if let Some(span) = node.name_span {
+                queries.insert((node.path.clone(), span, node.name.clone()));
+            }
+        }
+        for path in index.files.keys() {
+            for name in &names {
+                assert_eq!(
+                    lookup.top_level(path, name),
+                    top_level_symbol_by_scan(index, path, name),
+                    "top-level {path}: {name}"
+                );
+                queries.insert((path.clone(), SourceSpan::default(), name.clone()));
+            }
+        }
+        queries.insert(("missing.py".into(), SourceSpan::default(), "unknown".into()));
+        for (path, span, name) in queries {
+            let reference = PendingReference {
+                path,
+                span,
+                name,
+                kind: OccurrenceKind::Reference,
+                container: ElementId::new("lookup-query-container").unwrap(),
+            };
+            assert_eq!(
+                lookup.candidates(&reference),
+                lexical_candidates_by_scan(index, &reference),
+                "{} {:?}: {}",
+                reference.path,
+                reference.span,
+                reference.name
+            );
+        }
+    }
+
+    fn compare_generations(states: Vec<Snapshot>, config: IndexConfig) {
+        let mut indexed = Indexer::new(config.clone()).unwrap();
+        let mut scanned = Indexer::new(config.clone()).unwrap();
+        for state in states {
+            let actual = indexed.update(&state).unwrap();
+            let reference = scanned
+                .update_with_resolution(&state, resolve_references_by_scan)
+                .unwrap();
+            assert_eq!(
+                actual, reference,
+                "entire artifact, including generation and provenance"
+            );
+            assert_eq!(indexed.stats(), scanned.stats());
+            assert_eq!(
+                actual,
+                Indexer::new(config.clone()).unwrap().build(&state).unwrap(),
+                "incremental versus clean rebuild"
+            );
+            compare_candidates(&actual);
+        }
+    }
+
+    #[test]
+    fn indexed_lookup_preserves_original_scan_artifacts_across_languages_and_transitions() {
+        for language in ["typescript", "javascript", "python", "go", "rust"] {
+            let original = fixture_files(language);
+            let dependency = original
+                .iter()
+                .position(|(_, bytes)| std::str::from_utf8(bytes).unwrap().contains("+ 1"))
+                .unwrap();
+            let mut changed = original.clone();
+            let callee = if language == "go" { "Base" } else { "base" };
+            changed[dependency].1 = String::from_utf8(changed[dependency].1.clone())
+                .unwrap()
+                .replace(callee, "renamed_dependency")
+                .into_bytes();
+            let mut deleted = original.clone();
+            deleted.remove(dependency);
+            let mut moved = original.clone();
+            moved[dependency].0 = format!("relocated/{}", moved[dependency].0);
+            let mut copied = original.clone();
+            copied.push((
+                format!("copied/{}", original[dependency].0),
+                original[dependency].1.clone(),
+            ));
+            compare_generations(
+                vec![
+                    snapshot(original.clone()),
+                    snapshot(changed),
+                    snapshot(deleted),
+                    snapshot(moved),
+                    snapshot(copied),
+                    snapshot(vec![]),
+                    snapshot(original),
+                ],
+                IndexConfig::default(),
+            );
+        }
+    }
+
+    #[test]
+    fn lookup_oracle_covers_shadowing_ambiguity_packages_and_partial_analysis() {
+        let files = vec![
+            ("a.ts", "function same(){return 1;} function same(){return 1;} function run(){ {let value=1; same(value);} {let value=2; same(value);} }"),
+            ("left.py", "def work(): return 1\n"),
+            ("right.py", "def work(): return 2\n"),
+            ("app.py", "def first():\n    from left import work\n    return work()\ndef second():\n    from right import work\n    return work()\ndef outside(): return work()\n"),
+            ("a.go", "package shared\nfunc Run() int {return helper()}"),
+            ("b.go", "package shared\nfunc helper() int {return 1}"),
+            ("c.go", "package shared\nfunc helper() int {return 2}"),
+            ("outside_test.go", "package shared_test\nfunc helper() int {return 3}"),
+            ("nested/d.go", "package shared\nfunc helper() int {return 4}"),
+            ("broken.ts", "export function broken( {"),
+            ("unsupported.rb", "puts 'unknown'"),
+            ("generated.py", "def generated(): return first()\n"),
+            ("schema.json", "{}"),
+        ].into_iter().map(|(path, bytes)| (path.into(), bytes.as_bytes().to_vec())).collect();
+        compare_generations(
+            vec![snapshot(files)],
+            IndexConfig {
+                generated_inputs: BTreeMap::from([(
+                    "generated.py".into(),
+                    BTreeSet::from(["schema.json".into()]),
+                )]),
+                ..IndexConfig::default()
+            },
+        );
     }
 }
