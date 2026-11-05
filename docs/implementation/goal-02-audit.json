@@ -1,0 +1,163 @@
+{
+  "schema": "celetixo/development-validation/v1",
+  "milestone": "Goal 02",
+  "tested_source_commit": "72621aa786ca430ccf9f267644a6554d7bf77ea6",
+  "source_checkout_clean_before_and_after": true,
+  "cargo_cache_reused": true,
+  "rust_tests_passed": 186,
+  "attribution_regressions_passed": 25,
+  "integration_native_environment": {
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC"
+  },
+  "checks": [
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.466
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "seconds": 13.403
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline",
+        "--",
+        "--include-ignored"
+      ],
+      "exit": 0,
+      "seconds": 135.713
+    },
+    {
+      "command": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--examples",
+        "--locked",
+        "--offline"
+      ],
+      "exit": 0,
+      "seconds": 2.023
+    },
+    {
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "-p",
+        "celetixo-engine",
+        "--example",
+        "concurrent_transactions"
+      ],
+      "exit": 0,
+      "seconds": 0.516
+    },
+    {
+      "command": [
+        "bash",
+        ".github/scripts/test-commit-attribution.sh"
+      ],
+      "exit": 0,
+      "seconds": 1.497
+    },
+    {
+      "command": [
+        "bash",
+        ".github/scripts/check-commit-attribution.sh",
+        "HEAD"
+      ],
+      "exit": 0,
+      "seconds": 14.956
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.116
+    }
+  ],
+  "rust_analyzer": "rust-analyzer 1.94.1 (e408947 2026-03-25)",
+  "release_inspection_native_cflags": "-target x86_64-linux-gnu -fPIC -O3",
+  "release_inspection": {
+    "snapshot": "b5af92631d659e6e1686298245fa991fe6e3e289faf03c1de0086e66d4fd8e89",
+    "index_generation": "438ecf7e0171c99b4cc1b4a5f29b6f0404173a15cd6907e1439d75ee0217a59c",
+    "engine_analysis_artifact": "66ef1972c225ba3b37173d2d1060f3b638fe44f9f8af9d103fdc58cd7aab79e0",
+    "capture_consistency": "GitTree",
+    "capture_complete": true,
+    "files": 112,
+    "elements": 5896,
+    "edges": 17267,
+    "engine_impact_complete": false,
+    "source_mutation_supported": false,
+    "commit": "72621aa786ca430ccf9f267644a6554d7bf77ea6",
+    "gaps": 9903
+  },
+  "measured_source_fingerprint": "8df921f0cc94df6aa778fbd0b8c5a7a522c507780d36f5430d1f128a7ff76b4d",
+  "benchmark_report": "../benchmarks/goal-02.md",
+  "unvalidated": [
+    "Native Windows filesystem capture",
+    "Actual TypeScript/JavaScript, Python and Go language-server processes",
+    "Language-wide impact precision/recall or production performance"
+  ],
+  "architectural_boundaries": [
+    "Live capture retains non-atomic-source uncertainty",
+    "Structural and query-only semantic coverage gaps prevent complete-impact admission",
+    "Source mutation and production durable/distributed storage are not supplied by this milestone",
+    "Conservative revision/base identities do not establish a durable historical file-lineage registry"
+  ],
+  "release_inspection_checks": [
+    {
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "-p",
+        "celetixo-repository",
+        "--example",
+        "inspect_repository"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "inspect_repository",
+        "ROOT",
+        "--git-tree",
+        "72621aa786ca430ccf9f267644a6554d7bf77ea6",
+        "--changed",
+        "crates/engine/src/engine.rs"
+      ],
+      "root_parameter": "The Celetixo Git repository",
+      "exit": 0
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Goal 02 validation record
 
-Goal 02 remains active until the final clean-checkout audit is recorded. Performance measurements are complete; this record distinguishes completed checks from pending work.
+Goal 02 is implemented and validated within the explicit subsystem boundaries below. The final clean-checkout audit, exact-tree Engine inspection and measured performance records are complete. This does not claim complete language semantics, source mutation or a deployed distributed service.
 
 ## Milestone 1 — authoritative Engine contracts
 
@@ -14,7 +14,7 @@ Commands on the WSL/Zig development environment use task-local `CRATE_CC_NO_DEFA
 
 `036d8b10f1766e9978799fc1f776ee8c1368aa70` strengthens the upstream human-attribution policy with author/committer checks and 25 independently rerun temporary-repository regression cases. It preserves the owner's remote policy documents. Local hooks and repository-local identity are configured; CI checks raw metadata and co-author declarations. Recognition cannot authenticate a person or replace required branch protection.
 
-`fdc0bed50d5b2eddf331d9d6c681f4a86dd9d65b` publishes the capture/index/LSP/impact core, fixtures, inspection and measurement harnesses, developer instructions and CI integration after the 177-test workspace verification below. [Core CI](https://github.com/Emiloart/Celetixo/actions/runs/42050087402) and [attribution milestone CI](https://github.com/Emiloart/Celetixo/actions/runs/42049435137) both passed. Benchmark results and the final performance/clean-checkout audit remain a later milestone. Each published milestone was checked for human attribution and pushed; no unverified performance claim is implied by the core commit.
+`fdc0bed50d5b2eddf331d9d6c681f4a86dd9d65b` publishes the capture/index/LSP/impact core, fixtures, inspection and measurement harnesses, developer instructions and CI integration after the 177-test workspace verification below. [Core CI](https://github.com/Emiloart/Celetixo/actions/runs/42050087402) and [attribution milestone CI](https://github.com/Emiloart/Celetixo/actions/runs/42049435137) both passed. Benchmark results and the final performance/clean-checkout audit were published in subsequent milestones. Each published milestone was checked for human attribution and pushed; no unverified performance claim is implied by the core commit.
 
 ## Scope-to-evidence audit
 
@@ -34,7 +34,7 @@ Commands on the WSL/Zig development environment use task-local `CRATE_CC_NO_DEFA
 | Engine authority and incomplete analysis | Scoped trusted installation only, no legacy source registration/model replacement, fail-closed analysis admission and source integer patch/revalidation/commit guards |
 | Developer workflow and separate verified milestones | Goal 02 contract, CLI inspection, benchmark instructions, CI and milestone commits |
 
-## Final integration evidence
+## Core integration evidence
 
 After integrating the remote human-attribution policy without dropping any source changes, the coordinator ran:
 
@@ -83,4 +83,16 @@ All four final release/native-O3 workloads completed sequentially against source
 
 The actual-source medians are 3,934.212 ms capture, 1,013.859 ms cold index, 888.466 ms incremental index and 967.605 ms rebuild; pooled query p95 is 15.096 ms and observed lifetime process peak is 114.99 MiB. These apply to the specified 42-file, 462,750-byte immutable corpus, not arbitrary repositories. All raw samples, phase checkpoints, manually labeled quality counts and mechanically derived local investigation targets are in [the benchmark report](../benchmarks/goal-02.md). Broader language accuracy, deployment capacity and statistical significance remain unestablished.
 
-An immutable-tree CLI smoke over the Engine milestone passed capture, structural indexing, Engine artifact installation and impact query. Its semantic gaps remained explicit and integer source mutation remained disabled. The larger live-worktree debug attempt produced no accepted result. Final clean-checkout verification remains pending. See [implementation boundaries](goal-02.md) for limitations that cannot be replaced by a green test count.
+The final measurement records and derived targets were committed and pushed as `0518053511b1481055eb5a615d64d7c4f000e7ce`.
+
+## Final clean-checkout and Engine inspection audit
+
+A separate detached worktree at `72621aa786ca430ccf9f267644a6554d7bf77ea6` was clean before and after verification. Existing Cargo dependency/build caches were reused; this was a clean source checkout, not a fresh machine or hermetic build. The coordinator reran formatting, strict all-target workspace Clippy, locked/offline workspace tests including ignored tests, workspace example builds, the transaction example, all 25 attribution regressions, full reachable-history attribution checks and whitespace checks. All passed. The later measurement milestone changes only documentation and raw JSON, preserving the tested Rust source and lockfile.
+
+The final Rust total is **186**: 75 Engine, 38 capture, 26 index integration, two lookup-oracle unit tests, seven identity, 28 LSP including the actual rust-analyzer probe, nine impact and one manual quality regression. The real server reports `rust-analyzer 1.94.1 (e408947 2026-03-25)`. No check was skipped to obtain this count.
+
+From that checkout, the coordinator also built the release inspection example with native `-O3` and inspected the exact immutable `72621aa` tree through the Engine. Capture completed with **112 files, 5,896 elements and 17,267 edges**. Snapshot `b5af92631d659e6e1686298245fa991fe6e3e289faf03c1de0086e66d4fd8e89` bound index generation `438ecf7e0171c99b4cc1b4a5f29b6f0404173a15cd6907e1439d75ee0217a59c` and Engine artifact `66ef1972c225ba3b37173d2d1060f3b638fe44f9f8af9d103fdc58cd7aab79e0`. The query included the changed Engine file, retained **9,903 coverage gaps**, reported incomplete impact in both analysis layers and kept source mutation disabled.
+
+The [machine-readable audit](goal-02-audit.json) records the exact tested commit, commands, results, compiler settings and inspection bindings. This development record does not substitute for transaction-specific Engine verification evidence. Documentation links and both Python report scripts were checked; report rejection also passed under Python optimization. The earlier larger live-worktree debug attempt produced no accepted result and is not counted as successful validation.
+
+Actual TypeScript/JavaScript, Python and Go language-server processes, native Windows capture, arbitrary-repository accuracy and production deployment performance remain unvalidated. The initial structural adapters and supported version-bound semantic queries are implemented; full language engineering harnesses are not claimed. See [implementation boundaries](goal-02.md) for live-source atomicity, durable storage, historical file lineage and source-publishing limits.
