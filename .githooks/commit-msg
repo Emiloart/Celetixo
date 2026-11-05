@@ -8,14 +8,35 @@ if [[ ! -f "$message_file" ]]; then
   exit 1
 fi
 
-# Match only Co-authored-by trailers. Delimiters avoid partial-word matches
-# and keep ordinary references to AI in the subject/body out of scope.
+# Delimiters avoid partial-word matches in human names and addresses.
 identity_pattern='(^|[^[:alnum:]_])(bot|ai|agent|assistant|copilot|claude|chatgpt|openai|codex|cursor|gemini|devin|swe-agent)([^[:alnum:]_]|$)|\[bot\]|noreply\+[^[:space:]]*\[bot\]'
 
-if grep -Eiq "^[[:space:]]*Co-authored-by:[[:space:]].*${identity_pattern}" "$message_file"; then
+# Git prepares the actual author environment before this hook, including
+# --author overrides and authors preserved by amend/cherry-pick operations.
+# Reading config alone would miss those identities.
+author="$(git var GIT_AUTHOR_IDENT)"
+committer="$(git var GIT_COMMITTER_IDENT)"
+for role in author committer; do
+  if grep -Eiq "$identity_pattern" <<<"${!role}"; then
+    echo "Commit rejected: AI tools, agents, and bots must not be Git ${role}s." >&2
+    echo "Use the human contributor's actual Git identity." >&2
+    exit 1
+  fi
+done
+
+# Group the alternatives so ordinary body mentions such as [bot] do not
+# match independently of the attribution prefix. Read the file directly:
+# a producer piped to grep -q can fail with SIGPIPE under pipefail.
+if grep -Eiq "^[[:space:]]*Co-authored-by:[[:space:]]*.*(${identity_pattern})" "$message_file"; then
   echo "Commit rejected: AI tools, agents, and bots must not be Git co-authors." >&2
   echo "Remove the automated Co-authored-by trailer. Human co-authors are permitted." >&2
   exit 1
+else
+  status=$?
+  if [[ "$status" -ne 1 ]]; then
+    echo "Commit rejected: could not inspect the commit message." >&2
+    exit "$status"
+  fi
 fi
 
 exit 0

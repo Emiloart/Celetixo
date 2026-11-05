@@ -186,6 +186,7 @@ During editing:
 3. use deterministic fixtures and controlled clocks;
 4. update canonical schemas before generated bindings;
 5. avoid mixing unrelated refactors into correctness-critical changes.
+6. follow [CONTRIBUTING.md](CONTRIBUTING.md): use the human contributor's established Git identity for authorship and committer metadata, and never add an AI tool or bot as an author or co-author.
 
 Before completion:
 1. format and lint changed components;
@@ -195,5 +196,6 @@ Before completion:
 5. confirm no assertions, tests, authorization or verification requirements were weakened;
 6. report exact checks run, checks not run and why;
 7. update documentation to match actual behavior.
+8. commit and push each verified milestone separately, preserving remote contributions and checking attribution before publication.
 
 > **Models propose changes. The Engine decides admissibility. Verification supplies evidence. The atomic commit boundary protects repository state.**
