@@ -172,7 +172,7 @@ fn configuration_and_analyzer_versions_invalidate_generation_and_cache() {
     let snap = fixture("python");
     let original = index(&snap);
     let config = IndexConfig {
-        analyzer_version: "celetixo-structural/v2".into(),
+        analyzer_version: "custom-analysis-profile/v1".into(),
         ..IndexConfig::default()
     };
     let changed = Indexer::new(config).unwrap().build(&snap).unwrap();

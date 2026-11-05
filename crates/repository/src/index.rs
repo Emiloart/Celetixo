@@ -8,6 +8,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use thiserror::Error;
 use tree_sitter::{Node, Parser};
 
+pub const STRUCTURAL_EXTRACTOR_VERSION: &str = "celetixo-structural/v2";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Language {
     TypeScript,
@@ -195,7 +197,7 @@ pub struct IndexedFile {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IndexConfig {
     /// Caller-selected analysis profile identity. The implementation/extractor
-    /// identity remains celetixo-structural/v1 and is separately recorded on
+    /// identity remains STRUCTURAL_EXTRACTOR_VERSION and is separately recorded on
     /// structural edges; changing this label does not install another analyzer.
     pub analyzer_version: String,
     pub language_configuration: BTreeMap<String, String>,
@@ -207,7 +209,7 @@ pub struct IndexConfig {
 impl Default for IndexConfig {
     fn default() -> Self {
         Self {
-            analyzer_version: "celetixo-structural/v1".into(),
+            analyzer_version: STRUCTURAL_EXTRACTOR_VERSION.into(),
             language_configuration: BTreeMap::new(),
             generated_inputs: BTreeMap::new(),
             max_file_bytes: 16 * 1024 * 1024,
@@ -219,6 +221,7 @@ impl IndexConfig {
     pub fn digest(&self) -> Digest {
         let mut c = Canonical::default();
         c.str("tree-sitter/0.26.13");
+        c.str(STRUCTURAL_EXTRACTOR_VERSION);
         c.value(self);
         for l in [
             Language::TypeScript,
@@ -230,13 +233,16 @@ impl IndexConfig {
         ] {
             c.str(l.parser_version());
         }
-        c.finish("celetixo/index-config/v1")
+        c.finish("celetixo/index-config/v2")
     }
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceIndex {
     pub snapshot: SnapshotId,
     pub scope: Scope,
+    /// Versioned repository incarnation namespace: scope, authoritative revision
+    /// and Git base. Shape equality never recycles an earlier revision's IDs.
+    pub identity_namespace: Digest,
     pub generation: Digest,
     pub config_digest: Digest,
     pub configuration: IndexConfig,
@@ -264,7 +270,10 @@ impl SourceIndex {
         self.validate_structure()
     }
     pub fn validate(&self, snapshot: &Snapshot) -> Result<(), IndexError> {
-        if self.snapshot != snapshot.id() || self.scope != *snapshot.scope() {
+        if self.snapshot != snapshot.id()
+            || self.scope != *snapshot.scope()
+            || self.identity_namespace != identity_namespace(snapshot)
+        {
             return Err(IndexError::SnapshotMismatch);
         }
         self.validate_generation()?;
@@ -436,6 +445,7 @@ impl SourceIndex {
         let mut c = Canonical::default();
         c.str(&self.snapshot.to_string());
         c.value(&self.scope);
+        c.value(&self.identity_namespace);
         c.str(&self.config_digest.to_string());
         c.value(&self.configuration);
         c.value(&self.files);
@@ -443,7 +453,7 @@ impl SourceIndex {
         c.value(&self.edges);
         c.value(&self.occurrences);
         c.value(&self.issues);
-        c.finish("celetixo/source-index/v1")
+        c.finish("celetixo/source-index/v2")
     }
 }
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -527,6 +537,7 @@ impl Indexer {
         let mut index = SourceIndex {
             snapshot: snapshot.id(),
             scope: snapshot.scope().clone(),
+            identity_namespace: identity_namespace(snapshot),
             generation: Digest::of("pending", b""),
             config_digest: self.config.digest(),
             configuration: self.config.clone(),
@@ -790,17 +801,35 @@ impl Canonical {
         Digest::of(domain, &self.0)
     }
 }
-fn make_id(snapshot: &Snapshot, path: &str, kind: &str, identity: &str) -> ElementId {
+fn identity_namespace(snapshot: &Snapshot) -> Digest {
     let mut c = Canonical::default();
     c.value(snapshot.scope());
+    c.0.extend_from_slice(&snapshot.revision().0.to_be_bytes());
+    c.str(&snapshot.manifest().base_commit);
+    c.finish("celetixo/repository-identity-namespace/v2")
+}
+
+fn make_id(snapshot: &Snapshot, path: &str, kind: &str, identity: &str) -> ElementId {
+    let mut c = Canonical::default();
+    c.value(&identity_namespace(snapshot));
     c.str(path);
     c.str(kind);
     c.str(identity);
     ElementId::new(format!(
         "source:{}",
-        c.finish("celetixo/semantic-element/v1")
+        c.finish("celetixo/semantic-element/v2")
     ))
     .expect("digest identifier is bounded ASCII")
+}
+fn package_id(namespace: Digest, signature: Digest) -> ElementId {
+    let mut c = Canonical::default();
+    c.value(&namespace);
+    c.value(&signature);
+    ElementId::new(format!(
+        "package:{}",
+        c.finish("celetixo/package-element/v2")
+    ))
+    .expect("bounded package digest ID")
 }
 fn issue(index: &mut SourceIndex, path: &str, span: SourceSpan, kind: IssueKind, detail: &str) {
     index.issues.insert(IndexIssue {
@@ -825,7 +854,7 @@ fn add_edge(
         kind,
         provenance: EdgeProvenance {
             snapshot: index.snapshot,
-            extractor: "celetixo-structural/v1".into(),
+            extractor: STRUCTURAL_EXTRACTOR_VERSION.into(),
             path: path.into(),
             span,
             resolution,
@@ -2309,8 +2338,7 @@ fn configuration_edges(
                                 canonical.str(name);
                                 canonical.str(&version.to_string());
                                 let signature = canonical.finish("celetixo/package-dependency/v1");
-                                let id = ElementId::new(format!("package:{signature}"))
-                                    .expect("bounded digest ID");
+                                let id = package_id(index.identity_namespace, signature);
                                 index.nodes.insert(
                                     id.clone(),
                                     IndexNode {
@@ -2686,7 +2714,7 @@ fn package_dependency(
     c.str(name);
     c.str(specification);
     let signature = c.finish("celetixo/package-specification/v1");
-    let id = ElementId::new(format!("package:{signature}")).expect("bounded package digest ID");
+    let id = package_id(index.identity_namespace, signature);
     index.nodes.insert(
         id.clone(),
         IndexNode {
@@ -2876,7 +2904,7 @@ fn go_package_edges(index: &mut SourceIndex) {
         c.str(&name);
         c.str("declared-package-scope/v1");
         let signature = c.finish("celetixo/go-package/v1");
-        let id = ElementId::new(format!("package:{signature}")).expect("bounded package digest ID");
+        let id = package_id(index.identity_namespace, signature);
         index.nodes.insert(
             id.clone(),
             IndexNode {
