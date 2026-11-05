@@ -1,6 +1,6 @@
 # Goal 02 validation record
 
-Goal 02 remains active until the remaining performance measurements and final clean-checkout audit are recorded. This record distinguishes completed checks from pending work.
+Goal 02 remains active until the final clean-checkout audit is recorded. Performance measurements are complete; this record distinguishes completed checks from pending work.
 
 ## Milestone 1 — authoritative Engine contracts
 
@@ -75,6 +75,12 @@ The final identity audit found that restoring exactly the same bytes after a lat
 
 An independent reviewer traced every production element constructor, including manifest dependencies and synthetic Go packages. Seven new behavioral regressions cover all five initial languages, exact-byte file and symbol recreation, later revision with unchanged Git base, new Git base at the same revision, original-snapshot revisits, comment/line stability within one namespace, configuration/package nodes, namespace tampering and scope isolation. Every transition compares incremental and clean results. The existing profile-invalidation assertion now uses an explicit custom profile distinct from the new default.
 
-The coordinator ran workspace formatting, strict all-target workspace Clippy, and `cargo test --locked --offline -p celetixo-repository --lib --test index --test identity --test benchmark_quality` with the documented local compiler settings. All **36** focused tests passed. No authorization, evidence, transaction or completeness check was removed.
+The coordinator ran workspace formatting, strict all-target workspace Clippy, and `cargo test --locked --offline -p celetixo-repository --lib --test index --test identity --test benchmark_quality` with the documented local compiler settings. All **36** focused tests passed. No authorization, evidence, transaction or completeness check was removed. The source correction was committed and pushed as `72621aa786ca430ccf9f267644a6554d7bf77ea6`; [its CI passed](https://github.com/Emiloart/Celetixo/actions/runs/42056011228). [The separate comparison-record milestone CI](https://github.com/Emiloart/Celetixo/actions/runs/42055850628) also passed.
 
-An immutable-tree CLI smoke over the Engine milestone passed capture, structural indexing, Engine artifact installation and impact query. Its semantic gaps remained explicit and integer source mutation remained disabled. The larger live-worktree debug attempt produced no accepted result. Final v2 measurements and clean-checkout verification remain pending. See [implementation boundaries](goal-02.md) for limitations that cannot be replaced by a green test count.
+## Final v2 performance evidence
+
+All four final release/native-O3 workloads completed sequentially against source `72621aa`. The coordinator independently validated every report with the summary/target script, reconstructed implementation fingerprint `8df921f0cc94df6aa778fbd0b8c5a7a522c507780d36f5430d1f128a7ff76b4d` from committed source and lockfile, and checked it against all four records. Corpus snapshot IDs and graph cardinalities match earlier observations. Configuration, semantic IDs and index generations change for v2; all other labeled quality outcomes remain equal. Incremental/rebuild equivalence holds on every sample. The separately preserved v1 comparison still passes its strict artifact-equality verifier.
+
+The actual-source medians are 3,934.212 ms capture, 1,013.859 ms cold index, 888.466 ms incremental index and 967.605 ms rebuild; pooled query p95 is 15.096 ms and observed lifetime process peak is 114.99 MiB. These apply to the specified 42-file, 462,750-byte immutable corpus, not arbitrary repositories. All raw samples, phase checkpoints, manually labeled quality counts and mechanically derived local investigation targets are in [the benchmark report](../benchmarks/goal-02.md). Broader language accuracy, deployment capacity and statistical significance remain unestablished.
+
+An immutable-tree CLI smoke over the Engine milestone passed capture, structural indexing, Engine artifact installation and impact query. Its semantic gaps remained explicit and integer source mutation remained disabled. The larger live-worktree debug attempt produced no accepted result. Final clean-checkout verification remains pending. See [implementation boundaries](goal-02.md) for limitations that cannot be replaced by a green test count.

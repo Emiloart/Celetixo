@@ -15,7 +15,7 @@ target/release/examples/repository_bench --copies 1 --iterations 3 --queries 100
 target/release/examples/repository_bench --copies 5 --iterations 3 --queries 100 > /tmp/goal-02-copies-5.json
 target/release/examples/repository_bench --copies 20 --iterations 3 --queries 100 > /tmp/goal-02-copies-20.json
 target/release/examples/repository_bench --repository . --commit 53d50ebed98476878a48503a9d9d159d56974c14 --change-path crates/engine/src/engine.rs --iterations 3 --queries 100 > /tmp/goal-02-actual-celetixo.json
-python3 docs/benchmarks/goal-02-summary.py /tmp/goal-02-copies-1.json /tmp/goal-02-copies-5.json /tmp/goal-02-copies-20.json /tmp/goal-02-actual-celetixo.json
+python3 docs/benchmarks/goal-02-summary.py --targets /tmp/goal-02-copies-1.json /tmp/goal-02-copies-5.json /tmp/goal-02-copies-20.json /tmp/goal-02-actual-celetixo.json
 cargo test -p celetixo-repository --test benchmark_quality --locked
 ```
 
@@ -89,10 +89,10 @@ fingerprint stands in for a dirty-workspace snapshot identity.
 ## Results and limits
 
 The completed **baseline** below predates the lexical-lookup optimization and the
-separate identity non-recycling correction. The artifact-neutral optimization
-comparison is now complete below. Measurements after the identity correction and
-final performance targets are still pending. Each table identifies the measured
-implementation rather than implying that earlier measurements cover later code.
+identity non-recycling correction. The artifact-neutral optimization comparison
+and final v2 measurements are also complete below. Each table identifies the
+measured implementation. The final v2 table and its derived targets apply to the
+corrected implementation.
 
 All four baseline reports identify compiled implementation fingerprint
 `b4ddcec88f989e78f24f132663d25a88fb69fbf0e8afa4982f9bb78ebe2ffc70`.
@@ -185,11 +185,57 @@ Recheck the complete artifact comparison with:
 python3 -O docs/benchmarks/goal-02-compare.py docs/benchmarks
 ```
 
-Final records after the separate identity-namespace correction will use
-`goal-02-*.json`; their deliberately changed semantic generation must not be
-presented as artifact-equal to this baseline. `goal-02-summary.py --targets`
-derives local investigation ceilings from observed maxima, rounded upward, after
-those final measurements. No production SLO or timing gate is inferred.
+## Final v2 measurements and targets
+
+The final analyzer is `celetixo-structural/v2`, measured from source commit
+`72621aa786ca430ccf9f267644a6554d7bf77ea6`. Its compiled implementation fingerprint
+is `8df921f0cc94df6aa778fbd0b8c5a7a522c507780d36f5430d1f128a7ff76b4d`.
+It retains the lookup optimization and adds the versioned identity namespace for
+scope, authoritative revision and Git base. The harness, fixtures, reference,
+native `-O3` settings, Rust compiler, parser versions, machine and fixed actual
+corpus remain unchanged. All source and other builds were held during these
+final sequential measurements.
+
+All four final reports retain the same captured clean/changed snapshot IDs as the
+baseline. Their configuration and index-generation digests differ as required by
+v2. Node, edge and issue cardinalities and the independently labeled file-impact
+outcomes agree with the earlier observations. Semantic IDs deliberately changed;
+the v1/v2 indexes are not presented as artifact-equal. Every final iteration
+passed exact incremental/rebuild and repeat-capture checks. Each changed source
+reparsed once, with 23, 115, 460 and 15 unchanged trees reused respectively.
+
+| Final v2 corpus | Files / bytes | Clean capture median [min, max] ms | Changed capture median ms | Git-tree capture median ms | Cold index median ms | Incremental median ms | Rebuild median ms | Query p50 / p95 ms | Process peak MiB |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| [1 copy](goal-02-copies-1.json) | 30 / 2064 | 591.181 [587.371, 595.369] | 597.302 | 159.713 | 5.051 | 6.533 | 6.480 | 0.239 / 0.600 | 9.85 |
+| [5 copies](goal-02-copies-5.json) | 122 / 7716 | 2392.490 [2290.384, 2691.648] | 2181.575 | 621.335 | 25.284 | 25.922 | 26.836 | 0.526 / 0.737 | 16.82 |
+| [20 copies](goal-02-copies-20.json) | 467 / 28911 | 10113.088 [7705.336, 10431.233] | 10277.905 | 3017.850 | 143.972 | 132.446 | 125.382 | 1.990 / 2.817 | 43.18 |
+| [Actual Celetixo](goal-02-actual-celetixo.json) | 42 / 462750 | 3934.212 [3897.187, 4598.234] | 4075.214 | 3934.212 | 1013.859 | 888.466 | 967.605 | 11.438 / 15.096 | 114.99 |
+
+Actual-source impact remains incomplete with 3725 gaps and receives no quality
+score. The five labeled scenarios retain 15 true positives, zero false positives
+and the one Python dynamic-consumer false negative. Their 93.75% pooled file-level
+recall includes changed roots as defined above. No broader recall or semantic
+completeness follows from these results.
+
+The initial performance targets below are local investigation ceilings for the
+same corpora and comparable machine/storage conditions. They are calculated from
+all final observations: round each phase maximum upward to 100 ms, each individual
+query maximum upward to 1 ms, and the observed process peak upward to 1 MiB.
+Capture uses the maximum across clean, repeat, immutable-tree and changed
+captures. Query targets use the maximum rather than p95, preserving outliers.
+
+| Corpus | Capture target ms | Cold index target ms | Incremental target ms | Rebuild target ms | Individual-query target ms | Process peak target MiB |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 copy | 800 | 100 | 100 | 100 | 11 | 10 |
+| 5 copies | 2700 | 100 | 100 | 100 | 2 | 17 |
+| 20 copies | 10900 | 200 | 200 | 200 | 6 | 44 |
+| Actual Celetixo | 4600 | 1100 | 1500 | 1000 | 24 | 115 |
+
+Regenerate these targets with `goal-02-summary.py --targets` and the four final
+JSON files. A target exceedance calls for investigation and repeated comparable
+measurements. These targets are not CI timing assertions, production SLOs,
+capacity estimates or correctness gates. Broader corpora and dedicated hardware
+measurements are required before setting deployment targets.
 
 Live generated-workspace capture explicitly retains `LiveSourceNotAtomic`, even
 when its two-pass census is complete. Verified immutable Git-tree capture can be
