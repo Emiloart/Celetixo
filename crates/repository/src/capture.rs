@@ -296,58 +296,13 @@ impl CaptureResult {
 pub fn effective_workspace(
     snapshot: &Snapshot,
 ) -> Result<BTreeMap<String, WorkspaceInput>, CaptureError> {
-    let mut files: BTreeMap<String, WorkspaceInput> = BTreeMap::new();
-    for layer in [
-        InputLayer::Base,
-        InputLayer::Index,
-        InputLayer::WorkingTree,
-        InputLayer::Untracked,
-        InputLayer::Generated,
-        InputLayer::Mounted,
-        InputLayer::Submodule,
-        InputLayer::Overlay,
-    ] {
-        for input in snapshot
-            .manifest()
-            .inputs
-            .iter()
-            .filter(|i| i.layer == layer)
-        {
-            match &input.bytes {
-                Some(_) => {
-                    if let Some(existing) = files.get(&input.path) {
-                        if matches!(layer, InputLayer::Generated | InputLayer::Mounted)
-                            && (existing.kind != input.kind
-                                || existing.mode != input.mode
-                                || existing.bytes != input.bytes)
-                        {
-                            return Err(CaptureError::ExternalCollision(input.path.clone()));
-                        }
-                        if layer == InputLayer::Submodule && existing.kind != InputKind::Submodule {
-                            return Err(CaptureError::ExternalCollision(input.path.clone()));
-                        }
-                    }
-                    files.insert(input.path.clone(), input.clone());
-                }
-                None => {
-                    files.remove(&input.path);
-                }
-            }
+    use celetixo_engine::snapshot::EffectiveWorkspaceError;
+    celetixo_engine::snapshot::effective_workspace(snapshot).map_err(|error| match error {
+        EffectiveWorkspaceError::ExternalCollision(path) => CaptureError::ExternalCollision(path),
+        EffectiveWorkspaceError::NonDirectoryAncestor(_) => {
+            CaptureError::InvalidPolicy("effective inputs cross a file or symlink ancestor")
         }
-    }
-    for path in files.keys() {
-        for (position, _) in path.match_indices('/') {
-            if files
-                .get(&path[..position])
-                .is_some_and(|file| file.kind != InputKind::Submodule)
-            {
-                return Err(CaptureError::InvalidPolicy(
-                    "effective inputs cross a file or symlink ancestor",
-                ));
-            }
-        }
-    }
-    Ok(files)
+    })
 }
 
 pub fn effective_files(

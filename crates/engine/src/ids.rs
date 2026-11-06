@@ -32,6 +32,7 @@ opaque_id!(
     RepositoryId,
     PrincipalId,
     TransactionId,
+    SourceAttemptId,
     ElementId,
     InvariantId,
     CheckId,
@@ -52,6 +53,10 @@ pub struct Revision(pub u64);
 pub struct Digest([u8; 32]);
 
 impl Digest {
+    /// Decode an existing content address; consumers still verify its payload.
+    pub fn from_bytes(bytes: [u8; 32]) -> Self {
+        Self(bytes)
+    }
     pub fn of(domain: &str, bytes: &[u8]) -> Self {
         let mut hash = Sha256::new();
         hash.update((domain.len() as u64).to_be_bytes());
@@ -83,7 +88,15 @@ macro_rules! digest_id {
         }
     )+};
 }
-digest_id!(SnapshotId, PatchId, EvidenceId);
+digest_id!(
+    SnapshotId,
+    PatchId,
+    EvidenceId,
+    SourcePatchId,
+    SourcePlanId,
+    SourceAdmissionId,
+    SourceEvidenceId
+);
 
 /// Length-delimited canonical encoding. Maps/sets are encoded in sorted order by callers.
 #[derive(Default)]
@@ -108,6 +121,9 @@ impl Canonical {
     }
     pub(crate) fn finish(self, domain: &str) -> Digest {
         Digest::of(domain, &self.0)
+    }
+    pub(crate) fn into_bytes(self) -> Vec<u8> {
+        self.0
     }
 }
 

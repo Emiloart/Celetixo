@@ -408,3 +408,70 @@ fn length_delimited_encoding_distinguishes_field_boundaries() {
         snapshot(second).unwrap().id()
     );
 }
+
+#[test]
+fn manifest_address_preserves_capture_provenance_without_reference_state() {
+    let mut source = manifest();
+    source.inputs.extend([
+        input(InputLayer::Index, "src/main.rs", b"staged"),
+        input(InputLayer::Overlay, "src/main.rs", b"editor"),
+    ]);
+    let expected = source.digest();
+    source.inputs.reverse();
+    assert_eq!(source.digest(), expected);
+    let mut changed = source.clone();
+    changed.inputs[0].bytes = Some(b"different editor buffer".to_vec());
+    assert_ne!(changed.digest(), expected);
+    changed = source.clone();
+    changed.inputs[0].bytes = None;
+    assert_ne!(changed.digest(), expected);
+    changed.inputs[0].bytes = Some(vec![]);
+    assert_ne!(changed.digest(), source.digest());
+    changed = source.clone();
+    changed
+        .inclusion_policy
+        .excluded_paths
+        .insert("ignored".into(), "not an input".into());
+    assert_ne!(changed.digest(), expected);
+    changed = source.clone();
+    changed.provenance.push_str("/different-capture");
+    assert_ne!(changed.digest(), expected);
+    let first = snapshot(source.clone()).unwrap();
+    let second = Snapshot::new(scope(), Revision(1), source, State::new()).unwrap();
+    assert_ne!(first.id(), second.id());
+    assert_eq!(first.manifest().digest(), second.manifest().digest());
+}
+
+#[test]
+fn effective_view_keeps_layer_precedence_and_rejects_external_aliases() {
+    use celetixo_engine::snapshot::{EffectiveWorkspaceError, effective_workspace};
+    let mut source = manifest();
+    source.inputs.extend([
+        input(InputLayer::WorkingTree, "src/main.rs", b"disk"),
+        input(InputLayer::Overlay, "src/main.rs", b"editor"),
+    ]);
+    let view = effective_workspace(&snapshot(source.clone()).unwrap()).unwrap();
+    assert_eq!(
+        view["src/main.rs"].bytes.as_deref(),
+        Some(b"editor".as_slice())
+    );
+    source
+        .inputs
+        .push(input(InputLayer::Mounted, "src/main.rs", b"external"));
+    assert_eq!(
+        effective_workspace(&snapshot(source).unwrap()),
+        Err(EffectiveWorkspaceError::ExternalCollision(
+            "src/main.rs".into()
+        ))
+    );
+    let mut crossed = manifest();
+    crossed
+        .inputs
+        .push(input(InputLayer::WorkingTree, "src", b"file"));
+    assert_eq!(
+        effective_workspace(&snapshot(crossed).unwrap()),
+        Err(EffectiveWorkspaceError::NonDirectoryAncestor(
+            "src/main.rs".into()
+        ))
+    );
+}

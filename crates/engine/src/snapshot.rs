@@ -7,7 +7,7 @@
 //! symlink target bytes without resolving or following them. It performs no Unicode, case,
 //! newline, encoding, or filesystem normalization.
 
-use crate::ids::{Canonical, ElementId, Revision, Scope, SnapshotId};
+use crate::ids::{Canonical, Digest, ElementId, Revision, Scope, SnapshotId};
 use std::collections::{BTreeMap, BTreeSet};
 use thiserror::Error;
 
@@ -130,6 +130,118 @@ pub struct SnapshotManifest {
     pub provenance: String,
     pub inputs: Vec<WorkspaceInput>,
     pub environment: BTreeMap<String, String>,
+}
+
+impl SnapshotManifest {
+    /// Address the complete input manifest independently of the reference state.
+    pub fn digest(&self) -> Digest {
+        let mut c = Canonical::default();
+        c.str(&self.base_commit);
+        c.u64(u64::from(self.canonicalization_version));
+        c.str(&self.provenance);
+        c.u64(u64::from(self.inclusion_policy.version));
+        c.u64(self.inclusion_policy.captured_layers.len() as u64);
+        for layer in &self.inclusion_policy.captured_layers {
+            c.u64(layer.tag());
+        }
+        c.u64(self.inclusion_policy.excluded_paths.len() as u64);
+        for (path, reason) in &self.inclusion_policy.excluded_paths {
+            c.str(path);
+            c.str(reason);
+        }
+        let mut inputs = self.inputs.iter().collect::<Vec<_>>();
+        inputs.sort_by_key(|input| (input.layer, &input.path));
+        c.u64(inputs.len() as u64);
+        for input in inputs {
+            c.str(&input.path);
+            c.u64(input.layer.tag());
+            c.u64(input.kind.tag());
+            c.u64(input.mode.tag());
+            match &input.bytes {
+                Some(bytes) => {
+                    c.u64(1);
+                    c.bytes(bytes);
+                }
+                None => c.u64(0),
+            }
+        }
+        c.u64(self.environment.len() as u64);
+        for (key, value) in &self.environment {
+            c.str(key);
+            c.str(value);
+        }
+        c.finish("celetixo/source-manifest/v1")
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
+pub enum EffectiveWorkspaceError {
+    #[error("external input conflicts with an effective workspace entry at {0:?}")]
+    ExternalCollision(String),
+    #[error("effective input crosses a file or symlink ancestor at {0:?}")]
+    NonDirectoryAncestor(String),
+}
+
+/// Merge captured views without consulting a filesystem. Every original layer
+/// remains part of snapshot identity; generated/mounted aliases require exact
+/// agreement and editor overlays, including tombstones, apply last.
+pub fn effective_workspace(
+    snapshot: &Snapshot,
+) -> Result<BTreeMap<String, WorkspaceInput>, EffectiveWorkspaceError> {
+    let mut files: BTreeMap<String, WorkspaceInput> = BTreeMap::new();
+    for layer in [
+        InputLayer::Base,
+        InputLayer::Index,
+        InputLayer::WorkingTree,
+        InputLayer::Untracked,
+        InputLayer::Generated,
+        InputLayer::Mounted,
+        InputLayer::Submodule,
+        InputLayer::Overlay,
+    ] {
+        for input in snapshot
+            .manifest()
+            .inputs
+            .iter()
+            .filter(|i| i.layer == layer)
+        {
+            match &input.bytes {
+                Some(_) => {
+                    if let Some(existing) = files.get(&input.path) {
+                        if matches!(layer, InputLayer::Generated | InputLayer::Mounted)
+                            && (existing.kind != input.kind
+                                || existing.mode != input.mode
+                                || existing.bytes != input.bytes)
+                        {
+                            return Err(EffectiveWorkspaceError::ExternalCollision(
+                                input.path.clone(),
+                            ));
+                        }
+                        if layer == InputLayer::Submodule && existing.kind != InputKind::Submodule {
+                            return Err(EffectiveWorkspaceError::ExternalCollision(
+                                input.path.clone(),
+                            ));
+                        }
+                    }
+                    files.insert(input.path.clone(), input.clone());
+                }
+                None => {
+                    files.remove(&input.path);
+                }
+            }
+        }
+    }
+    for path in files.keys() {
+        for (position, _) in path.match_indices('/') {
+            if files
+                .get(&path[..position])
+                .is_some_and(|file| file.kind != InputKind::Submodule)
+            {
+                return Err(EffectiveWorkspaceError::NonDirectoryAncestor(path.clone()));
+            }
+        }
+    }
+    Ok(files)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
