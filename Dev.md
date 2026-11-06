@@ -149,7 +149,23 @@ Introduce Tree-sitter parsing, stable file/symbol identity, reference edges, and
 
 The implementation commands, capture policies, source-analysis authority contract, supported structural/LSP relationships and limitations are documented in [Goal 02](docs/implementation/goal-02.md). Reproduce the [recorded benchmarks](docs/benchmarks/goal-02.md) before changing performance targets. Tests must preserve known dynamic-reference misses and their incomplete-coverage result; passing a parser or a single language-server query cannot clear that result.
 
-### Phase 5 — Durable services and execution
+### Phase 5 — Goal 03: controlled patch application and verification
+
+Implement [Goal 03](docs/implementation/goal-03.md) before connecting real workers or broad distributed orchestration. This phase turns Goal 02's immutable repository intelligence into an Engine-governed patch and verification path.
+
+Required sequence:
+1. Canonical, exact-base patch contracts and deterministic application to a private snapshot-derived workspace.
+2. Engine admission bound to transaction, scope, snapshot, impact generation, policy, reservation/lease and idempotency.
+3. Deterministic verification plans and policy-owned check identities.
+4. A backend-neutral executor with validated isolation; untrusted repository code must never fall back to host execution.
+5. Immutable, provenance-complete evidence sealing and independent Engine admission.
+6. End-to-end, adversarial and fault-injection validation plus reproducible measurements.
+
+Keep source revision publication and production distributed commit explicitly outside this milestone. Passing checks does not itself authorize a source commit.
+
+**Exit gate:** an exact-base patch is applied without mutating its source snapshot, required checks execute in a validated isolation backend against the resulting snapshot, and the Engine admits only complete, correctly bound evidence. All Goal 03 acceptance criteria must pass.
+
+### Phase 6 — Durable services and execution
 
 Integrate the remaining architectural components when the preceding contracts are stable:
 
@@ -164,7 +180,7 @@ Keep component responsibilities separate. Do not use NATS as a workflow engine, 
 
 **Exit gate:** service failures, retries, duplicate events, stale results, and worker crashes have explicit tested behavior.
 
-### Phase 6 — Real worker integration and evaluation
+### Phase 7 — Real worker integration and evaluation
 
 Connect real coding workers through provider-neutral adapters. Run tasks against immutable repository snapshots and pass every patch through the same transaction and verification path.
 
