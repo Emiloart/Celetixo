@@ -135,6 +135,11 @@ pub struct SnapshotManifest {
 impl SnapshotManifest {
     /// Address the complete input manifest independently of the reference state.
     pub fn digest(&self) -> Digest {
+        Digest::of("celetixo/source-manifest/v1", &self.canonical_bytes())
+    }
+
+    /// Complete input bytes and provenance for immutable artifact retention.
+    pub fn canonical_bytes(&self) -> Vec<u8> {
         let mut c = Canonical::default();
         c.str(&self.base_commit);
         c.u64(u64::from(self.canonicalization_version));
@@ -170,7 +175,7 @@ impl SnapshotManifest {
             c.str(key);
             c.str(value);
         }
-        c.finish("celetixo/source-manifest/v1")
+        c.into_bytes()
     }
 }
 
@@ -326,6 +331,11 @@ impl Snapshot {
         &self.state
     }
 
+    /// Complete identity bytes for immutable source/evidence retention.
+    pub fn canonical_bytes(&self) -> Vec<u8> {
+        snapshot_bytes(&self.scope, self.revision, &self.manifest, &self.state)
+    }
+
     /// Reference-state advancement preserves captured workspace inputs. A repository
     /// adapter that mutates source bytes must instead construct a fresh manifest.
     pub fn successor(&self, revision: Revision, state: State) -> Result<Self, SnapshotError> {
@@ -454,6 +464,18 @@ fn snapshot_id(
     manifest: &SnapshotManifest,
     state: &State,
 ) -> SnapshotId {
+    SnapshotId(Digest::of(
+        "celetixo/snapshot/v1",
+        &snapshot_bytes(scope, revision, manifest, state),
+    ))
+}
+
+fn snapshot_bytes(
+    scope: &Scope,
+    revision: Revision,
+    manifest: &SnapshotManifest,
+    state: &State,
+) -> Vec<u8> {
     let mut c = Canonical::default();
     c.str(scope.organization.as_str());
     c.str(scope.workspace.as_str());
@@ -496,5 +518,5 @@ fn snapshot_id(
         c.str(element.as_str());
         c.i64(*value);
     }
-    SnapshotId(c.finish("celetixo/snapshot/v1"))
+    c.into_bytes()
 }

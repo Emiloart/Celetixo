@@ -15,6 +15,15 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex, MutexGuard};
 use thiserror::Error;
 
+mod source_attempts;
+mod source_cleanup;
+pub use source_attempts::{
+    SourceAdmission, SourceAttemptError, SourceAttemptEvent, SourceAttemptState, SourceAttemptView,
+    SourceAuthorizationProvenance, SourceExecutorCapability, SourcePatchContext,
+    SourceRejectionView,
+};
+pub use source_cleanup::SourceCleanupCapability;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Permission {
     Register,
@@ -218,6 +227,8 @@ pub enum EngineError {
     SourceAnalysisRequired,
     #[error("integer reference patches cannot mutate a captured source repository")]
     SourceMutationUnsupported,
+    #[error("source execution attempt rejected: {0}")]
+    SourceAttempt(#[from] SourceAttemptError),
 }
 
 #[derive(Clone)]
@@ -354,6 +365,14 @@ struct Database {
     evidence: BTreeMap<(Scope, EvidenceId), VerificationEvidence>,
     evidence_sources: BTreeMap<(Scope, EvidenceId), u64>,
     operations: BTreeMap<(Scope, IdempotencyKey), RecordedOperation>,
+    next_source_executor: u64,
+    source_executors: BTreeMap<u64, source_attempts::SourceExecutorGrant>,
+    source_policies: BTreeMap<Scope, crate::source_execution::SourceExecutionPolicy>,
+    source_attempts: BTreeMap<(Scope, SourceAttemptId), source_attempts::SourceAttemptRecord>,
+    source_operations: BTreeMap<(Scope, IdempotencyKey), source_attempts::RecordedSourceOperation>,
+    source_rejections: BTreeMap<(Scope, SourceAttemptId), SourceRejectionView>,
+    next_source_cleanup: u64,
+    source_cleanup_grants: BTreeMap<u64, source_cleanup::SourceCleanupGrant>,
 }
 
 impl InMemoryStore {
@@ -774,7 +793,11 @@ impl Engine {
         if tx.attempt().model != repo.model {
             return Err(EngineError::ModelChanged);
         }
-        analyze_attempt(&mut tx, repo.source_analysis.as_ref())?;
+        analyze_attempt(
+            &mut tx,
+            repo.source_analysis.as_ref(),
+            db.source_policies.get(scope),
+        )?;
         let accesses = tx
             .attempt()
             .effective
@@ -1043,6 +1066,7 @@ impl Engine {
         }
         tx.lease = None;
         tx.last_reason = Some(reason);
+        source_attempts::cancel_transaction_attempts(&mut db, scope, id)?;
         Ok(())
     }
     pub fn revalidate(
@@ -1099,7 +1123,11 @@ impl Engine {
             candidate: Some(candidate),
             evidence: BTreeMap::new(),
         });
-        analyze_attempt(&mut tx, repo.source_analysis.as_ref())?;
+        analyze_attempt(
+            &mut tx,
+            repo.source_analysis.as_ref(),
+            db.source_policies.get(scope),
+        )?;
         tx.last_reason = Some("compatible revision advance; fresh evidence required".into());
         let bindings = tx.bindings()?;
         db.transactions.insert(key, tx);
@@ -1281,6 +1309,7 @@ fn validate_intent(intent: &TransactionIntent) -> Result<(), EngineError> {
 fn analyze_attempt(
     tx: &mut Transaction,
     source: Option<&RepositoryAnalysis>,
+    policy: Option<&crate::source_execution::SourceExecutionPolicy>,
 ) -> Result<(), EngineError> {
     let mut explicit = tx.intent.accesses.clone();
     for invariant in &tx.intent.invariants {
@@ -1288,15 +1317,21 @@ fn analyze_attempt(
         // Invariants are actual dependencies, even if a requester omits their read set.
         explicit.reads.extend(invariant.scope());
     }
-    let analysis = if let Some(source) = source {
+    let (effective, analysis) = if let Some(source) = source {
         source.validate(&tx.attempt().base, source.index_generation())?;
-        source
-            .inspect(tx.attempt().model.generation, &explicit)?
-            .analysis
+        let (effective, impact, _) = source_attempts::derive_source_impact(
+            source,
+            tx.attempt().model.generation,
+            &explicit,
+            policy,
+        )?;
+        (effective, impact.analysis)
     } else {
-        tx.attempt()
+        let analysis = tx
+            .attempt()
             .model
-            .analyze(tx.attempt().base.id(), &explicit)
+            .analyze(tx.attempt().base.id(), &explicit);
+        (explicit.union(analysis.derived()), analysis)
     };
     if !matches!(
         analysis.completeness(),
@@ -1304,7 +1339,6 @@ fn analyze_attempt(
     ) {
         return Err(EngineError::IncompleteAnalysis);
     }
-    let effective = explicit.union(analysis.derived());
     tx.attempt_mut().effective = Some(effective);
     tx.attempt_mut().analysis = Some(analysis);
     Ok(())

@@ -871,6 +871,13 @@ impl ApplicationReport {
     }
 
     pub fn digest(&self) -> Digest {
+        Digest::of(
+            "celetixo/source-application-report/v1",
+            &self.canonical_bytes(),
+        )
+    }
+
+    pub fn canonical_bytes(&self) -> Vec<u8> {
         let mut c = Canonical::default();
         c.digest(self.base_snapshot.0);
         c.digest(self.base_manifest_digest);
@@ -894,7 +901,7 @@ impl ApplicationReport {
             encode_optional_preimage(&mut c, outcome.before);
             encode_optional_preimage(&mut c, outcome.after);
         }
-        c.finish("celetixo/source-application-report/v1")
+        c.into_bytes()
     }
 }
 
