@@ -1,0 +1,85 @@
+{
+  "schema": "celetixo/goal03-execution-validation/v1",
+  "recorded_at_utc": "2026-11-09T00:48:34.089014+00:00",
+  "engine_source_commit": "4be2abfefcac82e97a0ee2753941943d98a86dfb",
+  "execution_source_files": {
+    "Cargo.toml": {
+      "sha256": "36209fbb5c2e13012bbd65c1a10a424c52b0103c1bb3bac4b2e5c0d459df31cd",
+      "bytes": 442
+    },
+    "Cargo.lock": {
+      "sha256": "c4e2dd16a9ec3cb3c9f7b24f0f5e17db820e7fefa8361709d259060cb350f63e",
+      "bytes": 15817
+    },
+    "crates/execution/Cargo.toml": {
+      "sha256": "086ea930336da2a6faffac7c0f3b4095525db6b3d23f14ae99785bd323992560",
+      "bytes": 604
+    },
+    "crates/execution/examples/source_execution_bench.rs": {
+      "sha256": "95baf71b9fd45019e021e745e71803b97b640534d32e263a9f36a0c23a0b2ff0",
+      "bytes": 8669
+    },
+    "crates/execution/src/artifacts.rs": {
+      "sha256": "2b7479eff0be7ed1fd24361887f7a877bd2c3d6443106734f8d94e1d4633c995",
+      "bytes": 28260
+    },
+    "crates/execution/src/bin/celetixo-exec-init.rs": {
+      "sha256": "4968b38fab4ccb49bbe48d911cedeac18ee91e13045500721308f1207fdf2778",
+      "bytes": 6314
+    },
+    "crates/execution/src/coordinator.rs": {
+      "sha256": "179325f9ea469d85b283474419265126cb2035d178d18d54b4349453ce790ceb",
+      "bytes": 29144
+    },
+    "crates/execution/src/coordinator_tests.rs": {
+      "sha256": "85ca4282fa444592b29a67f7bf4569a96c9883b015b76549c0d6cd18789bc05a",
+      "bytes": 26584
+    },
+    "crates/execution/src/lib.rs": {
+      "sha256": "c7049d06d59b8967503f0fe8757abbc825d1f3f60d80a8695329f336a7a33e54",
+      "bytes": 241
+    },
+    "crates/execution/src/materialize.rs": {
+      "sha256": "e1f72d444cde91bdf3ea143db2e133e65f84966a6d26eb615fdeae12829f1aae",
+      "bytes": 31726
+    },
+    "crates/execution/src/oci.rs": {
+      "sha256": "6785e9476764c888f88d5901b997d49920ecfef0ca585342084bf9e24c898dc0",
+      "bytes": 109613
+    },
+    "crates/execution/tests/artifacts.rs": {
+      "sha256": "5cc99727a986282d2f959d78d7b1d750e7021a5123b600cd3ffb3960ae120c0d",
+      "bytes": 18973
+    },
+    "crates/execution/tests/materialize.rs": {
+      "sha256": "e66b0e33158036a7a0fc10c939f639fbeb610ed1a8ca1963397c1b0e20ed3d60",
+      "bytes": 17866
+    },
+    "crates/execution/tests/oci.rs": {
+      "sha256": "556b46e1a5a36f117b9a68268ef27a5a4f8427f793ec85bbbc325b5633897e61",
+      "bytes": 45100
+    },
+    "crates/execution/tests/support/mod.rs": {
+      "sha256": "4f6bc25bca7721cda62e1e64f5722a3d6b7f08cfae76461678d2a8d3d32259a4",
+      "bytes": 14505
+    }
+  },
+  "execution_source_fingerprint_sha256": "f83c405104b06ed93535d8885b0755461aaee3bdaad3c09c8599967a99661656",
+  "ordinary_tests_passed": 40,
+  "actual_oci_groups_passed": 8,
+  "command_environment": {
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC",
+    "CARGO_INCREMENTAL": "0",
+    "CELETIXO_OCI_HOME": "<reviewed-private-tooling>"
+  },
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "actual_checks_log_sha256": "709f5eeb6ca5ca2bead0f92913284fad14b38f6ce2346886d632ff6b2b398a28",
+  "known_incomplete": [
+    "T0 source-copy hard-kill ownership recovery",
+    "backend-neutral executor result contract audit",
+    "representative benchmark baseline and targets",
+    "clean-checkout/final Goal03 acceptance audit"
+  ]
+}

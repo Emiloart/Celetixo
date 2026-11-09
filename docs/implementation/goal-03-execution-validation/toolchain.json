@@ -1,0 +1,71 @@
+{
+  "init-provenance.json": {
+    "version": 3,
+    "source_sha256": "4968b38fab4ccb49bbe48d911cedeac18ee91e13045500721308f1207fdf2778",
+    "binary_sha256": "41cd4284dfc010dca9c2a3f95bc6b82e2d01075c16d385e34b64dabf7b2bbfe9",
+    "bytes": 440072,
+    "compiler": "rustc 1.94.1 (e408947bf 2026-03-25)",
+    "linkage": "explicit pinned ELF interpreter/libc closure; not static",
+    "elf_interpreter": "/lib64/ld-linux-x86-64.so.2",
+    "elf_needed": [
+      "libc.so.6",
+      "ld-linux-x86-64.so.2"
+    ],
+    "elf_runpath": [
+      "/home/emiloart/.local/share/celetixo-goal03/rustc0m7OUp/raw-dylibs:/home/emiloart/.rustup/toolchains/1.94.1-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib"
+    ],
+    "runpath_is_not_mounted_into_guest": true,
+    "command": [
+      "rustc",
+      "--edition",
+      "2024",
+      "-C",
+      "target-feature=+crt-static",
+      "-C",
+      "opt-level=s",
+      "-C",
+      "strip=symbols",
+      "crates/execution/src/bin/celetixo-exec-init.rs",
+      "-o",
+      "<reviewed-home>/celetixo-exec-init"
+    ],
+    "built_at_utc": "2026-11-09T00:23:10.393179+00:00"
+  },
+  "init-library-provenance.json": {
+    "version": 1,
+    "trusted_host_package": "libc6 2.39-0ubuntu8.9",
+    "elf_needed": [
+      "libc.so.6"
+    ],
+    "elf_interpreter": "/lib64/ld-linux-x86-64.so.2",
+    "files": [
+      {
+        "source": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "guest": "/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+        "bytes": 2129424
+      },
+      {
+        "source": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "guest": "/lib64/ld-linux-x86-64.so.2",
+        "sha256": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da",
+        "bytes": 236616
+      }
+    ]
+  },
+  "gofmt-provenance.json": {
+    "image": "sha256:37a932cac16c0188b9a431afa69b0f64063cba293bb362177242913cadbb94bd",
+    "manifest": "golang@sha256:f85330846cde1e57ca9ec309382da3b8e6ae3ab943d2739500e08c86393a21b1",
+    "executable_sha256": "0802a3784f7b2a924ccde5b34f6727ffe74e0193a1c0eea4cd773863fce4528a",
+    "bytes": 3106647,
+    "elf_static": true,
+    "container_started": false,
+    "golang_version": "1.26.2"
+  },
+  "runc": {
+    "version": "1.5.2",
+    "sha256": "599f6f94ff8c5057241eff0d54c3c74f95c34935b6457b33fe545defc61e9488",
+    "signer_fingerprint": "C2428CD75720FACDCF76B6EA17DE5ECB75A1100E",
+    "signature_status": "[GNUPG:] NEWSIG\n[GNUPG:] KEY_CONSIDERED C2428CD75720FACDCF76B6EA17DE5ECB75A1100E 0\n[GNUPG:] SIG_ID olOn4q9cuhaP0RWeiAfr6scQE7Q 2026-09-25 1790370591\n[GNUPG:] GOODSIG 17DE5ECB75A1100E Kir Kolyshkin <kolyshkin@gmail.com>\n[GNUPG:] VALIDSIG C2428CD75720FACDCF76B6EA17DE5ECB75A1100E 2026-09-25 1790370591 0 4 0 1 10 00 C2428CD75720FACDCF76B6EA17DE5ECB75A1100E\n[GNUPG:] TRUST_UNDEFINED 0 pgp\ngpg: Signature made Fri Sep 25 22:09:51 2026 WAT\ngpg:                using RSA key C2428CD75720FACDCF76B6EA17DE5ECB75A1100E\ngpg: Good signature from \"Kir Kolyshkin <kolyshkin@gmail.com>\" [unknown]\ngpg: WARNING: This key is not certified with a trusted signature!\ngpg:          There is no indication that the signature belongs to the owner.\nPrimary key fingerprint: C242 8CD7 5720 FACD CF76  B6EA 17DE 5ECB 75A1 100E\n"
+  }
+}

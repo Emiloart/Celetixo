@@ -1,0 +1,105 @@
+COMMAND ["cargo", "test", "-p", "celetixo-execution", "--locked", "--offline"]
+   Compiling celetixo-execution v0.1.0 (/mnt/c/dev/celetixo/crates/execution)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.22s
+     Running unittests src/lib.rs (target/debug/deps/celetixo_execution-cc311c5784207c33)
+
+running 7 tests
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.78s
+
+     Running unittests src/bin/celetixo-exec-init.rs (target/debug/deps/celetixo_exec_init-c72dc1da79b7ad49)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/artifacts.rs (target/debug/deps/artifacts-f36ccc59571c9fb4)
+
+running 12 tests
+test explicit_pending_reconciliation_preserves_published_objects_and_unknown_files ... ok
+test cross_scope_reads_and_missing_or_oversized_objects_fail_explicitly ... ok
+test immutable_binary_and_empty_objects_roundtrip_through_registered_reader_contract ... ok
+test content_modes_symlink_substitution_and_hardlink_tampering_never_yield_verified_bytes ... ok
+test persistent_reopen_and_exact_duplicate_put_preserve_objects_and_scope_retention_contract ... ok
+test object_byte_inode_and_aggregate_limits_are_enforced_before_new_publication ... ok
+test published_readback_tampering_is_rejected_and_preserved_instead_of_overwritten ... ok
+test recovery_synchronizes_only_the_exact_validated_store_contract_and_header ... ok
+test interrupted_creation_is_not_ready_until_recovery_confirms_header_root_and_parent ... ok
+test root_symlink_replacement_and_scope_header_tampering_fail_without_touching_replacement ... ok
+test persistence_faults_never_return_a_reference_and_published_objects_survive_for_recovery ... ok
+test reopened_store_accounts_for_pending_inodes_and_recovers_lost_publication_response ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+     Running tests/materialize.rs (target/debug/deps/materialize-daabb51778df0800)
+
+running 13 tests
+test declared_resource_bounds_include_derived_directory_census_before_creating_disk_inputs ... ok
+test a_directory_replaced_with_an_escape_symlink_is_never_traversed ... ok
+test borrowed_executor_quarantine_closes_validation_and_drop_cannot_remove_the_retained_source ... ok
+test exact_immutable_bytes_and_modes_are_materialized_without_reading_or_mutating_live_source ... ok
+test explicit_quarantine_retains_only_the_owned_workspace_for_executor_reconciliation ... ok
+test immutable_report_uncertainty_is_retained_and_non_operational_git_configuration_is_not_a_git_directory ... ok
+test gitlinks_and_unimplemented_capture_metadata_reject_before_any_private_disk_side_effect ... ok
+test fault_during_copy_and_final_content_mutation_publish_no_workspace_and_report_cleanup ... ok
+test private_instances_share_receipt_identity_but_never_writable_files_or_cleanup_scope ... ok
+test substituted_source_root_cannot_redirect_writes_and_partial_resources_are_cleaned ... ok
+test exact_census_detects_changed_bytes_modes_links_missing_inputs_and_unexpected_directories ... ok
+test replaced_private_parent_is_quarantined_without_deleting_the_replacement ... ok
+test symlinks_are_reproduced_as_links_and_cleanup_never_follows_outside_targets ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/oci.rs (target/debug/deps/oci-08622c90415d343b)
+
+running 16 tests
+test real::real_patch_to_isolated_checks_persisted_evidence_and_engine_admission ... ignored, requires reviewed pinned OCI tooling and delegated Linux cgroupv2
+test real::real_publication_faults_reconcile_without_reexecuting_claimed_checks ... ignored, requires reviewed pinned OCI tooling and delegated Linux cgroupv2
+test real::real_readiness_waits_for_pid_publication_and_missing_pid_cannot_run_a_check ... ignored, requires reviewed pinned OCI tooling and delegated Linux cgroupv2
+test real::real_rootless_oci_boundaries_resources_and_reconciliation ... ignored, requires reviewed pinned OCI tooling and delegated Linux cgroupv2
+test real::real_rootless_oci_cancellation_stops_children ... ignored, requires reviewed pinned OCI tooling and delegated Linux cgroupv2
+test real::real_rootless_oci_controller_loss_preserves_independent_deadline ... ignored, requires reviewed pinned OCI tooling and delegated Linux cgroupv2
+test real::real_rootless_oci_readonly_gofmt_and_intrinsic_authority ... ignored, requires reviewed signed runc1.5.2, pinned ELF entrypoint plus explicit loader/libc closure, pinned cached Go1.26.2 formatter and delegated Linux cgroupv2
+test real::real_rootless_oci_unwind_retains_and_cleanup_only_grant_recovers ... ignored, requires reviewed pinned OCI tooling and delegated Linux cgroupv2
+test executable_addresses_are_domain_separated ... ok
+test missing_or_changed_runtime_never_becomes_an_available_backend ... ok
+test runtime_environment_cannot_load_code_or_import_credentials ... ok
+test runtime_version_and_rootfs_are_explicit_pins ... ok
+test tooling_symlinks_are_not_followed ... ok
+test seccomp_policy_is_an_allowlist_with_namespace_clone_restrictions ... ok
+test rootfs_path_traversal_and_reserved_mount_paths_are_rejected ... ok
+test content_identity_is_independent_of_asset_storage_paths ... ok
+
+test result: ok. 8 passed; 0 failed; 8 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+   Doc-tests celetixo_execution
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+EXIT 0
+COMMAND ["cargo", "test", "-p", "celetixo-execution", "--test", "oci", "--locked", "--offline", "--", "--ignored", "--test-threads=1"]
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.65s
+     Running tests/oci.rs (target/debug/deps/oci-08622c90415d343b)
+
+running 8 tests
+test real::real_patch_to_isolated_checks_persisted_evidence_and_engine_admission ... ok
+test real::real_publication_faults_reconcile_without_reexecuting_claimed_checks ... ok
+test real::real_readiness_waits_for_pid_publication_and_missing_pid_cannot_run_a_check ... ok
+test real::real_rootless_oci_boundaries_resources_and_reconciliation ... ok
+test real::real_rootless_oci_cancellation_stops_children ... ok
+test real::real_rootless_oci_controller_loss_preserves_independent_deadline ... ok
+test real::real_rootless_oci_readonly_gofmt_and_intrinsic_authority ... ok
+test real::real_rootless_oci_unwind_retains_and_cleanup_only_grant_recovers ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 52.12s
+
+EXIT 0

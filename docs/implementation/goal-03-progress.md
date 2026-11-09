@@ -301,3 +301,53 @@ concurrent-transaction assertions, whole-tree capture/index/Engine inspection,
 benchmark smoke and all 25 attribution checks. Self-inspection uses the default
 credential policy without new reviewed exceptions. Both commit identities are
 the established human contributor.
+
+
+The evidence contract milestone is published as
+`4be2abfefcac82e97a0ee2753941943d98a86dfb`. Its exact source passed 289 workspace
+tests plus the explicit actual rust-analyzer probe, formatting, strict Clippy,
+examples, whole-tree inspection and benchmark smoke. Its
+[GitHub Actions run](https://github.com/Emiloart/Celetixo/actions/runs/42539193564)
+passed. Milestone 03.3's
+[Actions run](https://github.com/Emiloart/Celetixo/actions/runs/42538446776)
+also passed.
+
+## 03.4a: concrete isolated checks and local retained artifacts
+
+The execution crate connects private exact-base materialization, the reviewed
+rootless OCI T1 runner, confirmed local artifact publication and the Engine gate.
+The [execution contract and reproduction instructions](goal-03-execution.md)
+describe its actual boundary and limitations. This is a verified component
+milestone; the complete Goal 03 exit gate remains open.
+
+The current component passed 40 ordinary coordinator/filesystem/contract tests
+and eight explicit actual-OCI integration groups, with strict all-target Clippy.
+The actual fixture uses real immutable Git capture and repository JSON selection
+of approved checks. Its actual structural analysis remains incomplete; positive
+execution uses a separate, explicitly finite, manually established reference
+model for the controlled inputs. No language-wide semantic completeness is
+inferred from the successful run.
+
+The real path proves patch application, an unchanged source snapshot, isolated
+Go syntax checks, persisted canonical artifacts, Engine assessment, immutable
+redelivery and rejection of source publication. Adversarial probes cover resource
+and namespace boundaries, network/filesystem denial, cancellation, timeout,
+controller loss, owned cleanup, partial publication and response loss.
+
+A newly exposed startup race is handled within the existing deadline: the
+trusted launcher can signal readiness before runc publishes its PID file.
+Absence waits; an invalid marker or failed isolation check still fails. Real
+delayed-publication and permanently-missing-marker probes establish this boundary.
+
+[Validation metadata](goal-03-execution-validation/checks.json),
+[raw test output](goal-03-execution-validation/checks.log) and
+[toolchain provenance](goal-03-execution-validation/toolchain.json) bind these
+checks to their exact source-file digests and reviewed tool closure. A benchmark
+runner has passed a single smoke invocation; representative measurements and
+performance targets are not claimed by that smoke run.
+
+Remaining work includes ownership recovery when killed during T0 source copying,
+the neutral executor-result interface audit, representative benchmark cases and
+raw results, clean-checkout/CI validation and the complete requirement-by-requirement
+acceptance audit. T2/T3, unvalidated language harnesses and source publication
+remain unsupported. No incomplete record may authorize a commit.

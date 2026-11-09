@@ -54,6 +54,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "celetixo-execution"
+version = "0.1.0"
+dependencies = [
+ "celetixo-engine",
+ "celetixo-repository",
+ "rustix",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "celetixo-repository"
 version = "0.1.0"
 dependencies = [
