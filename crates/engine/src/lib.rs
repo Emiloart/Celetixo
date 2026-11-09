@@ -1,5 +1,6 @@
 //! Deterministic semantic transaction mechanics, independent of providers and clients.
 pub mod access;
+#[path = "input_admission.rs"]
 pub mod credentials;
 pub mod engine;
 pub mod evidence;

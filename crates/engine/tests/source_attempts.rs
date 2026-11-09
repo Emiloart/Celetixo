@@ -1297,3 +1297,236 @@ fn only_installed_exact_public_review_can_admit_a_new_sensitive_path() {
         )))
     );
 }
+
+#[test]
+fn optional_checks_are_bound_to_idempotency_and_cannot_remove_mandatory_checks() {
+    let h = Harness::new(false);
+    let tx = h.execute("optional-transaction");
+    let patch = h.patch(&tx, "optional-attempt");
+    let key = IdempotencyKey::new("optional-operation").unwrap();
+    let options = SourceAttemptOptions {
+        optional_checks: [check_id("invariant"), check_id("downstream")].into(),
+    };
+    let admission = h
+        .engine
+        .admit_source_attempt_with_options(
+            &h.owner,
+            &scope(),
+            patch.clone(),
+            options.clone(),
+            key.clone(),
+        )
+        .unwrap();
+    assert_eq!(admission.plan().checks().len(), 3);
+    for check in admission.plan().checks() {
+        let name = check.definition().id().as_str();
+        assert_eq!(check.required(), name == "verify");
+        if name != "verify" {
+            assert!(
+                check
+                    .rationales()
+                    .contains(&CheckRationale::OptionalRequest)
+            );
+        }
+    }
+    let reverse_delivery = SourceAttemptOptions {
+        optional_checks: [check_id("downstream"), check_id("invariant")].into(),
+    };
+    assert_eq!(
+        h.engine
+            .admit_source_attempt_with_options(
+                &h.owner,
+                &scope(),
+                patch.clone(),
+                reverse_delivery,
+                key.clone(),
+            )
+            .unwrap(),
+        admission
+    );
+    for changed in [
+        SourceAttemptOptions::default(),
+        SourceAttemptOptions {
+            optional_checks: [check_id("invariant")].into(),
+        },
+    ] {
+        assert_eq!(
+            h.engine.admit_source_attempt_with_options(
+                &h.owner,
+                &scope(),
+                patch.clone(),
+                changed,
+                key.clone(),
+            ),
+            Err(EngineError::IdempotencyConflict)
+        );
+    }
+    assert_eq!(
+        h.engine
+            .source_attempt(&h.owner, &scope(), &patch.binding().source_attempt)
+            .unwrap()
+            .admission,
+        admission
+    );
+    assert_eq!(h.engine.current(&h.owner, &scope()).unwrap(), h.base);
+}
+
+#[test]
+fn unknown_and_explicitly_required_optional_checks_reject_without_runnable_work() {
+    for (name, expected) in [
+        (
+            "not-installed",
+            SourcePlanError::MissingCheck(check_id("not-installed")),
+        ),
+        (
+            "verify",
+            SourcePlanError::ConflictingRequirement(check_id("verify")),
+        ),
+    ] {
+        let h = Harness::new(false);
+        let tx = h.execute("optional-rejection-transaction");
+        let patch = h.patch(&tx, "optional-rejection");
+        let options = SourceAttemptOptions {
+            optional_checks: [check_id(name)].into(),
+        };
+        let key = IdempotencyKey::new("optional-rejection-operation").unwrap();
+        let error = EngineError::SourceAttempt(SourceAttemptError::Plan(expected));
+        assert_eq!(
+            h.engine.admit_source_attempt_with_options(
+                &h.owner,
+                &scope(),
+                patch.clone(),
+                options.clone(),
+                key.clone(),
+            ),
+            Err(error.clone())
+        );
+        let rejection = h
+            .engine
+            .source_rejection(&h.owner, &scope(), &patch.binding().source_attempt)
+            .unwrap();
+        assert_ne!(rejection.request, patch.id().0);
+        assert_eq!(rejection.error, error);
+        assert!(
+            h.engine
+                .source_attempt(&h.owner, &scope(), &patch.binding().source_attempt)
+                .is_err()
+        );
+        assert_eq!(
+            h.engine.admit_source_attempt_with_options(
+                &h.owner,
+                &scope(),
+                patch.clone(),
+                options,
+                key,
+            ),
+            Err(error)
+        );
+        assert_eq!(
+            h.engine
+                .source_rejection(&h.owner, &scope(), &patch.binding().source_attempt)
+                .unwrap(),
+            rejection
+        );
+    }
+}
+
+#[test]
+fn a_mandatory_dependency_promotes_an_optional_check_without_losing_provenance() {
+    let h = Harness::new(false);
+    let mut input = h.policy.input().clone();
+    input.generation += 1;
+    let configured = input
+        .checks
+        .iter_mut()
+        .find(|check| check.id() == &check_id("verify"))
+        .unwrap();
+    let mut definition = configured.input().clone();
+    definition.depends_on.insert(check_id("downstream"));
+    *configured = SourceCheckDefinition::new(definition).unwrap();
+    h.engine
+        .install_source_policy(
+            &h.owner,
+            &scope(),
+            Some(h.policy.digest()),
+            SourceExecutionPolicy::new(input).unwrap(),
+        )
+        .unwrap();
+    let tx = h.execute("promoted-optional-transaction");
+    let admission = h
+        .engine
+        .admit_source_attempt_with_options(
+            &h.owner,
+            &scope(),
+            h.patch(&tx, "promoted-optional-attempt"),
+            SourceAttemptOptions {
+                optional_checks: [check_id("downstream")].into(),
+            },
+            IdempotencyKey::new("promoted-optional-operation").unwrap(),
+        )
+        .unwrap();
+    let prerequisite = &admission.plan().checks()[0];
+    assert_eq!(prerequisite.definition().id(), &check_id("downstream"));
+    assert!(prerequisite.required());
+    assert!(
+        prerequisite
+            .rationales()
+            .contains(&CheckRationale::OptionalRequest)
+    );
+    assert!(
+        prerequisite
+            .rationales()
+            .contains(&CheckRationale::DependencyOf(check_id("verify")))
+    );
+}
+
+#[test]
+fn oversized_optional_selection_reserves_neither_an_attempt_nor_an_idempotency_key() {
+    let h = Harness::new(false);
+    let tx = h.execute("oversized-options-transaction");
+    let patch = h.patch(&tx, "oversized-options-attempt");
+    let key = IdempotencyKey::new("oversized-options-operation").unwrap();
+    assert_eq!(
+        h.engine.admit_source_attempt_with_options(
+            &h.owner,
+            &scope(),
+            patch.clone(),
+            SourceAttemptOptions {
+                optional_checks: (0..4097)
+                    .map(|number| check_id(&format!("extra-{number}")))
+                    .collect(),
+            },
+            key.clone(),
+        ),
+        Err(EngineError::SourceAttempt(
+            SourceAttemptError::InvalidOptions
+        ))
+    );
+    assert!(
+        h.engine
+            .source_attempt(&h.owner, &scope(), &patch.binding().source_attempt)
+            .is_err()
+    );
+    assert!(
+        h.engine
+            .source_rejection(&h.owner, &scope(), &patch.binding().source_attempt)
+            .is_err()
+    );
+    // The original empty-options entry point retains its existing behavior.
+    let admission = h
+        .engine
+        .admit_source_attempt(&h.owner, &scope(), patch.clone(), key.clone())
+        .unwrap();
+    assert_eq!(
+        h.engine
+            .admit_source_attempt_with_options(
+                &h.owner,
+                &scope(),
+                patch,
+                SourceAttemptOptions::default(),
+                key,
+            )
+            .unwrap(),
+        admission
+    );
+}

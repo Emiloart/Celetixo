@@ -18,9 +18,9 @@ use thiserror::Error;
 mod source_attempts;
 mod source_cleanup;
 pub use source_attempts::{
-    SourceAdmission, SourceAttemptError, SourceAttemptEvent, SourceAttemptState, SourceAttemptView,
-    SourceAuthorizationProvenance, SourceExecutorCapability, SourcePatchContext,
-    SourceRejectionView,
+    SourceAdmission, SourceAttemptError, SourceAttemptEvent, SourceAttemptOptions,
+    SourceAttemptState, SourceAttemptView, SourceAuthorizationProvenance, SourceExecutorCapability,
+    SourcePatchContext, SourceRejectionView,
 };
 pub use source_cleanup::SourceCleanupCapability;
 

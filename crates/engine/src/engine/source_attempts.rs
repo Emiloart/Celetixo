@@ -39,6 +39,8 @@ pub enum SourceAttemptError {
     SourceRepositoryRequired,
     #[error("source attempt needs a bounded, nonempty failure reason")]
     InvalidReason,
+    #[error("source attempt options exceed the supported check budget")]
+    InvalidOptions,
     #[error("source planning failed: {0}")]
     Plan(#[from] SourcePlanError),
     #[error("source patch application failed: {0}")]
@@ -106,6 +108,39 @@ pub struct SourceAuthorizationProvenance {
     /// Scoped opaque attribution to the active in-process Engine capability.
     /// This digest is provenance, not an independently usable capability.
     pub capability_reference: Digest,
+}
+
+/// Optional selection among installed policy-owned definitions. This cannot
+/// remove mandatory checks, alter definitions or widen execution grants.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SourceAttemptOptions {
+    /// At most 4096 unique IDs from the installed registry. Structurally
+    /// oversized options are rejected before an idempotency key is retained.
+    pub optional_checks: BTreeSet<CheckId>,
+}
+
+impl SourceAttemptOptions {
+    fn validate(&self) -> Result<(), SourceAttemptError> {
+        if self.optional_checks.len() > 4096 {
+            return Err(SourceAttemptError::InvalidOptions);
+        }
+        Ok(())
+    }
+
+    fn request_digest(&self, patch: SourcePatchId) -> Digest {
+        // Preserve the published empty-options operation identity. Nonempty
+        // selections use a separate domain and bind every sorted CheckId.
+        if self.optional_checks.is_empty() {
+            return patch.0;
+        }
+        let mut c = Canonical::default();
+        c.digest(patch.0);
+        c.u64(self.optional_checks.len() as u64);
+        for id in &self.optional_checks {
+            c.str(id.as_str());
+        }
+        c.finish("celetixo/source-attempt-request/v1")
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -257,8 +292,8 @@ pub(super) struct SourceAttemptRecord {
     pub(super) application: AppliedSourcePatch,
     pub(super) patch: SourcePatch,
     pub(super) state: SourceAttemptState,
-    pub(super) owner_token: u64,
-    pub(super) executor_token: Option<u64>,
+    pub(super) owner_capability: u64,
+    pub(super) executor_capability: Option<u64>,
     pub(super) evidence: Option<SourceEvidenceId>,
     pub(super) events: Vec<SourceAttemptEvent>,
 }
@@ -291,7 +326,7 @@ impl SourceAttemptRecord {
             admission: self.admission.clone(),
             state: self.state,
             executor: self
-                .executor_token
+                .executor_capability
                 .and_then(|token| db.source_executors.get(&token))
                 .map(|grant| grant.principal.clone()),
             evidence: self.evidence,
@@ -304,7 +339,7 @@ impl SourceAttemptRecord {
 pub(super) struct RecordedSourceOperation {
     request: Digest,
     attempt: SourceAttemptId,
-    owner_token: u64,
+    owner_capability: u64,
     outcome: Result<(), EngineError>,
 }
 
@@ -417,7 +452,7 @@ impl Administrator {
             .active = false;
         let now = db.now;
         for record in db.source_attempts.values_mut() {
-            if record.executor_token == Some(executor.token) && !record.state.is_terminal() {
+            if record.executor_capability == Some(executor.token) && !record.state.is_terminal() {
                 record.transition(now, SourceAttemptState::Cancelled, "executor grant revoked")?;
             }
         }
@@ -521,6 +556,23 @@ impl Engine {
         patch: SourcePatch,
         key: IdempotencyKey,
     ) -> Result<SourceAdmission, EngineError> {
+        self.admit_source_attempt_with_options(
+            session,
+            scope,
+            patch,
+            SourceAttemptOptions::default(),
+            key,
+        )
+    }
+
+    pub fn admit_source_attempt_with_options(
+        &self,
+        session: &Session,
+        scope: &Scope,
+        patch: SourcePatch,
+        options: SourceAttemptOptions,
+        key: IdempotencyKey,
+    ) -> Result<SourceAdmission, EngineError> {
         let mut db = self.store.lock()?;
         self.authorize(&db, session, scope, Permission::Execute)?;
         // An unauthorized caller cannot reserve another principal's attempt
@@ -542,10 +594,13 @@ impl Engine {
         {
             return Err(EngineError::InvalidLease);
         }
+        // Structurally invalid options reserve neither an attempt identity nor
+        // an idempotency key, like a patch rejected before construction.
+        options.validate()?;
         let operation_key = (scope.clone(), key);
-        let request = patch.id().0;
+        let request = options.request_digest(patch.id());
         if let Some(previous) = db.source_operations.get(&operation_key) {
-            if previous.owner_token != session.token {
+            if previous.owner_capability != session.token {
                 return Err(EngineError::Unauthorized);
             }
             if previous.request != request {
@@ -556,7 +611,7 @@ impl Engine {
                 .source_attempts
                 .get(&(scope.clone(), previous.attempt.clone()))
                 .ok_or(EngineError::NotFound)?;
-            if record.owner_token != session.token {
+            if record.owner_capability != session.token {
                 return Err(EngineError::Unauthorized);
             }
             return Ok(record.admission.clone());
@@ -568,7 +623,7 @@ impl Engine {
         {
             Err(SourceAttemptError::AttemptIdentity.into())
         } else {
-            Self::admit_source_attempt_locked(&mut db, session, scope, patch)
+            Self::admit_source_attempt_locked(&mut db, session, scope, patch, options)
         };
         if let Err(error) = &result
             && !db.source_attempts.contains_key(&identity)
@@ -601,7 +656,7 @@ impl Engine {
             RecordedSourceOperation {
                 request,
                 attempt: binding.source_attempt,
-                owner_token: session.token,
+                owner_capability: session.token,
                 outcome: result.as_ref().map(|_| ()).map_err(Clone::clone),
             },
         );
@@ -613,6 +668,7 @@ impl Engine {
         session: &Session,
         scope: &Scope,
         patch: SourcePatch,
+        options: SourceAttemptOptions,
     ) -> Result<SourceAdmission, EngineError> {
         let binding = patch.binding();
         let context = source_context(db, scope, &binding.transaction, session.token)?;
@@ -707,7 +763,7 @@ impl Engine {
                 declared_checks: tx.intent.required_checks.clone(),
                 impact_checks: impact.justified_checks,
                 invariants,
-                optional_checks: BTreeSet::new(),
+                optional_checks: options.optional_checks,
             },
         )
         .map_err(SourceAttemptError::from)?;
@@ -738,8 +794,8 @@ impl Engine {
             application,
             patch,
             state: SourceAttemptState::Admitted,
-            owner_token: session.token,
-            executor_token: None,
+            owner_capability: session.token,
+            executor_capability: None,
             evidence: None,
             events: vec![SourceAttemptEvent {
                 sequence: 0,
@@ -801,7 +857,7 @@ impl Engine {
             .source_attempts
             .get_mut(&key)
             .ok_or(EngineError::NotFound)?;
-        if record.executor_token.is_some() {
+        if record.executor_capability.is_some() {
             return Err(SourceAttemptError::AlreadyClaimed.into());
         }
         record.transition(
@@ -809,7 +865,7 @@ impl Engine {
             SourceAttemptState::Patching,
             "trusted executor claimed attempt",
         )?;
-        record.executor_token = Some(executor.token());
+        record.executor_capability = Some(executor.token());
         Ok(db.source_attempts[&key].view(&db))
     }
 
@@ -991,7 +1047,7 @@ pub(super) fn validate_executor_for_admission(
             return Err(SourceAttemptError::UntrustedExecutor.into());
         }
     }
-    if require_claim && record.executor_token != Some(executor.token) {
+    if require_claim && record.executor_capability != Some(executor.token) {
         return Err(SourceAttemptError::UntrustedExecutor.into());
     }
     Ok(())
@@ -1014,7 +1070,7 @@ fn validate_record_current(db: &Database, record: &SourceAttemptRecord) -> Resul
         db,
         &record.admission.binding.scope,
         &record.admission.binding.transaction,
-        record.owner_token,
+        record.owner_capability,
     )?;
     if context.policy != record.admission.policy
         || context.analysis_artifact != record.admission.binding.analysis_artifact
@@ -1032,7 +1088,7 @@ fn source_context(
     db: &Database,
     scope: &Scope,
     id: &TransactionId,
-    owner_token: u64,
+    owner_capability: u64,
 ) -> Result<SourcePatchContext, EngineError> {
     let tx = db
         .transactions
@@ -1040,7 +1096,7 @@ fn source_context(
         .ok_or(EngineError::NotFound)?;
     let owner = db
         .grants
-        .get(&owner_token)
+        .get(&owner_capability)
         .ok_or(EngineError::Unauthorized)?;
     if !owner.active
         || owner.scope != *scope
@@ -1053,7 +1109,7 @@ fn source_context(
         return Err(SourceAttemptError::InvalidState.into());
     }
     let lease = tx.lease.as_ref().ok_or(EngineError::InvalidLease)?;
-    if lease.owner != owner_token || !lease_active(db, lease) {
+    if lease.owner != owner_capability || !lease_active(db, lease) {
         return Err(EngineError::InvalidLease);
     }
     let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
@@ -1205,7 +1261,7 @@ fn reconcile_attempt(db: &mut Database, key: &(Scope, SourceAttemptId)) -> Resul
     if record.state.is_terminal() {
         return Ok(());
     }
-    if let Some(token) = record.executor_token {
+    if let Some(token) = record.executor_capability {
         let outcome = match db.source_executors.get(&token) {
             Some(grant) if grant.active && grant.expires_at_ms > db.now => None,
             Some(grant) if grant.expires_at_ms <= db.now => Some(SourceAttemptState::TimedOut),

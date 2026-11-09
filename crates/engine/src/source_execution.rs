@@ -602,14 +602,7 @@ impl SourceExecutionPolicy {
         {
             return Err(SourcePlanError::BindingMismatch);
         }
-        if !snapshot
-            .manifest()
-            .inclusion_policy
-            .excluded_paths
-            .is_empty()
-        {
-            return Err(SourcePlanError::IncompleteCapture);
-        }
+        let exclusions = &snapshot.manifest().inclusion_policy.excluded_paths;
         let environment = &snapshot.manifest().environment;
         match self.input.capture.consistency {
             SourceCaptureConsistency::ImmutableGitTree => {
@@ -628,11 +621,13 @@ impl SourceExecutionPolicy {
                         != Some(&self.input.capture.uncertainty.to_string())
                     || self.input.capture.uncertainty
                         != SourceCaptureBinding::empty_uncertainty_digest()
-                    || !snapshot
-                        .manifest()
-                        .inclusion_policy
-                        .excluded_paths
-                        .is_empty()
+                    // Git administration is not part of a selected immutable
+                    // tree. This exact capture-producer explanation is the
+                    // sole recognized non-operational exclusion; arbitrary
+                    // source exclusions still make capture incomplete.
+                    || exclusions.iter().any(|(path, reason)| {
+                        path != ".git" || reason != "GitTree source consists of the selected immutable commit, not Git administration or current workspace"
+                    })
                 {
                     return Err(SourcePlanError::IncompleteCapture);
                 }
@@ -642,6 +637,7 @@ impl SourceExecutionPolicy {
                     .manifest()
                     .provenance
                     .starts_with("celetixo/reference-source/")
+                    || !exclusions.is_empty()
                     || environment
                         .keys()
                         .any(|key| key.starts_with("celetixo.capture."))

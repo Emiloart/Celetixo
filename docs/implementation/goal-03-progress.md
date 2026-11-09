@@ -178,3 +178,71 @@ Source evidence admission, isolated execution and filesystem materialization are
 not enabled by this commit. The legacy source integer-patch, revalidation and
 commit paths still return `SourceMutationUnsupported`. No executor may seal a
 successful Engine result until the later persisted-evidence gate is integrated.
+
+
+The exact published 03.2 tree passed 245 workspace tests, formatting, strict
+all-target Clippy and workspace example builds with the locked offline commands
+above. The opt-in real language-server test was not repeated locally. The
+milestone is `c23d940c4a31d2d86930ff779ecb79d32be33a42`; both Git attribution
+identities are the established human contributor.
+
+## 03.3: repository configuration and optional checks
+
+`celetixo_repository::harness::ConfiguredHarness` reads an ordinary file from
+an exact immutable snapshot. It accepts bounded, strict version-1 JSON:
+
+```json
+{
+  "version": 1,
+  "checks": [
+    {"id": "go-syntax", "definition": "<64 lowercase hexadecimal digits>"}
+  ]
+}
+```
+
+The example address is a placeholder for an exact approved check-definition
+digest, not an executable configuration. The trusted embedding supplies the
+registry. Repository configuration selects exact definitions; it cannot supply
+commands, install tools, expand network/credential grants, change resources or
+install Engine policy. Unknown or duplicate fields, duplicate IDs, missing
+checks, substituted definitions and dependency cycles reject.
+
+The adapter records selected roots separately from transitive prerequisites,
+orders prerequisites deterministically and binds the raw configuration content
+into each configured definition. Even a whitespace change changes its identity.
+The plan validates this input against the candidate, so a patch changing the
+configuration cannot reuse the base configuration's checks. Applying the adapter
+to policy input preserves mandatory/invariant requirements and does not confer
+policy installation authority.
+
+`SourceAttemptOptions` and `admit_source_attempt_with_options` let an authorized
+transaction owner request additional approved optional checks. Their sorted IDs
+are part of admission idempotency; changing that set requires a new request.
+Empty options retain the existing API and request identity. The Engine still
+derives mandatory checks independently, promotes prerequisites reached by a
+mandatory check and rejects attempts to label a required check as optional.
+The request is bounded to 4096 IDs before hashing or reserving an identity.
+
+Tests cover strict configuration decoding and budgets, raw-byte configuration
+identity, trusted definition selection, deterministic dependency closure,
+mandatory-check preservation, optional-request identity and rejection behavior,
+and candidate-input mismatches. An actual immutable Git-tree fixture containing
+TypeScript, Python, Go and Rust is parsed and configured, but its real structural
+analysis remains incomplete and the Engine rejects execution. Positive
+admission tests continue to use explicitly finite reference analysis. No
+language-wide execution support is inferred from configuration or syntax parsing.
+
+Actual isolated tool execution, artifact persistence, evidence admission and
+integrated recovery remain later milestones. Cache key construction remains
+available with reuse disabled.
+
+
+The 03.2 CI run passed tests, strict linting, the actual rust-analyzer probe and
+builds, then correctly refused self-inspection: the newly added `credentials.rs`
+source and test filenames matched the existing sensitive-file rule. Private
+capability-handle initializer names also triggered the finite material heuristic;
+those fields now use capability terminology. The shared
+module now lives in `input_admission.rs`, retaining its public `credentials`
+module API through an explicit path attribute. This changes neither credential
+classification nor capture exceptions. The inspection step is repeated against
+the exact next staged commit before publication.
