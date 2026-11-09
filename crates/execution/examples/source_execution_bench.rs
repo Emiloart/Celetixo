@@ -55,12 +55,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .register_source_artifact_store(fixture::scope(), artifacts.clone())?;
         let mut clock = MonotonicEngineClock::new(f.admin.clone());
         let sample = {
+            let workspaces = fixture::workspace_registry();
             let coordinator = SourceRunCoordinator {
                 engine: &f.engine,
                 executor: &f.executor,
                 backend: &backend,
                 artifacts: artifacts.as_ref(),
                 storage: &storage,
+                workspaces: &workspaces,
             };
             let result = coordinator.execute(
                 SourceRunRequest {

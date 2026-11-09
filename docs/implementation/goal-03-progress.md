@@ -346,8 +346,38 @@ checks to their exact source-file digests and reviewed tool closure. A benchmark
 runner has passed a single smoke invocation; representative measurements and
 performance targets are not claimed by that smoke run.
 
-Remaining work includes ownership recovery when killed during T0 source copying,
-the neutral executor-result interface audit, representative benchmark cases and
-raw results, clean-checkout/CI validation and the complete requirement-by-requirement
-acceptance audit. T2/T3, unvalidated language harnesses and source publication
+At 03.4a publication, remaining work included source-copy hard-kill ownership
+recovery, the neutral executor-result interface audit, representative benchmarks
+and the final clean-checkout/CI acceptance audit. The following milestone
+addresses ownership and the common executor interface. T2/T3, unvalidated language harnesses and source publication
 remain unsupported. No incomplete record may authorize a commit.
+
+
+## 03.4b: common execution facts and scoped source-copy recovery
+
+The coordinator now consumes backend-neutral check facts. OCI-specific projection
+and error translation stay in the OCI adapter. Forged bindings and absent actual
+observations cannot become passing evidence. The isolated backend requires a
+registered workspace whose ownership was durable before copying began.
+
+A scoped persistent workspace registry accounts for pending/live/retained copy
+quotas. Recovery skips live owners, retains runtime-latched sources and rejects
+changed identities, scopes and cleanup grants. Actual SIGKILL tests cover four
+allocation/copy publication intervals and recovery after reference Engine loss.
+The separate runtime claim protocol is exercised before and after launch claim
+publication as well as after actual command start. These are component recovery
+proofs; the complete Goal 03 benchmark and acceptance audit remain open.
+
+Milestone 03.4a is published as `c7edb05ed7b4070418bde5513d06efa78c1053c4`.
+Its [GitHub Actions run](https://github.com/Emiloart/Celetixo/actions/runs/42543267592)
+passed. Its validation directory remains historical evidence for that exact
+source. The next component's test output is recorded separately.
+
+The exact component source passed 48 ordinary execution tests, including the
+four hard-kill allocation/copy checkpoints, and all nine actual OCI groups.
+Formatting and strict all-target execution Clippy passed. The
+[recovery validation metadata](goal-03-recovery-validation/checks.json) and
+[raw command output](goal-03-recovery-validation/checks.log) record source hashes,
+commands, current kernel and the actually used tool-closure hashes. Tool origin
+and signature records remain in the preceding component's
+[toolchain provenance](goal-03-execution-validation/toolchain.json).

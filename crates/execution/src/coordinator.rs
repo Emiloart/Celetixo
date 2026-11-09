@@ -2,10 +2,14 @@
 //! isolated checks and persisted evidence. A successful receipt is evidence
 //! admission only; this module cannot publish source or grant commit authority.
 use crate::artifacts::LocalSourceArtifactStore;
+pub use crate::backend::VerificationBackend;
+#[cfg(test)]
+use crate::backend::sealed;
+use crate::backend::{BackendCheckResult, BackendError, ExecutionGuard, GuardDecision};
 use crate::materialize::{
     CleanupOutcome, MaterializationError, MaterializationReport, PrivateWorkspace,
 };
-use crate::oci::{ExecutionGuard, GuardDecision, OciBackend, OciCheckRecord, OciError};
+use crate::workspaces::{WorkspaceError, WorkspaceRegistry};
 use celetixo_engine::engine::{
     Administrator, Engine, EngineError, SourceAdmission, SourceArtifactStoreCapability,
     SourceAttemptState, SourceEvidenceFault, SourceEvidenceReceipt, SourceExecutorCapability,
@@ -17,51 +21,11 @@ use celetixo_engine::source_evidence::{
     SourceCheckRecord, SourceCheckRecordInput, SourceCleanup, SourceEvidence,
     SourceEvidenceBinding, SourceEvidenceError, SourceResourceUsage, SourceTermination,
 };
-use celetixo_engine::source_execution::{
-    BackendIdentity, SourceCheckDefinition, SourceExecutionPolicy,
-};
+use celetixo_engine::source_execution::{SourceCheckDefinition, SourceExecutionPolicy};
 use celetixo_engine::source_patch::SourcePatch;
 use std::collections::BTreeMap;
 use std::time::Instant;
 use thiserror::Error;
-
-mod sealed {
-    pub trait Backend {}
-}
-
-/// Implementations live in this crate and must revalidate the Engine before
-/// releasing a command and throughout its lifetime. No worker-supplied runner
-/// or host-command fallback can be attached to this coordinator.
-pub trait VerificationBackend: sealed::Backend {
-    fn identity(&self) -> &BackendIdentity;
-    fn execute(
-        &self,
-        engine: &Engine,
-        executor: &SourceExecutorCapability,
-        admission: &SourceAdmission,
-        workspace: &mut PrivateWorkspace,
-        check: &SourceCheckDefinition,
-        guard: &mut dyn ExecutionGuard,
-    ) -> Result<OciCheckRecord, OciError>;
-}
-
-impl sealed::Backend for OciBackend {}
-impl VerificationBackend for OciBackend {
-    fn identity(&self) -> &BackendIdentity {
-        self.identity()
-    }
-    fn execute(
-        &self,
-        engine: &Engine,
-        executor: &SourceExecutorCapability,
-        admission: &SourceAdmission,
-        workspace: &mut PrivateWorkspace,
-        check: &SourceCheckDefinition,
-        guard: &mut dyn ExecutionGuard,
-    ) -> Result<OciCheckRecord, OciError> {
-        self.execute(engine, executor, admission, workspace, check, guard)
-    }
-}
 
 /// One trusted clock driver per reference Engine store. Retain it across runs:
 /// elapsed idle, materialization, execution and storage time all count toward
@@ -126,7 +90,9 @@ pub enum SourceRunError {
     #[error(transparent)]
     Materialization(#[from] MaterializationError),
     #[error(transparent)]
-    Backend(#[from] OciError),
+    Workspace(#[from] WorkspaceError),
+    #[error(transparent)]
+    Backend(#[from] BackendError),
     #[error(transparent)]
     Artifact(#[from] SourceArtifactError),
     #[error(transparent)]
@@ -182,6 +148,7 @@ pub struct SourceRunCoordinator<'a, B: VerificationBackend> {
     pub backend: &'a B,
     pub artifacts: &'a LocalSourceArtifactStore,
     pub storage: &'a SourceArtifactStoreCapability,
+    pub workspaces: &'a WorkspaceRegistry,
 }
 
 impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
@@ -211,6 +178,7 @@ impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
                 || self.backend.identity() != self.executor.backend()
                 || self.artifacts.scope() != &admission.binding().scope
                 || self.artifacts.retention_policy() != admission.retention_policy()
+                || self.workspaces.scope() != &admission.binding().scope
             {
                 return Err(SourceRunError::Binding(
                     "patch, base, policy, backend or artifact store",
@@ -245,8 +213,13 @@ impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
 
         let mut timings = SourceRunTimings::default();
         let phase = Instant::now();
-        let workspace =
-            PrivateWorkspace::materialize_with_hook(request.base, request.patch, |_| {
+        let workspace = self.workspaces.materialize(
+            self.engine,
+            self.executor,
+            admission,
+            request.base,
+            request.patch,
+            |_| {
                 poll_guard(guard)
                     .and_then(|()| {
                         self.engine
@@ -254,7 +227,8 @@ impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
                         Ok(())
                     })
                     .map_err(std::io::Error::other)
-            });
+            },
+        );
         timings.materialization_us = micros(phase);
         let mut workspace = workspace.map_err(|cause| {
             self.failure(
@@ -418,7 +392,12 @@ impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
                     definition,
                     guard,
                 )?;
-                PendingCheck::executed(admission, definition, raw)?
+                PendingCheck::executed(
+                    admission,
+                    definition,
+                    self.backend.execution_identity(admission, definition),
+                    raw,
+                )?
             };
             bytes = bytes
                 .checked_add(pending.retained_bytes()?)
@@ -482,15 +461,13 @@ impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
                         .iter()
                         .find(|r| r.name == "isolation-record")
                 })
+                && let Some(bytes) = pending.isolation_record.as_deref()
             {
                 self.revalidate(admission, guard)?;
                 input.artifacts.insert(
                     "isolation-record".into(),
-                    self.artifacts.put_bytes(
-                        "isolation-record",
-                        &requirement.media_type,
-                        &pending.isolation_record,
-                    )?,
+                    self.artifacts
+                        .put_bytes("isolation-record", &requirement.media_type, bytes)?,
                 );
             }
             let bytes = SourceCheckRecord::new(input.clone())?.execution_bytes();
@@ -627,86 +604,59 @@ struct PendingCheck {
     input: SourceCheckRecordInput,
     stdout: Vec<u8>,
     stderr: Vec<u8>,
-    isolation_record: Vec<u8>,
+    isolation_record: Option<Vec<u8>>,
 }
 
 impl PendingCheck {
     fn executed(
         admission: &SourceAdmission,
         definition: &SourceCheckDefinition,
-        raw: OciCheckRecord,
+        expected_execution: celetixo_engine::ids::Digest,
+        result: BackendCheckResult,
     ) -> Result<Self, SourceRunError> {
-        if raw.execution != crate::oci::execution_identity(admission, definition)
-            || raw.rootfs != definition.input().toolchain.runtime_closure
-            || raw.check != *definition.id()
-            || raw.definition != definition.digest()
-            || raw.plan != admission.plan().id()
-            || raw.snapshot != admission.resulting_snapshot()
-            || raw.manifest != admission.resulting_manifest()
-            || raw.backend != definition.input().backend
+        let i = &result.record;
+        let policy = definition.input();
+        if result.execution != expected_execution
+            || i.admission != admission.id()
+            || i.plan != admission.plan().id()
+            || i.candidate != admission.resulting_snapshot()
+            || i.check != *definition.id()
+            || i.definition != definition.digest()
+            || i.backend != policy.backend.digest()
+            || i.executable != policy.toolchain.executable_digest
+            || i.runtime_closure != policy.toolchain.runtime_closure
+            || i.environment != policy.check.environment()
+            || i.limits != policy.resources
+            || !i.artifacts.is_empty()
         {
             return Err(SourceRunError::Binding("backend execution receipt"));
         }
-        // The control observations are retained as bytes, not only as a digest
-        // pointing at a process-local journal. The OCI result also binds that
-        // observation digest to the exact command and admission.
-        let execution = serde_json::from_slice::<serde_json::Value>(&raw.canonical_bytes())
-            .map_err(|_| SourceRunError::Binding("backend record encoding"))?;
-        let isolation = raw
-            .isolation
-            .as_ref()
-            .map(|bytes| {
-                serde_json::from_slice::<serde_json::Value>(bytes)
-                    .map_err(|_| SourceRunError::Binding("backend isolation encoding"))
-            })
-            .transpose()?;
-        if raw.outcome == (SourceCheckOutcome::Exited { code: 0 }) && isolation.is_none() {
+        if i.outcome == (SourceCheckOutcome::Exited { code: 0 }) && result.isolation.is_none() {
             return Err(SourceRunError::Binding(
                 "successful check lacks effective isolation observations",
             ));
         }
-        let isolation_record = serde_json::to_vec(&serde_json::json!({
-            "version":1,"execution":execution,"effective_isolation":isolation,
-        }))
-        .expect("isolation artifact JSON");
-        let policy = definition.input();
+        let isolation_record = match result.isolation {
+            Some(observation) => {
+                let expected = policy
+                    .expected_artifacts
+                    .iter()
+                    .find(|r| r.name == "isolation-record")
+                    .ok_or(SourceRunError::Binding("unplanned isolation record"))?;
+                if observation.media_type != expected.media_type
+                    || observation.bytes.len() as u64 > expected.max_bytes
+                {
+                    return Err(SourceRunError::Binding("backend isolation artifact"));
+                }
+                Some(observation.bytes)
+            }
+            None => None,
+        };
+        SourceCheckRecord::new(result.record.clone())?;
         Ok(Self {
-            input: SourceCheckRecordInput {
-                admission: admission.id(),
-                plan: admission.plan().id(),
-                candidate: admission.resulting_snapshot(),
-                check: definition.id().clone(),
-                definition: definition.digest(),
-                backend: policy.backend.digest(),
-                executable: policy.toolchain.executable_digest,
-                runtime_closure: policy.toolchain.runtime_closure,
-                environment: policy.check.environment(),
-                limits: policy.resources,
-                started_at_ms: raw.started_at_ms,
-                finished_at_ms: raw.finished_at_ms,
-                outcome: raw.outcome,
-                usage: raw.usage,
-                post_source_manifest: raw.post_source_manifest,
-                termination: if raw.termination_confirmed {
-                    SourceTermination::Confirmed
-                } else {
-                    SourceTermination::Unknown {
-                        reason: "backend could not establish whole-process-tree termination".into(),
-                    }
-                },
-                cleanup: match raw.cleanup {
-                    CleanupOutcome::Removed => SourceCleanup::Confirmed,
-                    CleanupOutcome::Quarantined { reason, .. } => {
-                        SourceCleanup::Quarantined { reason }
-                    }
-                },
-                stdout_truncated: raw.stdout_truncated,
-                stderr_truncated: raw.stderr_truncated,
-                artifacts: BTreeMap::new(),
-                diagnostics: raw.diagnostics,
-            },
-            stdout: raw.stdout,
-            stderr: raw.stderr,
+            input: result.record,
+            stdout: result.stdout,
+            stderr: result.stderr,
             isolation_record,
         })
     }
@@ -752,7 +702,7 @@ impl PendingCheck {
             },
             stdout: vec![],
             stderr: vec![],
-            isolation_record: br#"{"version":1,"kind":"not-executed"}"#.to_vec(),
+            isolation_record: None,
         }
     }
 
@@ -760,7 +710,7 @@ impl PendingCheck {
         [
             self.stdout.len(),
             self.stderr.len(),
-            self.isolation_record.len(),
+            self.isolation_record.as_ref().map_or(0, Vec::len),
         ]
         .into_iter()
         .chain(self.input.diagnostics.iter().map(String::len))

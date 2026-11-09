@@ -231,7 +231,9 @@ mod real {
             policy: _,
         } = admitted_command(backend, candidate, executable, args, limits);
         engine.claim_source_attempt(&executor, &admission).unwrap();
-        let workspace = PrivateWorkspace::materialize(&base, &patch).unwrap();
+        let workspace = workspace_registry()
+            .materialize(&engine, &executor, &admission, &base, &patch, |_| Ok(()))
+            .unwrap();
         engine
             .mark_source_patch_applied(&executor, &admission)
             .unwrap();
@@ -589,6 +591,148 @@ mod real {
 
     #[test]
     #[ignore = "requires reviewed pinned OCI tooling and delegated Linux cgroupv2"]
+    fn real_controller_hard_kill_before_and_after_launch_claim_recovers_without_execution() {
+        use celetixo_execution::backend::ExecutionCheckpoint;
+        use celetixo_execution::oci::execution_identity;
+        use std::io;
+        use std::time::Duration;
+        let backend = real_backend();
+        if let Some(root) = std::env::var_os("CELETIXO_CLAIM_KILL_ROOT") {
+            let root = PathBuf::from(root);
+            let after = std::env::var("CELETIXO_CLAIM_KILL_AFTER").unwrap() == "true";
+            let mut f = fixture(
+                &backend,
+                b"package main\nfunc answer() int { return 42 }\n",
+                &["-e", "/src/main.go"],
+            );
+            struct Pause {
+                point: ExecutionCheckpoint,
+                path: PathBuf,
+                metadata: Vec<u8>,
+            }
+            impl ExecutionGuard for Pause {
+                fn revalidate(&mut self) -> Result<GuardDecision, String> {
+                    Ok(GuardDecision::Continue)
+                }
+                fn checkpoint(&mut self, point: ExecutionCheckpoint) -> Result<(), String> {
+                    if point == self.point {
+                        fs::write(&self.path, &self.metadata).map_err(|e| e.to_string())?;
+                        loop {
+                            std::thread::park();
+                        }
+                    }
+                    Ok(())
+                }
+            }
+            let mut pause = Pause {
+                point: if after { ExecutionCheckpoint::AfterClaimPublication } else { ExecutionCheckpoint::BeforeClaimPublication },
+                path: root.join("ready.json"),
+                metadata: serde_json::to_vec(&serde_json::json!({"execution":execution_identity(&f.admission,&f.definition).to_string(),"source_root":f.workspace.source_path().parent().unwrap()})).unwrap(),
+            };
+            let _ = backend.execute(
+                &f.engine,
+                &f.executor,
+                &f.admission,
+                &mut f.workspace,
+                &f.definition,
+                &mut pause,
+            );
+            panic!("launch claim checkpoint was missed");
+        }
+        struct KillOnDrop(std::process::Child);
+        impl Drop for KillOnDrop {
+            fn drop(&mut self) {
+                let _ = self.0.kill();
+                let _ = self.0.wait();
+            }
+        }
+        for after in [false, true] {
+            let directory = tempfile::tempdir().unwrap();
+            let ready = directory.path().join("ready.json");
+            let mut child = KillOnDrop(std::process::Command::new(std::env::current_exe().unwrap())
+                .args(["--ignored","--exact","real::real_controller_hard_kill_before_and_after_launch_claim_recovers_without_execution"])
+                .env("CELETIXO_CLAIM_KILL_ROOT",directory.path())
+                .env("CELETIXO_CLAIM_KILL_AFTER",after.to_string())
+                .env("TMPDIR",directory.path())
+                .stdout(std::process::Stdio::null()).stderr(std::process::Stdio::inherit()).spawn().unwrap());
+            let deadline = Instant::now() + Duration::from_secs(15);
+            let metadata: serde_json::Value = loop {
+                if let Ok(bytes) = fs::read(&ready)
+                    && let Ok(value) = serde_json::from_slice(&bytes)
+                {
+                    break value;
+                }
+                assert!(
+                    child.0.try_wait().unwrap().is_none(),
+                    "controller exited before checkpoint"
+                );
+                assert!(Instant::now() < deadline, "controller checkpoint timed out");
+                std::thread::sleep(Duration::from_millis(5));
+            };
+            let id = metadata["execution"].as_str().unwrap();
+            let mut bytes = [0_u8; 32];
+            for (index, byte) in bytes.iter_mut().enumerate() {
+                *byte = u8::from_str_radix(&id[index * 2..index * 2 + 2], 16).unwrap();
+            }
+            let execution = Digest::from_bytes(bytes);
+            let source_root = PathBuf::from(metadata["source_root"].as_str().unwrap());
+            let claim = home().join("runs").join(format!("execution-{execution}"));
+            assert_eq!(claim.exists(), after);
+            assert!(source_root.join("source/main.go").is_file());
+            if after {
+                assert!(launched_pid(&claim).is_none());
+            }
+            child.0.kill().unwrap();
+            use std::os::unix::process::ExitStatusExt;
+            assert_eq!(child.0.wait().unwrap().signal(), Some(9));
+            let (store, admin) = InMemoryStore::new();
+            let engine = Engine::new(store);
+            let grant = |identity| {
+                admin
+                    .grant_source_cleanup(
+                        PrincipalId::new("hard-kill-recovery").unwrap(),
+                        scope(),
+                        identity,
+                        10_000,
+                    )
+                    .unwrap()
+            };
+            let cleanup = grant(backend.identity().digest());
+            let result = backend
+                .reconcile_execution(&engine, &cleanup, &scope(), execution)
+                .unwrap();
+            assert!(result.termination_confirmed, "{result:?}");
+            assert_eq!(result.cleanup, CleanupOutcome::Removed);
+            let second = backend
+                .reconcile_execution(&engine, &cleanup, &scope(), execution)
+                .unwrap();
+            assert!(second.termination_confirmed);
+            assert_eq!(second.cleanup, CleanupOutcome::Removed);
+            if after {
+                assert!(
+                    backend
+                        .recover_execution_record(&engine, &cleanup, &scope(), execution)
+                        .unwrap()
+                        .is_none()
+                );
+                assert!(!source_root.exists());
+            } else {
+                assert!(!claim.exists());
+                let registry = workspace_registry();
+                let report = registry
+                    .recover(&engine, &grant(registry.identity()))
+                    .unwrap();
+                assert_eq!(report.removed, vec![source_root.clone()]);
+                assert!(report.live.is_empty() && report.quarantined.is_empty());
+            }
+            assert!(
+                matches!(fs::symlink_metadata(&source_root),Err(e) if e.kind()==io::ErrorKind::NotFound)
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "requires reviewed pinned OCI tooling and delegated Linux cgroupv2"]
     fn real_rootless_oci_controller_loss_preserves_independent_deadline() {
         use celetixo_execution::oci::execution_identity;
         let backend = real_backend();
@@ -854,12 +998,14 @@ mod real {
                 .unwrap();
             let mut clock = MonotonicEngineClock::new(f.admin.clone());
             let (envelope, bytes) = {
+                let workspaces = workspace_registry();
                 let coordinator = SourceRunCoordinator {
                     engine: &f.engine,
                     executor: &f.executor,
                     backend: &backend,
                     artifacts: artifacts.as_ref(),
                     storage: &storage,
+                    workspaces: &workspaces,
                 };
                 let request = || SourceRunRequest {
                     base: &f.base,

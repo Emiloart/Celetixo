@@ -74,33 +74,7 @@ pub struct OciConfiguration {
     pub runtime_environment: BTreeMap<String, String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GuardDecision {
-    Continue,
-    Cancelled,
-    Expired,
-    Revoked,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ExecutionCheckpoint {
-    BeforeClaimPublication,
-    AfterClaimPublication,
-    BeforeRecordPublication,
-    BeforeControlValidation,
-    AfterRecordPublication,
-}
-
-/// Implemented by the trusted Engine integration. A worker must not choose its
-/// own guard or interpret this callback as a transferable authorization token.
-pub trait ExecutionGuard {
-    fn revalidate(&mut self) -> Result<GuardDecision, String>;
-    /// Trusted fault-injection/observability boundary. An error can only narrow
-    /// execution; it never substitutes for intrinsic Engine revalidation.
-    fn checkpoint(&mut self, _checkpoint: ExecutionCheckpoint) -> Result<(), String> {
-        Ok(())
-    }
-}
+pub use crate::backend::{ExecutionCheckpoint, ExecutionGuard, GuardDecision};
 
 #[derive(Debug, Error)]
 pub enum OciError {
@@ -302,6 +276,15 @@ impl OciBackend {
             )
             .as_bytes(),
         );
+        for bytes in [
+            include_bytes!("workspaces.rs").as_slice(),
+            include_bytes!("backend.rs").as_slice(),
+            include_bytes!("oci_adapter.rs").as_slice(),
+        ] {
+            profile.extend_from_slice(
+                Digest::of("celetixo/execution-boundary-source/v1", bytes).as_bytes(),
+            );
+        }
         profile.extend_from_slice(b"rootless-v3:readonly-root-source;private-namespaces;tmpfs-scratch;empty-caps;no-new-privileges;no-network;bounded-rlimits-cgroupv2;systemd-runtime-max-sigkill;ready-release;atomic-owned-journal;durable-cleanup-only-confirmation;serialized-bounded-capacity");
         profile.extend_from_slice(fs::read("/proc/sys/kernel/osrelease")?.as_slice());
         let identity = BackendIdentity {
@@ -558,6 +541,9 @@ impl OciBackend {
         guard: &mut dyn ExecutionGuard,
     ) -> Result<OciCheckRecord, OciError> {
         engine_continue(engine, executor, admission)?;
+        workspace
+            .validate_registered()
+            .map_err(|_| OciError::Binding)?;
         let plan = admission.plan();
         if executor.backend() != self.identity()
             || admission.application_report() != workspace.report().application()
@@ -1124,6 +1110,7 @@ mod linux {
     fn cleanup_retained_source(
         journal: &Value,
         claim: &Path,
+        scope: &Scope,
         authorize: impl Fn() -> Result<(), OciError>,
     ) -> Result<Option<CleanupOutcome>, OciError> {
         let source_root = PathBuf::from(journal_string(journal, "source_root")?);
@@ -1136,21 +1123,6 @@ mod linux {
                 reason: reason.into(),
             })
         };
-        if source_root.parent() != Some(std::env::temp_dir().as_path())
-            || !source_root
-                .file_name()
-                .and_then(|name| name.to_str())
-                .is_some_and(|name| {
-                    name.starts_with("celetixo-source-")
-                        && name
-                            .bytes()
-                            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
-                })
-        {
-            return Err(OciError::Journal(
-                "source parent is outside materializer namespace".into(),
-            ));
-        }
         let hint = match read_owned(
             &source_root.join("execution-retention.json"),
             MAX_CONTROL as u64,
@@ -1170,10 +1142,10 @@ mod linux {
         {
             return Ok(quarantine("retained source parent identity differs"));
         }
-        let hint: Value =
+        let parsed_hint: Value =
             serde_json::from_slice(&hint).map_err(|e| OciError::Journal(e.to_string()))?;
-        if hint["version"] != 1
-            || hint["journal"] != claim.join("journal.json").to_string_lossy().as_ref()
+        if parsed_hint["version"] != 1
+            || parsed_hint["journal"] != claim.join("journal.json").to_string_lossy().as_ref()
         {
             return Ok(quarantine("source retention belongs to different work"));
         }
@@ -1182,9 +1154,19 @@ mod linux {
         if again.dev() != metadata.dev() || again.ino() != metadata.ino() {
             return Ok(quarantine("source parent changed before cleanup"));
         }
-        fs::remove_dir_all(&source_root)?;
-        File::open(std::env::temp_dir())?.sync_all()?;
-        Ok(Some(CleanupOutcome::Removed))
+        let source = crate::workspaces::RetainedSource {
+            path: &source_root,
+            scope,
+            admission: journal_string(journal, "admission")?,
+            candidate: journal_string(journal, "snapshot")?,
+            manifest: journal_string(journal, "manifest")?,
+            latch: &hint,
+        };
+        crate::workspaces::WorkspaceRegistry::cleanup_retained(source, || {
+            authorize().map_err(|e| io::Error::other(e.to_string()))
+        })
+        .map(Some)
+        .map_err(|e| OciError::Journal(e.to_string()))
     }
 
     impl OciBackend {
@@ -1443,7 +1425,8 @@ mod linux {
                 if group_empty(&group)?
                     && (stored.record.is_some() || reconciled || cleanup_confirmed)
                 {
-                    let source_cleanup = cleanup_retained_source(&journal, &claim, authorize)?;
+                    let source_cleanup =
+                        cleanup_retained_source(&journal, &claim, scope, authorize)?;
                     return Ok(OciReconciliation {
                         execution,
                         termination_confirmed: true,
@@ -1549,7 +1532,7 @@ mod linux {
             }
             fs::remove_dir_all(&root)?;
             File::open(&self.configuration.private_parent)?.sync_all()?;
-            let source_cleanup = cleanup_retained_source(&journal, &claim, authorize)?;
+            let source_cleanup = cleanup_retained_source(&journal, &claim, scope, authorize)?;
             Ok(OciReconciliation { execution, termination_confirmed: true, cleanup: source_cleanup.unwrap_or(CleanupOutcome::Removed), diagnostics: vec!["owned resources stopped and removed; no execution or evidence authority restored".into()] })
         }
 

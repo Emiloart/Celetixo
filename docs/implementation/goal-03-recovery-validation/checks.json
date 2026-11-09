@@ -1,0 +1,158 @@
+{
+  "schema": "celetixo/goal03-recovery-validation/v1",
+  "recorded_at_utc": "2026-11-09T01:34:49.700019+00:00",
+  "parent_commit": "c7edb05ed7b4070418bde5513d06efa78c1053c4",
+  "execution_source_files": {
+    "Cargo.toml": {
+      "sha256": "36209fbb5c2e13012bbd65c1a10a424c52b0103c1bb3bac4b2e5c0d459df31cd",
+      "bytes": 442
+    },
+    "Cargo.lock": {
+      "sha256": "a10923eb622c6b236fc1ea17c9eabfead2fe5fd63a6163bb5e990a5503779abc",
+      "bytes": 15827
+    },
+    "crates/execution/Cargo.toml": {
+      "sha256": "703839fbfd715b27947f8cae05be663728b2116805907b9dd972aede95e046e8",
+      "bytes": 627
+    },
+    "crates/execution/examples/source_execution_bench.rs": {
+      "sha256": "23c68c8b07540a7c9d41730e133602a7a315a434eddaa1c14243fe3dce7367fc",
+      "bytes": 8770
+    },
+    "crates/execution/src/artifacts.rs": {
+      "sha256": "2b7479eff0be7ed1fd24361887f7a877bd2c3d6443106734f8d94e1d4633c995",
+      "bytes": 28260
+    },
+    "crates/execution/src/backend.rs": {
+      "sha256": "9512cf70d94a3bfe49282294b290fb5ad02ca019d009812467c5c30a0c2e2e8d",
+      "bytes": 3406
+    },
+    "crates/execution/src/bin/celetixo-exec-init.rs": {
+      "sha256": "4968b38fab4ccb49bbe48d911cedeac18ee91e13045500721308f1207fdf2778",
+      "bytes": 6314
+    },
+    "crates/execution/src/coordinator.rs": {
+      "sha256": "c886fc387db44c690ede9aad33aebbfec2fc9ca0d43c6cd73115ef34cf410d34",
+      "bytes": 26967
+    },
+    "crates/execution/src/coordinator_tests.rs": {
+      "sha256": "016e83ac2b3df916b78d0e2e93506f2c175999c4297b6e518dfd2d904156af72",
+      "bytes": 44610
+    },
+    "crates/execution/src/lib.rs": {
+      "sha256": "10e4f4d3f416c14b6999a0511b0968b69c8ba6884d13f3c4437b1e2993aef179",
+      "bytes": 323
+    },
+    "crates/execution/src/materialize.rs": {
+      "sha256": "4cf50981ef1903ac2b8e8581a15f864d9fbc5504184ebd298174d8991a328448",
+      "bytes": 34454
+    },
+    "crates/execution/src/oci.rs": {
+      "sha256": "3a227e8e5f57786c47a083b7f3ce072e800590e743c54b1c6f3f5411dcd1a26b",
+      "bytes": 109180
+    },
+    "crates/execution/src/oci_adapter.rs": {
+      "sha256": "e75c6c999f429455fec1f624de6d93ff4fe8e64e39b2f48cbb63b11c83e246a9",
+      "bytes": 5447
+    },
+    "crates/execution/src/workspaces.rs": {
+      "sha256": "b9e9da303b30c6acadba4c1aba5f434ca3946eee600331f6601b54f91e4233e0",
+      "bytes": 30118
+    },
+    "crates/execution/tests/artifacts.rs": {
+      "sha256": "5cc99727a986282d2f959d78d7b1d750e7021a5123b600cd3ffb3960ae120c0d",
+      "bytes": 18973
+    },
+    "crates/execution/tests/materialize.rs": {
+      "sha256": "e66b0e33158036a7a0fc10c939f639fbeb610ed1a8ca1963397c1b0e20ed3d60",
+      "bytes": 17866
+    },
+    "crates/execution/tests/oci.rs": {
+      "sha256": "fc04dd035bbcb7f2d3cf0838bda63043bc5f71552967380698338ee5a0d30a81",
+      "bytes": 51860
+    },
+    "crates/execution/tests/support/mod.rs": {
+      "sha256": "5d2a5a44e9bac52200870de014bc445287f9295d10e543f0a06b0803eb9d17ea",
+      "bytes": 15105
+    }
+  },
+  "execution_source_fingerprint_sha256": "fa1f2cc2608cfd65816f551b240f5092f5e4d0fa7c28ce594c0a74e0ba4e4091",
+  "checks": [
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "celetixo-execution",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-execution",
+        "--locked",
+        "--offline"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-execution",
+        "--test",
+        "oci",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--test-threads=1"
+      ],
+      "exit": 0
+    }
+  ],
+  "checks_log_sha256": "d881a3ce18e7cdcfbeaae208674006c0cf9e4611e024842b2251332ae18af999",
+  "command_environment": {
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC",
+    "CARGO_INCREMENTAL": "0",
+    "CELETIXO_OCI_HOME": "<reviewed-private-tooling>"
+  },
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "tooling_sha256": {
+    "runc-1.5.2": "599f6f94ff8c5057241eff0d54c3c74f95c34935b6457b33fe545defc61e9488",
+    "celetixo-exec-init": "41cd4284dfc010dca9c2a3f95bc6b82e2d01075c16d385e34b64dabf7b2bbfe9",
+    "toolchain/gofmt": "0802a3784f7b2a924ccde5b34f6727ffe74e0193a1c0eea4cd773863fce4528a",
+    "toolchain/lib/libc.so.6": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+    "toolchain/lib/ld-linux-x86-64.so.2": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+  },
+  "known_limits": [
+    "in-memory Engine authority is not durable transaction storage",
+    "damaged published ownership records quarantine rather than authorizing deletion",
+    "no source publication; incomplete analysis remains rejected",
+    "representative benchmark and full Goal03 completion audit remain outstanding"
+  ],
+  "ordinary_tests_passed": 48,
+  "actual_oci_groups_passed": 9
+}

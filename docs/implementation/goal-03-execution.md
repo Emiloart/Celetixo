@@ -2,15 +2,22 @@
 
 This component implements private materialization, a concrete Linux T1 runner,
 local immutable artifacts and their integration with the Engine evidence gate.
-Goal 03 remains in progress. Its outstanding source-copy crash recovery,
-executor interface audit and representative measurements must be completed before
-the complete Goal 03 exit gate can be claimed.
+Goal 03 remains in progress. Representative measurements, final clean-checkout
+validation and the complete acceptance audit remain required before its exit gate
+can be claimed.
 
 ## Authority and data flow
 
 The trusted embedding supplies an Engine admission and a separately granted
 `SourceExecutorCapability`. A transaction session, principal ID, patch producer
 string or successful process result cannot substitute for that capability.
+
+`VerificationBackend` returns common per-check execution facts, output bytes and
+optional actual isolation observations. OCI projection lives in its adapter;
+the coordinator does not depend on an OCI record. The sealed interface permits
+reviewed implementations. A missing observation stays missing and cannot become
+a passing placeholder. Binding checks and required-artifact checks remain
+independent Engine responsibilities.
 
 `SourceRunCoordinator` claims once, independently materializes the exact Engine
 candidate, runs the policy plan, confirms source integrity and cleanup, persists
@@ -43,10 +50,30 @@ runtime cleanup is unknown. Confirmed runtime cleanup permits ordinary workspace
 cleanup. A failed identity check, failed deletion or unknown termination retains
 an explicit quarantine hint; a path string alone never authorizes deletion.
 
-A hard process kill during the earlier T0 copy currently precedes the runtime's
-ownership journal. A scoped ownership/recovery mechanism for that interval is an
-outstanding acceptance item. Error-injection cleanup tests are not evidence of
-recovery from that hard-kill interval.
+Execution copies now require `WorkspaceRegistry::create/open`, with exact scope,
+root-inode identity and explicit root/count/input-byte quotas. Ownership metadata
+is published and synchronized before copying. The registry does not disappear
+when its last in-process handle drops. Plain `PrivateWorkspace` copies remain
+T0-only; the actual backend refuses them.
+
+A separate live-owner lock prevents orphan recovery from deleting an active
+copy. A durable runtime-retention latch independently prevents deletion while
+termination is unknown. Recovery requires an Engine cleanup capability for the
+exact registry identity, validates ownership without following symlinks, checks
+current authority before deletion and synchronizes removal. Published malformed
+records quarantine; incomplete allocations are removable only when their bounded
+contents prove ownership publication and source copying never completed. Cleanup
+cannot resume a lost transaction or execute a check. Namespace locks coordinate
+only liveness and quota accounting.
+
+The tests actually SIGKILL a helper before ownership publication, before copying
+an entry and after copying before validation, then reopen and recover through a
+fresh Engine's cleanup-only grant. They also cover scope/store/identity mismatch,
+revocation/expiry, live owners, runtime retention, corruption, symlink replacement
+and quota exhaustion. Interrupted deletion that damages an ownership record
+quarantines for operator review rather than inferring deletion authority. The
+regression test retains the damaged copy and cannot turn that state into
+successful evidence.
 
 ## Concrete T1 boundary
 

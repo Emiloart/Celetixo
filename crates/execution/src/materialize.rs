@@ -104,6 +104,9 @@ impl MaterializationReport {
 
 #[derive(Debug, Clone)]
 pub enum MaterializationEvent {
+    /// The registry owns this empty allocation but has not published its record.
+    RegistryRootCreated(PathBuf),
+    BeforeOwnershipPublication(PathBuf),
     PrivateRootCreated(PathBuf),
     BeforeEntry {
         source: PathBuf,
@@ -148,6 +151,7 @@ mod linux {
         directories: BTreeSet<String>,
         quarantined: Option<CleanupOutcome>,
         execution_retention: Option<String>,
+        registered: Option<crate::workspaces::WorkspaceLease>,
     }
 
     impl PrivateWorkspace {
@@ -163,6 +167,24 @@ mod linux {
         pub fn materialize_with_hook(
             base: &Snapshot,
             patch: &SourcePatch,
+            hook: impl FnMut(MaterializationEvent) -> io::Result<()>,
+        ) -> Result<Self, MaterializationError> {
+            Self::materialize_root(base, patch, None, hook)
+        }
+
+        pub(crate) fn materialize_registered(
+            base: &Snapshot,
+            patch: &SourcePatch,
+            allocation: crate::workspaces::RegisteredRoot,
+            hook: impl FnMut(MaterializationEvent) -> io::Result<()>,
+        ) -> Result<Self, MaterializationError> {
+            Self::materialize_root(base, patch, Some(allocation), hook)
+        }
+
+        fn materialize_root(
+            base: &Snapshot,
+            patch: &SourcePatch,
+            allocation: Option<crate::workspaces::RegisteredRoot>,
             mut hook: impl FnMut(MaterializationEvent) -> io::Result<()>,
         ) -> Result<Self, MaterializationError> {
             let applied = patch.apply(base)?;
@@ -229,10 +251,16 @@ mod linux {
                 directories: directories.len(),
                 content_bytes: bytes,
             };
-            let root = tempfile::Builder::new()
-                .prefix("celetixo-source-")
-                .tempdir()
-                .map_err(|source| io_at("<private-parent>", source))?;
+            let (root, registered) = match allocation {
+                Some(allocation) => (allocation.root, Some(allocation.lease)),
+                None => (
+                    tempfile::Builder::new()
+                        .prefix("celetixo-source-")
+                        .tempdir()
+                        .map_err(|source| io_at("<private-parent>", source))?,
+                    None,
+                ),
+            };
             let root_fd = open_absolute_directory(root.path())?;
             rustix::fs::fchmod(&root_fd, Mode::from_raw_mode(0o700))
                 .map_err(|e| io_at("<private-parent>", e))?;
@@ -250,6 +278,7 @@ mod linux {
                 directories,
                 quarantined: None,
                 execution_retention: None,
+                registered,
             };
             let result = (|| {
                 hook(MaterializationEvent::PrivateRootCreated(
@@ -413,6 +442,11 @@ mod linux {
         }
 
         fn validate_identity(&self) -> Result<(), MaterializationError> {
+            if let Some(lease) = &self.registered {
+                lease
+                    .validate()
+                    .map_err(|e| io_at("<workspace-ownership>", io::Error::other(e.to_string())))?;
+            }
             let root = self
                 .root
                 .as_ref()
@@ -445,6 +479,17 @@ mod linux {
                 return Err(MaterializationError::Changed("source root identity".into()));
             }
             Ok(())
+        }
+
+        /// Execution requires durable scoped ownership established before copy.
+        /// Plain T0 copies remain available for deterministic materializer users.
+        pub(crate) fn validate_registered(&self) -> Result<(), MaterializationError> {
+            if self.registered.is_none() {
+                return Err(MaterializationError::Changed(
+                    "execution requires a registered workspace".into(),
+                ));
+            }
+            self.validate_identity()
         }
 
         /// Exact no-follow census, including directories, bytes, modes and link
@@ -631,6 +676,9 @@ mod linux {
             };
             let path = self.owned_path_hint(root.path());
             let _ = root.keep();
+            // An inactive/quarantined controller no longer owns a live copy.
+            // Runtime retention remains a separate durable deletion barrier.
+            self.registered = None;
             let outcome = CleanupOutcome::Quarantined {
                 path,
                 reason: reason.into(),
@@ -647,15 +695,19 @@ mod linux {
                 return self.quarantined.clone().unwrap_or(CleanupOutcome::Removed);
             };
             let path = root.path().to_path_buf();
-            let valid = std::fs::symlink_metadata(&path)
-                .ok()
-                .is_some_and(|metadata| {
-                    self.root_fd.metadata().ok().is_some_and(|held| {
-                        metadata.is_dir()
-                            && metadata.dev() == held.dev()
-                            && metadata.ino() == held.ino()
-                    })
-                });
+            let valid = self
+                .registered
+                .as_ref()
+                .is_none_or(|lease| lease.validate().is_ok())
+                && std::fs::symlink_metadata(&path)
+                    .ok()
+                    .is_some_and(|metadata| {
+                        self.root_fd.metadata().ok().is_some_and(|held| {
+                            metadata.is_dir()
+                                && metadata.dev() == held.dev()
+                                && metadata.ino() == held.ino()
+                        })
+                    });
             if !valid {
                 let _ = root.keep();
                 return CleanupOutcome::Quarantined {
@@ -664,7 +716,18 @@ mod linux {
                 };
             }
             match root.close() {
-                Ok(()) => CleanupOutcome::Removed,
+                Ok(()) => match self
+                    .registered
+                    .as_ref()
+                    .map(|lease| lease.confirm_removal())
+                    .transpose()
+                {
+                    Ok(_) => CleanupOutcome::Removed,
+                    Err(error) => CleanupOutcome::Quarantined {
+                        path,
+                        reason: format!("workspace removal durability: {error}"),
+                    },
+                },
                 Err(error) => CleanupOutcome::Quarantined {
                     path,
                     reason: error.to_string(),

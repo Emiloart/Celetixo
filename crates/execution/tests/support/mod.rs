@@ -10,6 +10,7 @@ use celetixo_engine::source_execution::*;
 use celetixo_engine::source_patch::*;
 use celetixo_engine::transaction::TransactionIntent;
 use celetixo_execution::oci::{OciBackend, OciConfiguration, PinnedExecutable, executable_digest};
+use celetixo_execution::workspaces::{WorkspaceLimits, WorkspaceRegistry};
 use celetixo_repository::capture::{CaptureRequest, capture_git_tree};
 use celetixo_repository::harness::{ConfiguredHarness, HarnessLimits};
 use celetixo_repository::impact::ImpactAnalyzer;
@@ -83,6 +84,19 @@ pub(crate) fn real_backend() -> OciBackend {
         .into(),
     })
     .unwrap()
+}
+
+pub(crate) fn workspace_registry() -> WorkspaceRegistry {
+    let path = home().join("workspaces");
+    match WorkspaceRegistry::create(&path, scope(), WorkspaceLimits::default()) {
+        Ok(registry) => registry,
+        Err(celetixo_execution::workspaces::WorkspaceError::Io(e))
+            if e.kind() == std::io::ErrorKind::AlreadyExists =>
+        {
+            WorkspaceRegistry::open(&path, scope(), WorkspaceLimits::default()).unwrap()
+        }
+        Err(error) => panic!("workspace registry: {error}"),
+    }
 }
 
 pub(crate) fn limits() -> ResourceLimits {
