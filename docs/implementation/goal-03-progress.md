@@ -438,3 +438,17 @@ one retry/base-mismatch flow). Its [validation metadata](goal-03-evidence-v2-val
 and [raw commands/output](goal-03-evidence-v2-validation/checks.log) retain code,
 log and actual tool-closure hashes. Historical v1 validation records remain
 identified with their original source versions.
+
+
+### CI language-server loading window
+
+The evidence-v2 commit's [CI run](https://github.com/Emiloart/Celetixo/actions/runs/42606852618)
+passed formatting, linting and all workspace tests, then exhausted the actual
+rust-analyzer probe's 40 empty responses in about four seconds. A notification
+can make `poll(100 ms)` return early, so counting retries did not establish an
+elapsed loading window. The trusted probe now uses bounded 30-second monotonic
+query windows and drains notifications for each intended backoff interval.
+Definition/reference locations, semantic edges and incomplete-coverage assertions
+are unchanged. All 28 local LSP groups, including the actual server, passed;
+strict repository Clippy and formatting passed. This changes the validation
+harness; the measured runtime implementation at `fa888ed` is unchanged.

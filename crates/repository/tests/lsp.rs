@@ -657,6 +657,19 @@ fn real_rust_analyzer_definition_and_references() {
     use std::collections::BTreeMap;
     use std::process::{Command, Stdio};
     use std::sync::mpsc;
+    use std::time::Instant;
+    // Notifications can make poll return immediately. A bounded elapsed-time
+    // loading window must not collapse into a fixed number of rapid empty
+    // responses while rust-analyzer loads the linked project asynchronously.
+    fn poll_for(session: &mut LspSession, duration: Duration) {
+        let deadline = Instant::now() + duration;
+        while let Some(remaining) = deadline.checked_duration_since(Instant::now()) {
+            if remaining.is_zero() {
+                break;
+            }
+            session.poll(remaining).unwrap();
+        }
+    }
     struct ChildGuard(std::process::Child);
     impl Drop for ChildGuard {
         fn drop(&mut self) {
@@ -769,7 +782,8 @@ fn real_rust_analyzer_definition_and_references() {
         .open_document(uri.clone(), "rust", 1, text.into())
         .unwrap();
     let mut definition = None;
-    for _ in 0..40 {
+    let definition_deadline = Instant::now() + Duration::from_secs(30);
+    while Instant::now() < definition_deadline {
         let ticket = session
             .start_query(
                 SemanticQuery::Definition,
@@ -778,7 +792,9 @@ fn real_rust_analyzer_definition_and_references() {
                     line: 1,
                     character: 15,
                 },
-                Duration::from_secs(10),
+                definition_deadline
+                    .saturating_duration_since(Instant::now())
+                    .min(Duration::from_secs(10)),
             )
             .unwrap();
         match session.wait(&ticket) {
@@ -787,7 +803,12 @@ fn real_rust_analyzer_definition_and_references() {
                 break;
             }
             Ok(_) | Err(LspError::Server { code: -32801, .. }) => {
-                session.poll(Duration::from_millis(100)).unwrap();
+                poll_for(
+                    &mut session,
+                    definition_deadline
+                        .saturating_duration_since(Instant::now())
+                        .min(Duration::from_millis(100)),
+                );
             }
             Err(error) => panic!("real language server failed: {error}"),
         }
@@ -809,7 +830,8 @@ fn real_rust_analyzer_definition_and_references() {
         1
     );
     let mut references = None;
-    for _ in 0..40 {
+    let references_deadline = Instant::now() + Duration::from_secs(30);
+    while Instant::now() < references_deadline {
         let ticket = session
             .start_query(
                 SemanticQuery::References,
@@ -818,7 +840,9 @@ fn real_rust_analyzer_definition_and_references() {
                     line: 0,
                     character: 3,
                 },
-                Duration::from_secs(10),
+                references_deadline
+                    .saturating_duration_since(Instant::now())
+                    .min(Duration::from_secs(10)),
             )
             .unwrap();
         match session.wait(&ticket) {
@@ -832,7 +856,12 @@ fn real_rust_analyzer_definition_and_references() {
                 break;
             }
             Ok(_) | Err(LspError::Server { code: -32801, .. }) => {
-                session.poll(Duration::from_millis(100)).unwrap();
+                poll_for(
+                    &mut session,
+                    references_deadline
+                        .saturating_duration_since(Instant::now())
+                        .min(Duration::from_millis(100)),
+                );
             }
             Err(error) => panic!("real language server reference query failed: {error}"),
         }
