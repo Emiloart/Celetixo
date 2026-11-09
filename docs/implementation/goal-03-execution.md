@@ -148,6 +148,28 @@ Use persistent `create/open` for retained records. `temporary` is an explicit te
 adapter whose final drop removes its files. Neither adapter is a distributed
 object store, a retention daemon or protection against a host administrator.
 
+## Evidence version and result provenance
+
+The current sealed envelope is `celetixo/source-evidence/v2`, with media type
+`application/vnd.celetixo.source-evidence-v2`. Its canonical identity explicitly
+binds `SourceAttestationLevel`. The admitted level is `EngineScopedExecutor`:
+the Engine independently checks the actual current scoped executor capability
+before and after artifact I/O. A principal string or a declared enum value is
+not that capability, and an `Unattested` envelope is rejected.
+
+This level records local Engine-authenticated executor provenance. It does not
+claim hardware attestation, a cryptographically attested remote worker, microVM
+isolation or complete program semantics. Those require their own implemented and
+validated contracts. Check success and physical isolation observations remain
+separate evidence properties.
+
+The schema, content-identity domain and envelope media version advanced together.
+Check records, OCI journals and content-addressed artifact objects retain their
+independent v1 formats. Previously stored v1 envelope bytes remain immutable and
+readable as artifacts; they cannot be relabelled or admitted under the v2 gate.
+There is no implicit evidence upgrade or restoration of lost in-memory authority.
+New admission uses current bindings and the current evidence contract.
+
 ## Actual harness and fixture scope
 
 The concrete language check is gofmt from Go 1.26.2, with exact command

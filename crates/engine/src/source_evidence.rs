@@ -78,6 +78,21 @@ impl SourceArtifactReference {
     }
 }
 
+/// The v2 envelope makes result attestation explicit. Check records and artifact
+/// addresses retain their independent v1 formats; v1 evidence is never relabelled.
+pub const SOURCE_EVIDENCE_FORMAT: &str = "celetixo/source-evidence/v2";
+pub const SOURCE_EVIDENCE_MEDIA_TYPE: &str = "application/vnd.celetixo.source-evidence-v2";
+
+/// Result-provenance strength, independent of check success and physical
+/// isolation. No hardware or remote-worker attestation is implemented here.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SourceAttestationLevel {
+    Unattested,
+    /// The Engine must separately authenticate the current scoped executor
+    /// capability. An enum value or principal string is never that capability.
+    EngineScopedExecutor,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceEvidenceBinding {
     admission: SourceAdmissionId,
@@ -87,9 +102,12 @@ pub struct SourceEvidenceBinding {
     /// Canonical admission identity transitively binds the complete patch, transaction,
     /// authorization, lease, analysis, candidate, policy and verification plan.
     admission_contract: Digest,
+    attestation: SourceAttestationLevel,
 }
 
 impl SourceEvidenceBinding {
+    /// Construct expected metadata, not authentication. The Engine separately
+    /// verifies the actual executor capability before and after artifact I/O.
     pub fn for_admission(admission: &SourceAdmission, executor: PrincipalId) -> Self {
         Self {
             admission: admission.id(),
@@ -97,6 +115,7 @@ impl SourceEvidenceBinding {
             executor,
             retention_policy: admission.retention_policy(),
             admission_contract: admission.id().0,
+            attestation: SourceAttestationLevel::EngineScopedExecutor,
         }
     }
     pub fn admission(&self) -> SourceAdmissionId {
@@ -111,12 +130,25 @@ impl SourceEvidenceBinding {
     pub fn retention_policy(&self) -> Digest {
         self.retention_policy
     }
+    pub fn attestation(&self) -> SourceAttestationLevel {
+        self.attestation
+    }
+    /// Declared metadata only. The current Engine gate rejects any level other
+    /// than its authenticated scoped-executor contract, including Unattested.
+    pub fn with_attestation(mut self, attestation: SourceAttestationLevel) -> Self {
+        self.attestation = attestation;
+        self
+    }
     fn encode(&self, c: &mut Canonical) {
         c.digest(self.admission.0);
         encode_scope(c, &self.scope);
         c.str(self.executor.as_str());
         c.digest(self.retention_policy);
         c.digest(self.admission_contract);
+        c.u64(match self.attestation {
+            SourceAttestationLevel::Unattested => 0,
+            SourceAttestationLevel::EngineScopedExecutor => 1,
+        });
     }
 }
 
@@ -463,7 +495,7 @@ impl SourceEvidence {
         if bytes.len() > MAX_EVIDENCE_METADATA_BYTES {
             return Err(SourceEvidenceError::InvalidMetadata);
         }
-        result.id = SourceEvidenceId(Digest::of("celetixo/source-evidence/v1", &bytes));
+        result.id = SourceEvidenceId(Digest::of(SOURCE_EVIDENCE_FORMAT, &bytes));
         Ok(result)
     }
     pub fn id(&self) -> SourceEvidenceId {
@@ -486,7 +518,7 @@ impl SourceEvidence {
     }
     pub fn canonical_bytes(&self) -> Vec<u8> {
         let mut c = Canonical::default();
-        c.str("celetixo/source-evidence/v1");
+        c.str(SOURCE_EVIDENCE_FORMAT);
         self.binding.encode(&mut c);
         c.u64(self.started_at_ms);
         c.u64(self.finished_at_ms);
@@ -523,9 +555,7 @@ impl SourceEvidence {
             return Err(SourceEvidenceError::BindingMismatch);
         }
         let canonical = self.canonical_bytes();
-        if envelope.name != "sealed-evidence"
-            || envelope.media_type != "application/vnd.celetixo.source-evidence-v1"
-        {
+        if envelope.name != "sealed-evidence" || envelope.media_type != SOURCE_EVIDENCE_MEDIA_TYPE {
             return Err(SourceEvidenceError::ArtifactMismatch(envelope.name.clone()));
         }
         if read_verified_object(envelope, &self.binding, reader, canonical.len() as u64)?
@@ -773,6 +803,7 @@ mod tests {
             executor: PrincipalId::new("trusted-executor").unwrap(),
             retention_policy: d("retention"),
             admission_contract: d("admission"),
+            attestation: SourceAttestationLevel::EngineScopedExecutor,
         }
     }
     fn input(id: &str) -> SourceCheckRecordInput {

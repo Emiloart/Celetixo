@@ -413,3 +413,28 @@ OCI groups passed; the new live retry/base-mismatch group also passed. These are
 runner/integration proofs, not the published representative baseline yet.
 Milestone 03.4b's [CI run](https://github.com/Emiloart/Celetixo/actions/runs/42547309224)
 passed.
+
+
+## Explicit result-attestation contract
+
+The acceptance audit found that §9's result-attestation level needed an explicit
+sealed field. Evidence v2 now binds a typed level to its canonical identity and
+media type. The Engine admits only its scoped-executor authentication contract;
+metadata constructors do not authenticate callers. Unattested claims and legacy
+v1 envelope media fail without retaining evidence or poisoning a valid delivery.
+No hardware, remote-worker or microVM attestation is inferred.
+
+Check records, OCI journals and artifact addressing retain their own v1 versions;
+historical envelopes are not rewritten or silently promoted. This closes the
+named contract gap before final benchmark collection. The complete Goal 03 audit
+and measured baseline remain open until their records are published and checked.
+
+The measurement-runner milestone is published as
+`80dafd0a12b7a4c44b083b7bdf88a92cceed8fb4`.
+
+The exact evidence-v2 source passed 339 workspace tests, formatting, strict
+all-target Clippy and all ten explicit actual integration groups (nine OCI and
+one retry/base-mismatch flow). Its [validation metadata](goal-03-evidence-v2-validation/checks.json)
+and [raw commands/output](goal-03-evidence-v2-validation/checks.log) retain code,
+log and actual tool-closure hashes. Historical v1 validation records remain
+identified with their original source versions.

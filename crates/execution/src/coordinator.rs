@@ -17,8 +17,8 @@ use celetixo_engine::engine::{
 use celetixo_engine::ids::CheckId;
 use celetixo_engine::snapshot::Snapshot;
 use celetixo_engine::source_evidence::{
-    SourceArtifactError, SourceArtifactReader, SourceArtifactReference, SourceCheckOutcome,
-    SourceCheckRecord, SourceCheckRecordInput, SourceCleanup, SourceEvidence,
+    SOURCE_EVIDENCE_MEDIA_TYPE, SourceArtifactError, SourceArtifactReader, SourceArtifactReference,
+    SourceCheckOutcome, SourceCheckRecord, SourceCheckRecordInput, SourceCleanup, SourceEvidence,
     SourceEvidenceBinding, SourceEvidenceError, SourceResourceUsage, SourceTermination,
 };
 use celetixo_engine::source_execution::{SourceCheckDefinition, SourceExecutionPolicy};
@@ -554,7 +554,7 @@ impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
         self.revalidate(admission, guard)?;
         let envelope = self.artifacts.put_bytes(
             "sealed-evidence",
-            "application/vnd.celetixo.source-evidence-v1",
+            SOURCE_EVIDENCE_MEDIA_TYPE,
             &evidence.canonical_bytes(),
         )?;
         Ok(SealedSourceEvidence { evidence, envelope })

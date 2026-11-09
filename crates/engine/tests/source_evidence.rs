@@ -619,7 +619,7 @@ impl Harness {
         .unwrap();
         let envelope = self.reader.put(
             "sealed-evidence",
-            "application/vnd.celetixo.source-evidence-v1",
+            SOURCE_EVIDENCE_MEDIA_TYPE,
             &evidence.canonical_bytes(),
         );
         self.admin.advance_time(10).unwrap();
@@ -695,6 +695,82 @@ fn complete_bound_records_derive_pass_without_advancing_source_revision_or_grant
 }
 
 #[test]
+fn v2_attestation_is_identity_bound_and_an_unattested_claim_cannot_authorize_evidence() {
+    let h = Harness::new();
+    let attempt = h.start();
+    let original = h.seal(&attempt, h.input(&attempt));
+    assert_eq!(
+        original.evidence.binding().attestation(),
+        SourceAttestationLevel::EngineScopedExecutor
+    );
+    assert_eq!(original.envelope.media_type, SOURCE_EVIDENCE_MEDIA_TYPE);
+    assert_eq!(
+        original.evidence.id().0,
+        Digest::of(SOURCE_EVIDENCE_FORMAT, &original.evidence.canonical_bytes())
+    );
+    assert_ne!(
+        original.evidence.id().0,
+        Digest::of(
+            "celetixo/source-evidence/v1",
+            &original.evidence.canonical_bytes()
+        )
+    );
+    let evidence = SourceEvidence::new(
+        original
+            .evidence
+            .binding()
+            .clone()
+            .with_attestation(SourceAttestationLevel::Unattested),
+        original.evidence.started_at_ms(),
+        original.evidence.finished_at_ms(),
+        original.evidence.checks().values().cloned().collect(),
+        original.evidence.provenance().clone(),
+        vec![],
+    )
+    .unwrap();
+    assert_ne!(evidence.id(), original.evidence.id());
+    let envelope = h.reader.put(
+        "sealed-evidence",
+        SOURCE_EVIDENCE_MEDIA_TYPE,
+        &evidence.canonical_bytes(),
+    );
+    let untrusted = Bundle { evidence, envelope };
+    assert_eq!(
+        h.deliver(&attempt, &untrusted),
+        Err(EngineError::SourceEvidence(
+            SourceEvidenceError::BindingMismatch
+        ))
+    );
+    h.no_retained_evidence(&untrusted);
+    assert_eq!(
+        h.deliver(&attempt, &original).unwrap().assessment,
+        SourceEvidenceAssessment::Passed
+    );
+}
+
+#[test]
+fn legacy_envelope_media_is_not_relabelled_as_current_attested_evidence() {
+    let h = Harness::new();
+    let attempt = h.start();
+    let original = h.seal(&attempt, h.input(&attempt));
+    let envelope = h.reader.put(
+        "sealed-evidence",
+        "application/vnd.celetixo.source-evidence-v1",
+        &original.evidence.canonical_bytes(),
+    );
+    let legacy = Bundle {
+        evidence: original.evidence.clone(),
+        envelope,
+    };
+    assert!(h.deliver(&attempt, &legacy).is_err());
+    h.no_retained_evidence(&legacy);
+    assert_eq!(
+        h.deliver(&attempt, &original).unwrap().assessment,
+        SourceEvidenceAssessment::Passed
+    );
+}
+
+#[test]
 fn empty_check_sets_and_forged_executor_bindings_cannot_enter_the_admission_gate() {
     let h = Harness::new();
     let attempt = h.start();
@@ -728,7 +804,7 @@ fn empty_check_sets_and_forged_executor_bindings_cannot_enter_the_admission_gate
     .unwrap();
     let envelope = h.reader.put(
         "sealed-evidence",
-        "application/vnd.celetixo.source-evidence-v1",
+        SOURCE_EVIDENCE_MEDIA_TYPE,
         &evidence.canonical_bytes(),
     );
     let forged = Bundle { evidence, envelope };
@@ -750,7 +826,7 @@ fn the_sealed_envelope_scope_retention_media_label_and_bytes_are_not_producer_as
             _ => {
                 bundle.envelope = h.reader.put(
                     "sealed-evidence",
-                    "application/vnd.celetixo.source-evidence-v1",
+                    SOURCE_EVIDENCE_MEDIA_TYPE,
                     b"correctly addressed but false envelope",
                 )
             }
@@ -1143,7 +1219,7 @@ fn canonical_comparison_uses_the_same_bytes_that_were_digest_verified() {
             bundle.envelope = SourceArtifactReference::for_bytes(
                 scope(),
                 "sealed-evidence".into(),
-                "application/vnd.celetixo.source-evidence-v1".into(),
+                SOURCE_EVIDENCE_MEDIA_TYPE.into(),
                 &altered,
                 d("retention"),
             );
@@ -1656,7 +1732,7 @@ fn aggregate_persisted_payload_budget_is_checked_before_storage_io() {
     .unwrap();
     let envelope = h.reader.put(
         "sealed-evidence",
-        "application/vnd.celetixo.source-evidence-v1",
+        SOURCE_EVIDENCE_MEDIA_TYPE,
         &evidence.canonical_bytes(),
     );
     let bundle = Bundle { evidence, envelope };

@@ -1,0 +1,285 @@
+{
+  "schema": "celetixo/goal03-evidence-v2-validation/v1",
+  "recorded_at_utc": "2026-11-09T06:50:49.297291+00:00",
+  "source_parent_commit": "80dafd0a12b7a4c44b083b7bdf88a92cceed8fb4",
+  "source_files": {
+    "Cargo.lock": {
+      "sha256": "a10923eb622c6b236fc1ea17c9eabfead2fe5fd63a6163bb5e990a5503779abc",
+      "bytes": 15827
+    },
+    "Cargo.toml": {
+      "sha256": "36209fbb5c2e13012bbd65c1a10a424c52b0103c1bb3bac4b2e5c0d459df31cd",
+      "bytes": 442
+    },
+    "crates/engine/Cargo.toml": {
+      "sha256": "b1454aa43ae128f263a90693d2b2df326092ef2319cf0a257556bfdc4f6fd37f",
+      "bytes": 298
+    },
+    "crates/engine/examples/concurrent_transactions.rs": {
+      "sha256": "b9bb705d9306ed8fa1cbb63b2c88a2a0514490780f28e537cffdad938c72a15e",
+      "bytes": 13410
+    },
+    "crates/engine/src/access.rs": {
+      "sha256": "3a1c6efd16a230fafca1b9af9be3fb181101fe74e6cdc3ed7ffba91a0012ac55",
+      "bytes": 13267
+    },
+    "crates/engine/src/engine/source_attempts.rs": {
+      "sha256": "6c6322692c35fe523009cd091febc0826d44dd2ae6d3b43cae80ea9166194a25",
+      "bytes": 49394
+    },
+    "crates/engine/src/engine/source_cleanup.rs": {
+      "sha256": "dc86055dc587df489d7cf4b2026af7b3dfe4de9333ad19e9c4ae448ffd230718",
+      "bytes": 5414
+    },
+    "crates/engine/src/engine/source_evidence_gate.rs": {
+      "sha256": "a7f5e006a230b878df8466c03f20dee7fbbe9d9a9fbfce78613c94b29962c068",
+      "bytes": 13952
+    },
+    "crates/engine/src/engine.rs": {
+      "sha256": "53240e02c637be36b32a6b58aa67d9da08256f358dfa37e6d4f7918bf54ffb41",
+      "bytes": 52772
+    },
+    "crates/engine/src/evidence.rs": {
+      "sha256": "eb309f81ef26eadec5d50511222fda5ca227dd283053b546758534f14ef1fb71",
+      "bytes": 17819
+    },
+    "crates/engine/src/ids.rs": {
+      "sha256": "db9dd28bcc16f023f0237eb50b4796879a58dee66ed13116c4e1d68ccd2f6348",
+      "bytes": 4430
+    },
+    "crates/engine/src/input_admission.rs": {
+      "sha256": "223142fd1f76bcc93da0f04953b9446dbfc5fc5ce8843fe16e1a4729c3c1215c",
+      "bytes": 9948
+    },
+    "crates/engine/src/lib.rs": {
+      "sha256": "37d0523b4977bd0660fb696b93b3635937d80e952e64d182b6aa082703c35eee",
+      "bytes": 365
+    },
+    "crates/engine/src/model.rs": {
+      "sha256": "f7f677081856c6975a8764e3b1a2a583061432a18e6b24450596e38c250d4a5d",
+      "bytes": 2826
+    },
+    "crates/engine/src/patch.rs": {
+      "sha256": "8d53a73b1832e7907f3ccf338bf95a12561db5a88ce1c9e108a827a0272b2f01",
+      "bytes": 6461
+    },
+    "crates/engine/src/repository.rs": {
+      "sha256": "3bdf628c16357d341ef2d674e9666312670873b3b448a759d11a183559ee8a01",
+      "bytes": 9820
+    },
+    "crates/engine/src/snapshot.rs": {
+      "sha256": "1550c771034a2f7d1f13d57a6c827e7b42c857629a32d70fbc32317f764ccddb",
+      "bytes": 16910
+    },
+    "crates/engine/src/source_evidence.rs": {
+      "sha256": "7ec6b589911c7df0324b013c559dff2b2e8b7deaba579040492ea5afa34ed780",
+      "bytes": 37637
+    },
+    "crates/engine/src/source_execution.rs": {
+      "sha256": "fc6abf256165af998a10aaae27829fe1fbb4aada5f5109bdc126aec5398a0cae",
+      "bytes": 47141
+    },
+    "crates/engine/src/source_patch.rs": {
+      "sha256": "a12f143cdb55aaa257a0d57118d57057594cd2093ad389488b2abcd74e9253f2",
+      "bytes": 58937
+    },
+    "crates/engine/src/transaction.rs": {
+      "sha256": "37859151c294d6ddd875d63ea3683ce162a2360668a73db4bbb65ecb62f4d86e",
+      "bytes": 2350
+    },
+    "crates/engine/tests/adversarial.rs": {
+      "sha256": "8686991056c2a651e8b8ec717fdcfe80666c76470a8252d96e3e2cc91858110e",
+      "bytes": 21044
+    },
+    "crates/engine/tests/engine_transactions.rs": {
+      "sha256": "b01071ad450bf38af46c6d315d1f36dd8158136133ae9413a04245e9233511de",
+      "bytes": 37941
+    },
+    "crates/engine/tests/input_admission.rs": {
+      "sha256": "d41c07ddbea3162dd85da20d1df1d24d5cb9bb6aedb746e3907c48cb36593627",
+      "bytes": 4412
+    },
+    "crates/engine/tests/model_histories.rs": {
+      "sha256": "e1b74060bd4c19f53589ebc69c4d319d1ae494594d636f87f8439b34e31002cb",
+      "bytes": 28163
+    },
+    "crates/engine/tests/repository.rs": {
+      "sha256": "394ba64f90677b4203d2a919215415f144064bd68b7217ec0e918937e65e15f0",
+      "bytes": 28153
+    },
+    "crates/engine/tests/snapshots.rs": {
+      "sha256": "8ff4b28b1ff7a66f7b2fb8d51a945a41b75916f1eb3b36b3fd80300706b64ed1",
+      "bytes": 16579
+    },
+    "crates/engine/tests/source_attempts.rs": {
+      "sha256": "e1b51d98379f9650e0436e6076affaddeea01c208a8d4f87618072f9df561c2c",
+      "bytes": 50064
+    },
+    "crates/engine/tests/source_evidence.rs": {
+      "sha256": "b0919cf86b54367cd6ae9b93962458eb786a07d6150130acfc58ad559c9f3bc6",
+      "bytes": 61395
+    },
+    "crates/engine/tests/source_execution_plans.rs": {
+      "sha256": "3410327cb08d2f25cb6226f80e0b7b6fd7dc3cd567a726ff0bfaf38c3556b5a1",
+      "bytes": 32319
+    },
+    "crates/engine/tests/source_patches.rs": {
+      "sha256": "a1de409f0778960f9758993f41579c8fd13948149976fac12a07e3d235c9b518",
+      "bytes": 28863
+    },
+    "crates/execution/Cargo.toml": {
+      "sha256": "703839fbfd715b27947f8cae05be663728b2116805907b9dd972aede95e046e8",
+      "bytes": 627
+    },
+    "crates/execution/examples/bench_support/execution_recovery.rs": {
+      "sha256": "4425e3ce20cdc941bf24a6dc6d9c50ea5a7ad8358597ea176566f85dbc0a01a6",
+      "bytes": 6155
+    },
+    "crates/execution/examples/bench_support/mod.rs": {
+      "sha256": "d0909fcf536e44387bfb0b7773065fd0e0bf39915f1f857d8221d3f9ebd76f41",
+      "bytes": 1719
+    },
+    "crates/execution/examples/source_execution_bench.rs": {
+      "sha256": "f8c434d1659b8b80ee7424f1519fd9c0698d2f8a8bb1b5e88178e4a1b7865d85",
+      "bytes": 12494
+    },
+    "crates/execution/examples/source_patch_bench.rs": {
+      "sha256": "cc239d7c65ab8671cc3d11e330d21f9a98be0e907fcb4430bb165c6785a79470",
+      "bytes": 9123
+    },
+    "crates/execution/src/artifacts.rs": {
+      "sha256": "2b7479eff0be7ed1fd24361887f7a877bd2c3d6443106734f8d94e1d4633c995",
+      "bytes": 28260
+    },
+    "crates/execution/src/backend.rs": {
+      "sha256": "9512cf70d94a3bfe49282294b290fb5ad02ca019d009812467c5c30a0c2e2e8d",
+      "bytes": 3406
+    },
+    "crates/execution/src/bin/celetixo-exec-init.rs": {
+      "sha256": "4968b38fab4ccb49bbe48d911cedeac18ee91e13045500721308f1207fdf2778",
+      "bytes": 6314
+    },
+    "crates/execution/src/coordinator.rs": {
+      "sha256": "3b3762762ca0dc61c915dfb8fdd807cf5e9385f9845efa96e32e0ff293caa6fb",
+      "bytes": 26976
+    },
+    "crates/execution/src/coordinator_tests.rs": {
+      "sha256": "016e83ac2b3df916b78d0e2e93506f2c175999c4297b6e518dfd2d904156af72",
+      "bytes": 44610
+    },
+    "crates/execution/src/lib.rs": {
+      "sha256": "10e4f4d3f416c14b6999a0511b0968b69c8ba6884d13f3c4437b1e2993aef179",
+      "bytes": 323
+    },
+    "crates/execution/src/materialize.rs": {
+      "sha256": "4cf50981ef1903ac2b8e8581a15f864d9fbc5504184ebd298174d8991a328448",
+      "bytes": 34454
+    },
+    "crates/execution/src/oci.rs": {
+      "sha256": "3a227e8e5f57786c47a083b7f3ce072e800590e743c54b1c6f3f5411dcd1a26b",
+      "bytes": 109180
+    },
+    "crates/execution/src/oci_adapter.rs": {
+      "sha256": "e75c6c999f429455fec1f624de6d93ff4fe8e64e39b2f48cbb63b11c83e246a9",
+      "bytes": 5447
+    },
+    "crates/execution/src/workspaces.rs": {
+      "sha256": "b9e9da303b30c6acadba4c1aba5f434ca3946eee600331f6601b54f91e4233e0",
+      "bytes": 30118
+    },
+    "crates/execution/tests/artifacts.rs": {
+      "sha256": "5cc99727a986282d2f959d78d7b1d750e7021a5123b600cd3ffb3960ae120c0d",
+      "bytes": 18973
+    },
+    "crates/execution/tests/materialize.rs": {
+      "sha256": "e66b0e33158036a7a0fc10c939f639fbeb610ed1a8ca1963397c1b0e20ed3d60",
+      "bytes": 17866
+    },
+    "crates/execution/tests/oci.rs": {
+      "sha256": "fc04dd035bbcb7f2d3cf0838bda63043bc5f71552967380698338ee5a0d30a81",
+      "bytes": 51860
+    },
+    "crates/execution/tests/source_flow.rs": {
+      "sha256": "77eafb5820544dacf4364f0921fa0528dc0a0db2b504201b603b44fb46b35d69",
+      "bytes": 7361
+    },
+    "crates/execution/tests/support/mod.rs": {
+      "sha256": "53ccec026c333df4d7f24b445fcb9e549c6151ea3a2cfbe1377f05a5fd214039",
+      "bytes": 16163
+    }
+  },
+  "commands": [
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-execution",
+        "--test",
+        "oci",
+        "--test",
+        "source_flow",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--test-threads=1"
+      ],
+      "exit": 0
+    }
+  ],
+  "log_sha256": "0f5e0f3e73d9f71a21997cdabf781c89f039047f203101c1a0e5bfa84564dc47",
+  "command_environment": {
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC",
+    "CARGO_INCREMENTAL": "0",
+    "CELETIXO_OCI_HOME": "<reviewed-private-tooling>"
+  },
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "workspace_tests_passed": 339,
+  "actual_oci_groups_passed": 9,
+  "actual_retry_flow_groups_passed": 1,
+  "tooling_sha256": {
+    "runc-1.5.2": "599f6f94ff8c5057241eff0d54c3c74f95c34935b6457b33fe545defc61e9488",
+    "celetixo-exec-init": "41cd4284dfc010dca9c2a3f95bc6b82e2d01075c16d385e34b64dabf7b2bbfe9",
+    "toolchain/gofmt": "0802a3784f7b2a924ccde5b34f6727ffe74e0193a1c0eea4cd773863fce4528a",
+    "toolchain/lib/libc.so.6": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+    "toolchain/lib/ld-linux-x86-64.so.2": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+  },
+  "scope": "Reference Engine-scoped executor authentication, not hardware/remote attestation; source publication unsupported."
+}
