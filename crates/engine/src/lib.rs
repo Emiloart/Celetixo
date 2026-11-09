@@ -9,6 +9,7 @@ pub mod model;
 pub mod patch;
 pub mod repository;
 pub mod snapshot;
+pub mod source_evidence;
 pub mod source_execution;
 pub mod source_patch;
 pub mod transaction;

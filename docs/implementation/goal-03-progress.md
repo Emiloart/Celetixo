@@ -246,3 +246,58 @@ module now lives in `input_admission.rs`, retaining its public `credentials`
 module API through an explicit path attribute. This changes neither credential
 classification nor capture exceptions. The inspection step is repeated against
 the exact next staged commit before publication.
+
+
+## 03.5: immutable evidence contracts and Engine gate
+
+The evidence gate is integrated as an independently verified contract milestone
+before the executor integration is published. This records its actual dependency
+and validation scope; the real execution-to-evidence proof remains required.
+
+`source_evidence` contains versioned canonical evidence, per-check execution
+records and scope/content/retention-bound artifact references. The trusted
+embedding registers an artifact reader with a separate administrator capability.
+An ordinary verifier session cannot select a reader or assert that persistence
+succeeded. Evidence includes the exact source patch, base and resulting snapshots
+and manifests, application report, admission, policy, verification plan and each
+check definition, plus check logs, diagnostics and canonical execution records.
+
+`record_source_evidence` authenticates the claimed executor and registered store,
+validates the live admission, releases the Engine mutex while reading artifacts,
+and then rechecks current policy, index, snapshot, authorization, owner, lease,
+executor and storage authority before retaining one immutable result. Each read
+checks length and content address against the same bytes used for canonical
+comparison. A storage adapter cannot satisfy integrity with one read and replace
+the bytes on another read.
+
+The Engine derives Passed, Failed or Incomplete from the exact planned check set,
+check definitions, outcomes, prerequisite ordering, budgets, source integrity,
+whole-process termination, cleanup and mandatory persisted artifacts. The caller
+cannot supply a green aggregate status. Only complete passing evidence moves a
+source attempt to EvidenceSealed and its transaction to Validating. It does not
+advance the source snapshot or revision, and the source commit path remains
+unsupported.
+
+Exact duplicate delivery returns the original receipt; conflicting delivery
+cannot replace it. Failure and retry use distinct immutable attempt identities.
+Fault injection covers loss before artifact reads, after artifact reads and after
+retention, including recovery of the retained receipt without rerunning checks.
+Scoped read access can inspect historical results without granting execution.
+
+Adversarial tests cover forged or missing objects, truncated content, altered
+scope/retention/media/provenance, changed commands/toolchains/environments/resources,
+stale candidates, incomplete cleanup or termination, dependency failures, output
+truncation, concurrent conflicting deliveries, and authority changes during I/O.
+These finite reference readers establish the Engine contract. Filesystem
+synchronization, actual containment, runtime recovery and the integrated check
+path are validated separately with the concrete executor; they are not inferred
+from these reference fixtures.
+
+
+Milestone 03.3 is published as `3b78f3ecb3e85989ddc376083f20358285e67f8e`.
+Its exact staged source passed 261 workspace tests and the explicit actual
+rust-analyzer probe, strict all-target Clippy, formatting, example builds,
+concurrent-transaction assertions, whole-tree capture/index/Engine inspection,
+benchmark smoke and all 25 attribution checks. Self-inspection uses the default
+credential policy without new reviewed exceptions. Both commit identities are
+the established human contributor.

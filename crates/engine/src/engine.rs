@@ -17,12 +17,16 @@ use thiserror::Error;
 
 mod source_attempts;
 mod source_cleanup;
+mod source_evidence_gate;
 pub use source_attempts::{
     SourceAdmission, SourceAttemptError, SourceAttemptEvent, SourceAttemptOptions,
     SourceAttemptState, SourceAttemptView, SourceAuthorizationProvenance, SourceExecutorCapability,
     SourcePatchContext, SourceRejectionView,
 };
 pub use source_cleanup::SourceCleanupCapability;
+pub use source_evidence_gate::{
+    SourceArtifactStoreCapability, SourceEvidenceFault, SourceEvidenceReceipt,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Permission {
@@ -205,6 +209,8 @@ pub enum EngineError {
     Patch(#[from] PatchError),
     #[error("snapshot construction failed: {0}")]
     Snapshot(#[from] SnapshotError),
+    #[error("source evidence rejected: {0}")]
+    SourceEvidence(#[from] crate::source_evidence::SourceEvidenceError),
     #[error("current revision requires explicit revalidation against {current}")]
     RevalidationRequired { current: SnapshotId },
     #[error("intervening committed access invalidated this attempt: {0:?}")]
@@ -373,6 +379,10 @@ struct Database {
     source_rejections: BTreeMap<(Scope, SourceAttemptId), SourceRejectionView>,
     next_source_cleanup: u64,
     source_cleanup_grants: BTreeMap<u64, source_cleanup::SourceCleanupGrant>,
+    next_source_artifact_store: u64,
+    source_artifact_stores: BTreeMap<u64, source_evidence_gate::RegisteredSourceArtifactStore>,
+    source_evidence_records:
+        BTreeMap<(Scope, SourceEvidenceId), source_evidence_gate::RetainedSourceEvidence>,
 }
 
 impl InMemoryStore {
