@@ -96,5 +96,6 @@ Keep the sample count, median and observed maximum with the proposed threshold;
 do not extrapolate production throughput, queueing or universal SLOs from this
 machine and corpus. A safety violation invalidates the run regardless of speed.
 
-The runner milestone does not itself supply a measured baseline or complete
-Goal 03. Raw measurements and the final acceptance audit are separate deliverables.
+The [measured baseline](goal-03.md) records the later source-bound run and its
+provisional tracking targets. The [acceptance audit](../implementation/goal-03-acceptance.md)
+connects those measurements with the complete correctness and integration evidence.

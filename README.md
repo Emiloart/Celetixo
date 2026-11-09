@@ -33,7 +33,7 @@ cargo run --locked -p celetixo-repository --example inspect_repository -- /path/
 
 Git and a C compiler are required. Live capture reports its atomicity limitation; syntax parsing and individual LSP queries retain semantic coverage gaps. See [Goal 02 instructions and limitations](docs/implementation/goal-02.md), [validation](docs/implementation/goal-02-validation.md) and [measured benchmarks](docs/benchmarks/goal-02.md).
 
-[Goal 03](docs/implementation/goal-03.md) adds controlled source patches and isolated verification. Work is in progress; see the [implementation record](docs/implementation/goal-03-progress.md) for verified milestones and current limitations. The [concrete execution component](docs/implementation/goal-03-execution.md) validates a scoped Linux T1 path and persisted evidence; the complete Goal 03 acceptance gate remains open.
+[Goal 03](docs/implementation/goal-03.md) implements exact-base source patches, scoped execution admission, policy-owned checks, a validated Linux T1 path and independent persisted-evidence admission. The [acceptance record](docs/implementation/goal-03-acceptance.md), [milestone history](docs/implementation/goal-03-progress.md) and [measured baseline](docs/benchmarks/goal-03.md) state the tested scope and limits. The validated execution harness checks Go syntax with pinned gofmt; incomplete real-source analysis still blocks execution. Source revision publication, durable distributed authority, stronger tiers and broader execution harnesses remain unsupported.
 
 ---
 

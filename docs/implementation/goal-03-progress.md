@@ -3,7 +3,9 @@
 The [accepted Goal 03 objective](goal-03.md) and updated [Dev.md](../../Dev.md)
 were retrieved from GitHub at `2c42f67d3e9492c2dcd2cc49ab6a4870f608dec8`.
 This record describes implemented behavior separately from that objective.
-Goal 03 remains in progress until its integrated exit gate passes.
+The [acceptance record](goal-03-acceptance.md) audits the implemented exit gate,
+actual validation scope, measured baseline and remaining architectural boundaries.
+The milestone history below retains each stage's original limitations.
 
 ## 03.1: deterministic source patches
 
@@ -452,3 +454,29 @@ Definition/reference locations, semantic edges and incomplete-coverage assertion
 are unchanged. All 28 local LSP groups, including the actual server, passed;
 strict repository Clippy and formatting passed. This changes the validation
 harness; the measured runtime implementation at `fa888ed` is unchanged.
+
+
+## 03.6b: measured baseline and complete acceptance record
+
+The [published measurement record](../benchmarks/goal-03.md) retains three
+repetitions per case, exact source/tool/binary/environment identities, raw JSON,
+command output and byte-identically reproducible summaries. Fourteen actual
+repository T0 cases, three generated T1 cases and bounded capacity/recovery
+probes have observed distributions and provisional tracking ceilings. Different
+filesystem placements, warm caches, process-level RSS and sampled guest counters
+are explicit limits; no production SLO or universal performance claim is made.
+
+The measured runtime/runner source is `fa888ed49cda2f151f64491986aa8ea9d7afbb36`.
+Runtime source hashes remain unchanged by the later language-server test fix and
+this documentation/data publication. The [acceptance report](goal-03-acceptance.md)
+maps all sixteen definition-of-done items, adversarial/failure coverage, actual
+profile/harness, check commands and non-goals to repository evidence. All verified
+milestones retain human-only author and committer metadata.
+
+The corrected hosted [CI run](https://github.com/Emiloart/Celetixo/actions/runs/42608513914)
+passed the complete workflow, including the actual language server and whole-tree
+inspection/measurement smoke. Data publication also verified every raw/summary
+hash and all 111 recorded source-blob hashes, reproduced the summary exactly,
+checked local report links and passed the default input classifier. No Engine,
+repository runtime, executor, runner or shared fixture source changed after the
+measured commit.

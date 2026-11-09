@@ -165,6 +165,8 @@ Keep source revision publication and production distributed commit explicitly ou
 
 **Exit gate:** an exact-base patch is applied without mutating its source snapshot, required checks execute in a validated isolation backend against the resulting snapshot, and the Engine admits only complete, correctly bound evidence. All Goal 03 acceptance criteria must pass.
 
+The [Goal 03 acceptance record](docs/implementation/goal-03-acceptance.md) maps that gate to implemented contracts, actual integration checks, immutable source/evidence versions, known limits and the [measured baseline](docs/benchmarks/goal-03.md). Its reference Engine and reviewed Linux T1 profile do not provide source publication or durable distributed authority.
+
 ### Phase 6 — Durable services and execution
 
 Integrate the remaining architectural components when the preceding contracts are stable:

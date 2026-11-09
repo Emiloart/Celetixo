@@ -1,0 +1,33 @@
+{
+  "schema": "celetixo/benchmark-source-provision/v1",
+  "url": "https://github.com/cespare/xxhash",
+  "ref": "v2.3.0",
+  "commit": "998dce232f17418a7a5721ecf87ca714025a3243",
+  "purpose": "read-only T0 capture/patch/materialization benchmark; source/dependencies not executed or installed; no completeness promotion",
+  "files": {
+    ".github/workflows/test.yml": "78b064e7b4af4e4ce63eaa9fea1c31b5e0691650eaaa6eb458b86b7248d30442",
+    "LICENSE.txt": "f566a9f97bacdaf00d9f21dd991e81dc11201c4e016c86b470799429a1c9a79c",
+    "README.md": "d716f0702a2ebad4090b5b7d6bb7e7e027fc7beb49b92c0bc3de47174bdd3ab1",
+    "bench_test.go": "0803f3c2a20a2195f6b6728945adabd5715d4a1d1aa5380c66ecc2140f8d13c9",
+    "dynamic/.gitignore": "3154c55e9261594154c8600367ef48ec3b90cac0ca1b621a83c4503a4984182f",
+    "dynamic/dynamic_test.go": "b426d8b2a4fe3680e14e4e915f121b6dfd26fbb55d001afd2d56b71be858bdbe",
+    "dynamic/plugin.go": "d63088dac7436e763cceb01a932f65fe3238f6438862e3ccaa2133a1d2d8306d",
+    "go.mod": "a090f8eaaf59cc2adf163299ebefe797e1dca3f6add2c8e88a6a3b90ba538b02",
+    "go.sum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "testall.sh": "137f90625cac94915a9a8ee65efcb3fe78e71b72444d5df5df2736d42ffc0017",
+    "xxhash.go": "cc024316c7e49696f5705195951e49a8d24b612e2f95bec41ee4cd71990b78f9",
+    "xxhash_amd64.s": "580c39fa974ecc91035f33cc258a4141cf52bc767d2f5283fb5b8609e4a856db",
+    "xxhash_arm64.s": "f878f122d4af5bf05d12d5cffb9ab841a42aebba32ef551afe153d9b3c2c3ad0",
+    "xxhash_asm.go": "f5a64edc8b76317c95879329a0f3b358773fe3b529b8b88206012c9379145fc7",
+    "xxhash_other.go": "850a8d36bac7866042fa96965223a61ade436973280fb4ce537058b05ceaea17",
+    "xxhash_safe.go": "2a6c69e79401099ffa84eb89032b89e96a76310dc6595e79a49ced1ce1747848",
+    "xxhash_test.go": "09625f5007f6574dbc86782e9e2ce5955cffbfcc67fd4f918cbdf40b160e3d42",
+    "xxhash_unsafe.go": "b164ad04d24b0d1f5fbde666ae3806f4f33a23044359f63162aed343bcc97eb3",
+    "xxhash_unsafe_test.go": "eb3b5b04b7315c9508a7674a66363f5efff02c0020db1015b7c86b1dc2c077bb",
+    "xxhashbench/go.mod": "4a937e6ac3be3c2addde19b701fb9da57449005ba58e4d317ccfc3b41c050859",
+    "xxhashbench/go.sum": "8fdd63b4189eb2ab72451dbc8fd604a95f9e9d3b6cb413ee9c5e4e77d7a39f02",
+    "xxhashbench/xxhashbench_test.go": "2cf6437b964c567e70a468129e5af10a617f0c4c7dce596f987f89973d08b856",
+    "xxhsum/.gitignore": "edb4b3ce022752b3f102cee1653a9595b1e994654ba4aea750f2371671382bbc",
+    "xxhsum/xxhsum.go": "c966b085a91b033d1319d02153b27c2b62fa667eb0ca2ca0bef17c5c27a27625"
+  }
+}

@@ -1,0 +1,74 @@
+COMMAND ["cargo", "build", "--release", "--verbose", "--locked", "--offline", "-p", "celetixo-execution", "--example", "source_patch_bench", "--example", "source_execution_bench"]
+       Fresh shlex v2.0.1
+       Fresh find-msvc-tools v0.1.15
+       Fresh typenum v1.20.1
+       Fresh cc v1.11.0
+       Fresh unicode-ident v1.0.27
+       Fresh version_check v0.9.5
+       Fresh proc-macro2 v1.0.107
+       Fresh quote v1.0.47
+       Fresh tree-sitter-language v0.1.9
+       Fresh hybrid-array v0.4.15
+       Fresh syn v3.0.9
+       Fresh cfg-if v1.0.5
+       Fresh equivalent v1.0.3
+       Fresh hashbrown v0.17.1
+       Fresh generic-array v0.14.7
+       Fresh indexmap v2.14.2
+       Fresh serde_core v1.0.229
+       Fresh crypto-common v0.2.2
+       Fresh block-buffer v0.12.1
+       Fresh memchr v2.8.3
+       Fresh const-oid v0.10.2
+       Fresh digest v0.11.3
+       Fresh thiserror-impl v2.0.21
+       Fresh aho-corasick v1.1.5
+       Fresh regex-syntax v0.8.11
+       Fresh bitflags v2.13.2
+       Fresh linux-raw-sys v0.12.1
+       Fresh cpufeatures v0.3.1
+       Fresh rustix v1.1.6
+       Fresh sha2 v0.11.0
+       Fresh regex-automata v0.4.18
+       Fresh thiserror v2.0.21
+       Fresh zmij v1.0.23
+       Fresh libc v0.2.191
+       Fresh crypto-common v0.1.7
+       Fresh block-buffer v0.10.4
+       Fresh serde_derive v1.0.229
+       Fresh winnow v1.0.4
+       Fresh itoa v1.0.18
+       Fresh toml_parser v1.1.5+spec-1.1.0
+       Fresh serde_json v1.0.151
+       Fresh digest v0.10.7
+       Fresh serde v1.0.229
+       Fresh getrandom v0.4.3
+       Fresh celetixo-engine v0.1.0 (/mnt/c/dev/celetixo/crates/engine)
+       Fresh regex v1.13.1
+       Fresh toml_datetime v0.7.5+spec-1.1.0
+       Fresh serde_spanned v1.1.2
+       Fresh streaming-iterator v0.1.9
+       Fresh winnow v0.7.15
+       Fresh once_cell v1.21.4
+       Fresh cpufeatures v0.2.17
+       Fresh fastrand v2.5.0
+       Fresh toml_writer v1.1.3+spec-1.1.0
+       Fresh tree-sitter v0.26.13
+       Fresh tempfile v3.27.0
+       Fresh sha1 v0.10.6
+       Fresh toml v0.9.12+spec-1.1.0
+       Fresh tree-sitter-javascript v0.25.0
+       Fresh tree-sitter-python v0.25.0
+       Fresh tree-sitter-typescript v0.23.2
+       Fresh tree-sitter-rust v0.24.0
+       Fresh tree-sitter-go v0.25.0
+       Fresh celetixo-repository v0.1.0 (/mnt/c/dev/celetixo/crates/repository)
+       Fresh celetixo-execution v0.1.0 (/mnt/c/dev/celetixo/crates/execution)
+    Finished `release` profile [optimized] target(s) in 5.62s
+EXIT 0
+COMMAND ["/mnt/c/dev/celetixo/target/release/examples/source_patch_bench", "/mnt/c/dev/celetixo", "fa888ed49cda2f151f64491986aa8ea9d7afbb36", "--iterations", "3"]
+EXIT 0
+COMMAND ["/mnt/c/dev/celetixo/target/release/examples/source_patch_bench", "/home/emiloart/.local/share/celetixo-goal03/benchmark-sources/xxhash-v2.3.0", "998dce232f17418a7a5721ecf87ca714025a3243", "--iterations", "3"]
+EXIT 0
+COMMAND ["/mnt/c/dev/celetixo/target/release/examples/source_execution_bench", "--iterations", "3"]
+EXIT 0

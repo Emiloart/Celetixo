@@ -1,0 +1,12 @@
+{
+  "schema": "celetixo/goal03-measurement-context/v1",
+  "collector_sha256": "a6b1ac3e3205c9b0c863e0f6fe5976f48b17ce0eb7b318a237e11d8b5b5bf94f",
+  "summary_script_sha256": "75a8ca7c60fb26dadc168231809392c2e82d65c379b7ab3832986000302f3dd9",
+  "storage": {
+    "celetixo_source": "9p     /mnt/c",
+    "xxhash_source": "ext4   /",
+    "temporary_t0_copies": "ext4   /",
+    "registered_t1_workspaces": "ext4   /"
+  },
+  "interpretation": "Source repositories use different filesystem placements; capture latency cannot be attributed solely to repository size. Three observed repetitions are a local baseline, not production or cold-cache claims."
+}

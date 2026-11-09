@@ -2,9 +2,8 @@
 
 This component implements private materialization, a concrete Linux T1 runner,
 local immutable artifacts and their integration with the Engine evidence gate.
-Goal 03 remains in progress. Representative measurements, final clean-checkout
-validation and the complete acceptance audit remain required before its exit gate
-can be claimed.
+The [acceptance record](goal-03-acceptance.md) and [measured baseline](../benchmarks/goal-03.md)
+state the validated exit-gate evidence, exact source revisions and limits.
 
 ## Authority and data flow
 
@@ -229,8 +228,8 @@ for these actual containment tests.
 
 The [measurement protocol](../benchmarks/goal-03-protocol.md) covers actual-repository
 T0 patch/copy probes and generated finite-reference T1 checks, evidence and
-capacity/recovery probes. Representative results and targets remain a separate
-exit gate:
+capacity/recovery probes. [Recorded results and provisional targets](../benchmarks/goal-03.md) bind the
+actual run to committed source:
 
 ```sh
 CELETIXO_OCI_HOME=/reviewed/private/tooling cargo run --release --locked   -p celetixo-execution --example source_execution_bench -- --iterations 3

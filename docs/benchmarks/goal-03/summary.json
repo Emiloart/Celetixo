@@ -1,0 +1,1661 @@
+{
+  "schema": "celetixo/goal03-benchmark-summary/v1",
+  "source_commit": "fa888ed49cda2f151f64491986aa8ea9d7afbb36",
+  "timing_unit": "microseconds unless explicitly named otherwise",
+  "scope": "observed local distributions; no production or cold-cache claim",
+  "tracking_target_method": "provisional per-case ceiling equals observed maximum; throughput floor equals observed minimum; review future deviations with new measurements",
+  "t0": {
+    "celetixo": {
+      "commit": "fa888ed49cda2f151f64491986aa8ea9d7afbb36",
+      "files": 163,
+      "content_bytes": 2352661,
+      "capture_us": {
+        "samples": 3,
+        "minimum": 22545337,
+        "median": 24325843,
+        "maximum": 25541804
+      },
+      "cases": {
+        "replace-original": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 110721,
+              "median": 116670,
+              "maximum": 117389
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 4675,
+              "median": 5809,
+              "maximum": 6076
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 13411,
+              "median": 14891,
+              "maximum": 15203
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 115855,
+              "median": 117630,
+              "maximum": 122335
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 47,
+              "median": 64,
+              "maximum": 900
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 42,
+              "median": 85,
+              "maximum": 864
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 311803,
+              "median": 317275,
+              "maximum": 328537
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 4229,
+              "median": 4342,
+              "maximum": 5574
+            }
+          },
+          "source_files": 163,
+          "copied_source_bytes": 2352662,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 7161026.003159462,
+            "median": 7415213.931132299,
+            "maximum": 7545347.543160264
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 59281408,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 59281408,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 117389,
+            "extra_source_census_us": 6076,
+            "manifest_canonical_and_hash_us": 15203,
+            "patch_apply_us": 122335,
+            "patch_canonicalization_and_encode_us": 900,
+            "patch_decode_us": 864,
+            "private_materialization_including_replay_us": 328537,
+            "source_cleanup_us": 5574
+          }
+        },
+        "delete-original": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 105831,
+              "median": 113307,
+              "maximum": 116488
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 4855,
+              "median": 5179,
+              "maximum": 5190
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 12094,
+              "median": 12266,
+              "maximum": 14721
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 105995,
+              "median": 112585,
+              "maximum": 117022
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 29,
+              "median": 30,
+              "maximum": 32
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 12,
+              "median": 13,
+              "maximum": 15
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 299336,
+              "median": 305969,
+              "maximum": 310670
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 3513,
+              "median": 5010,
+              "maximum": 5135
+            }
+          },
+          "source_files": 162,
+          "copied_source_bytes": 2350995,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 7567499.275758844,
+            "median": 7683768.617082123,
+            "maximum": 7854033.594355507
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 59314176,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 59314176,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 116488,
+            "extra_source_census_us": 5190,
+            "manifest_canonical_and_hash_us": 14721,
+            "patch_apply_us": 117022,
+            "patch_canonicalization_and_encode_us": 32,
+            "patch_decode_us": 15,
+            "private_materialization_including_replay_us": 310670,
+            "source_cleanup_us": 5135
+          }
+        },
+        "rename-original": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 104471,
+              "median": 110514,
+              "maximum": 129566
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 5069,
+              "median": 5295,
+              "maximum": 6098
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 13242,
+              "median": 14183,
+              "maximum": 16296
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 108113,
+              "median": 121053,
+              "maximum": 137703
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 29,
+              "median": 39,
+              "maximum": 43
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 14,
+              "median": 18,
+              "maximum": 19
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 304386,
+              "median": 322234,
+              "maximum": 358461
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 3892,
+              "median": 4118,
+              "maximum": 4205
+            }
+          },
+          "source_files": 163,
+          "copied_source_bytes": 2352661,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 6563227.240899289,
+            "median": 7301094.85653283,
+            "maximum": 7729202.394328254
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 59314176,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 59314176,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 129566,
+            "extra_source_census_us": 6098,
+            "manifest_canonical_and_hash_us": 16296,
+            "patch_apply_us": 137703,
+            "patch_canonicalization_and_encode_us": 43,
+            "patch_decode_us": 19,
+            "private_materialization_including_replay_us": 358461,
+            "source_cleanup_us": 4205
+          }
+        },
+        "mode-original": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 108165,
+              "median": 121277,
+              "maximum": 130411
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 4954,
+              "median": 5744,
+              "maximum": 6913
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 11660,
+              "median": 13386,
+              "maximum": 15560
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 106388,
+              "median": 121328,
+              "maximum": 123119
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 38,
+              "median": 53,
+              "maximum": 54
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 16,
+              "median": 34,
+              "maximum": 41
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 309770,
+              "median": 319169,
+              "maximum": 327943
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 3651,
+              "median": 3659,
+              "maximum": 4567
+            }
+          },
+          "source_files": 163,
+          "copied_source_bytes": 2352661,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 7173993.651335751,
+            "median": 7371207.730074036,
+            "maximum": 7594863.931303871
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 59314176,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 59314176,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 130411,
+            "extra_source_census_us": 6913,
+            "manifest_canonical_and_hash_us": 15560,
+            "patch_apply_us": 123119,
+            "patch_canonicalization_and_encode_us": 54,
+            "patch_decode_us": 41,
+            "private_materialization_including_replay_us": 327943,
+            "source_cleanup_us": 4567
+          }
+        },
+        "create-4KiB": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 105230,
+              "median": 109339,
+              "maximum": 116835
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 5126,
+              "median": 5480,
+              "maximum": 6428
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 12561,
+              "median": 12656,
+              "maximum": 12659
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 109456,
+              "median": 109591,
+              "maximum": 120983
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 78,
+              "median": 87,
+              "maximum": 115
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 78,
+              "median": 93,
+              "maximum": 184
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 301550,
+              "median": 301809,
+              "maximum": 314457
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 3409,
+              "median": 3820,
+              "maximum": 49426
+            }
+          },
+          "source_files": 164,
+          "copied_source_bytes": 2356757,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 7494687.667948241,
+            "median": 7808769.784863937,
+            "maximum": 7815476.703697562
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 59314176,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 59314176,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 116835,
+            "extra_source_census_us": 6428,
+            "manifest_canonical_and_hash_us": 12659,
+            "patch_apply_us": 120983,
+            "patch_canonicalization_and_encode_us": 115,
+            "patch_decode_us": 184,
+            "private_materialization_including_replay_us": 314457,
+            "source_cleanup_us": 49426
+          }
+        },
+        "create-64KiB": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 111420,
+              "median": 117910,
+              "maximum": 119722
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 5431,
+              "median": 5451,
+              "maximum": 6926
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 12608,
+              "median": 14395,
+              "maximum": 14985
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 109101,
+              "median": 112263,
+              "maximum": 119198
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 666,
+              "median": 1135,
+              "maximum": 2078
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 992,
+              "median": 1072,
+              "maximum": 2570
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 309675,
+              "median": 335160,
+              "maximum": 376230
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 3809,
+              "median": 3815,
+              "maximum": 4598
+            }
+          },
+          "source_files": 164,
+          "copied_source_bytes": 2418197,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 6427443.3192462055,
+            "median": 7215052.512232963,
+            "maximum": 7808822.1522563975
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 59789312,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 59789312,
+            "median": 65642496,
+            "maximum": 65708032
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 119722,
+            "extra_source_census_us": 6926,
+            "manifest_canonical_and_hash_us": 14985,
+            "patch_apply_us": 119198,
+            "patch_canonicalization_and_encode_us": 2078,
+            "patch_decode_us": 2570,
+            "private_materialization_including_replay_us": 376230,
+            "source_cleanup_us": 4598
+          }
+        },
+        "create-1MiB": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 131999,
+              "median": 138011,
+              "maximum": 167213
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 6525,
+              "median": 7222,
+              "maximum": 7794
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 17547,
+              "median": 19773,
+              "maximum": 20614
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 126556,
+              "median": 127088,
+              "maximum": 131250
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 11524,
+              "median": 12232,
+              "maximum": 13773
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 17377,
+              "median": 20183,
+              "maximum": 20790
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 417809,
+              "median": 428601,
+              "maximum": 503483
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 4240,
+              "median": 4358,
+              "maximum": 4678
+            }
+          },
+          "source_files": 164,
+          "copied_source_bytes": 3401237,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 6755415.773720264,
+            "median": 7935672.105291402,
+            "maximum": 8140650.392882872
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 65622016,
+            "median": 65703936,
+            "maximum": 66764800
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 65622016,
+            "median": 65703936,
+            "maximum": 66764800
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 167213,
+            "extra_source_census_us": 7794,
+            "manifest_canonical_and_hash_us": 20614,
+            "patch_apply_us": 131250,
+            "patch_canonicalization_and_encode_us": 13773,
+            "patch_decode_us": 20790,
+            "private_materialization_including_replay_us": 503483,
+            "source_cleanup_us": 4678
+          }
+        }
+      }
+    },
+    "xxhash": {
+      "commit": "998dce232f17418a7a5721ecf87ca714025a3243",
+      "files": 24,
+      "content_bytes": 36958,
+      "capture_us": {
+        "samples": 3,
+        "minimum": 145082,
+        "median": 152060,
+        "maximum": 154673
+      },
+      "cases": {
+        "replace-original": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 2025,
+              "median": 2066,
+              "maximum": 2558
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 458,
+              "median": 492,
+              "maximum": 940
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 221,
+              "median": 329,
+              "maximum": 335
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 2142,
+              "median": 2206,
+              "maximum": 2352
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 50,
+              "median": 50,
+              "maximum": 871
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 40,
+              "median": 87,
+              "maximum": 700
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 9385,
+              "median": 9559,
+              "maximum": 10532
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 597,
+              "median": 793,
+              "maximum": 859
+            }
+          },
+          "source_files": 24,
+          "copied_source_bytes": 36959,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 3509210.0265856436,
+            "median": 3866408.620148551,
+            "maximum": 3938092.7011188064
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 5341184,
+            "median": 5447680,
+            "maximum": 5861376
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 5341184,
+            "median": 11141120,
+            "maximum": 11677696
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 2558,
+            "extra_source_census_us": 940,
+            "manifest_canonical_and_hash_us": 335,
+            "patch_apply_us": 2352,
+            "patch_canonicalization_and_encode_us": 871,
+            "patch_decode_us": 700,
+            "private_materialization_including_replay_us": 10532,
+            "source_cleanup_us": 859
+          }
+        },
+        "delete-original": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 1661,
+              "median": 1810,
+              "maximum": 1975
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 537,
+              "median": 687,
+              "maximum": 715
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 212,
+              "median": 245,
+              "maximum": 301
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 1949,
+              "median": 1973,
+              "maximum": 2019
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 26,
+              "median": 32,
+              "maximum": 40
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 13,
+              "median": 15,
+              "maximum": 29
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 8034,
+              "median": 8452,
+              "maximum": 8826
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 421,
+              "median": 527,
+              "maximum": 568
+            }
+          },
+          "source_files": 23,
+          "copied_source_bytes": 35653,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 4039542.261500113,
+            "median": 4218291.528632277,
+            "maximum": 4437764.500871297
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 5357568,
+            "median": 5447680,
+            "maximum": 5861376
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 5357568,
+            "median": 11141120,
+            "maximum": 11677696
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 1975,
+            "extra_source_census_us": 715,
+            "manifest_canonical_and_hash_us": 301,
+            "patch_apply_us": 2019,
+            "patch_canonicalization_and_encode_us": 40,
+            "patch_decode_us": 29,
+            "private_materialization_including_replay_us": 8826,
+            "source_cleanup_us": 568
+          }
+        },
+        "rename-original": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 1818,
+              "median": 1986,
+              "maximum": 2350
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 458,
+              "median": 465,
+              "maximum": 704
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 195,
+              "median": 202,
+              "maximum": 238
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 1698,
+              "median": 1863,
+              "maximum": 2384
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 25,
+              "median": 38,
+              "maximum": 49
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 13,
+              "median": 18,
+              "maximum": 19
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 7935,
+              "median": 8206,
+              "maximum": 9712
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 384,
+              "median": 519,
+              "maximum": 530
+            }
+          },
+          "source_files": 24,
+          "copied_source_bytes": 36958,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 3805395.3871499174,
+            "median": 4503777.723616865,
+            "maximum": 4657592.942659105
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 5373952,
+            "median": 5451776,
+            "maximum": 5861376
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 5373952,
+            "median": 11141120,
+            "maximum": 11677696
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 2350,
+            "extra_source_census_us": 704,
+            "manifest_canonical_and_hash_us": 238,
+            "patch_apply_us": 2384,
+            "patch_canonicalization_and_encode_us": 49,
+            "patch_decode_us": 19,
+            "private_materialization_including_replay_us": 9712,
+            "source_cleanup_us": 530
+          }
+        },
+        "mode-original": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 1674,
+              "median": 2148,
+              "maximum": 2265
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 472,
+              "median": 502,
+              "maximum": 555
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 237,
+              "median": 334,
+              "maximum": 378
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 1682,
+              "median": 1695,
+              "maximum": 2169
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 28,
+              "median": 29,
+              "maximum": 46
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 13,
+              "median": 14,
+              "maximum": 15
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 8941,
+              "median": 9158,
+              "maximum": 10780
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 467,
+              "median": 502,
+              "maximum": 563
+            }
+          },
+          "source_files": 24,
+          "copied_source_bytes": 36958,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 3428385.899814471,
+            "median": 4035597.2919851495,
+            "maximum": 4133542.1093837377
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 5390336,
+            "median": 5464064,
+            "maximum": 5861376
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 5390336,
+            "median": 11141120,
+            "maximum": 11677696
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 2265,
+            "extra_source_census_us": 555,
+            "manifest_canonical_and_hash_us": 378,
+            "patch_apply_us": 2169,
+            "patch_canonicalization_and_encode_us": 46,
+            "patch_decode_us": 15,
+            "private_materialization_including_replay_us": 10780,
+            "source_cleanup_us": 563
+          }
+        },
+        "create-4KiB": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 2398,
+              "median": 2441,
+              "maximum": 2571
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 560,
+              "median": 703,
+              "maximum": 927
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 228,
+              "median": 236,
+              "maximum": 370
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 1900,
+              "median": 1966,
+              "maximum": 2685
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 63,
+              "median": 66,
+              "maximum": 191
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 69,
+              "median": 75,
+              "maximum": 99
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 10125,
+              "median": 10316,
+              "maximum": 14104
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 535,
+              "median": 719,
+              "maximum": 835
+            }
+          },
+          "source_files": 25,
+          "copied_source_bytes": 41054,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 2910805.445263755,
+            "median": 3979643.272586274,
+            "maximum": 4054716.049382716
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 5419008,
+            "median": 5464064,
+            "maximum": 5861376
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 5419008,
+            "median": 11141120,
+            "maximum": 11677696
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 2571,
+            "extra_source_census_us": 927,
+            "manifest_canonical_and_hash_us": 370,
+            "patch_apply_us": 2685,
+            "patch_canonicalization_and_encode_us": 191,
+            "patch_decode_us": 99,
+            "private_materialization_including_replay_us": 14104,
+            "source_cleanup_us": 835
+          }
+        },
+        "create-64KiB": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 2875,
+              "median": 3059,
+              "maximum": 3432
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 501,
+              "median": 544,
+              "maximum": 577
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 554,
+              "median": 565,
+              "maximum": 639
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 3122,
+              "median": 3280,
+              "maximum": 3526
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 984,
+              "median": 1017,
+              "maximum": 1202
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 1290,
+              "median": 1451,
+              "maximum": 1761
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 11271,
+              "median": 11372,
+              "maximum": 12221
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 440,
+              "median": 511,
+              "maximum": 529
+            }
+          },
+          "source_files": 25,
+          "copied_source_bytes": 102494,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 8386711.3984125685,
+            "median": 9012838.550826592,
+            "maximum": 9093603.05208056
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 5808128,
+            "median": 5869568,
+            "maximum": 5922816
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 5808128,
+            "median": 11141120,
+            "maximum": 11677696
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 3432,
+            "extra_source_census_us": 577,
+            "manifest_canonical_and_hash_us": 639,
+            "patch_apply_us": 3526,
+            "patch_canonicalization_and_encode_us": 1202,
+            "patch_decode_us": 1761,
+            "private_materialization_including_replay_us": 12221,
+            "source_cleanup_us": 529
+          }
+        },
+        "create-1MiB": {
+          "metrics_us": {
+            "application_replay_validation_us": {
+              "samples": 3,
+              "minimum": 18409,
+              "median": 19768,
+              "maximum": 22118
+            },
+            "extra_source_census_us": {
+              "samples": 3,
+              "minimum": 1020,
+              "median": 1038,
+              "maximum": 1181
+            },
+            "manifest_canonical_and_hash_us": {
+              "samples": 3,
+              "minimum": 5646,
+              "median": 7470,
+              "maximum": 7744
+            },
+            "patch_apply_us": {
+              "samples": 3,
+              "minimum": 19433,
+              "median": 20333,
+              "maximum": 20430
+            },
+            "patch_canonicalization_and_encode_us": {
+              "samples": 3,
+              "minimum": 11355,
+              "median": 13034,
+              "maximum": 13680
+            },
+            "patch_decode_us": {
+              "samples": 3,
+              "minimum": 17417,
+              "median": 18916,
+              "maximum": 19308
+            },
+            "private_materialization_including_replay_us": {
+              "samples": 3,
+              "minimum": 51243,
+              "median": 53323,
+              "maximum": 54276
+            },
+            "source_cleanup_us": {
+              "samples": 3,
+              "minimum": 722,
+              "median": 730,
+              "maximum": 904
+            }
+          },
+          "source_files": 25,
+          "copied_source_bytes": 1085534,
+          "throughput_bytes_per_second": {
+            "samples": 3,
+            "minimum": 20000257.940894686,
+            "median": 20357706.805693604,
+            "maximum": 21184044.650000975
+          },
+          "host_current_rss_bytes": {
+            "samples": 3,
+            "minimum": 10596352,
+            "median": 11030528,
+            "maximum": 11038720
+          },
+          "host_process_lifetime_high_water_rss_bytes": {
+            "samples": 3,
+            "minimum": 11141120,
+            "median": 11677696,
+            "maximum": 11722752
+          },
+          "provisional_timing_ceilings_us": {
+            "application_replay_validation_us": 22118,
+            "extra_source_census_us": 1181,
+            "manifest_canonical_and_hash_us": 7744,
+            "patch_apply_us": 20430,
+            "patch_canonicalization_and_encode_us": 13680,
+            "patch_decode_us": 19308,
+            "private_materialization_including_replay_us": 54276,
+            "source_cleanup_us": 904
+          }
+        }
+      }
+    }
+  },
+  "t1": {
+    "4KiB-source": {
+      "materialized_files": 3,
+      "copied_source_bytes": 4261,
+      "metrics_us": {
+        "patch_apply_us": {
+          "samples": 3,
+          "minimum": 315,
+          "median": 321,
+          "maximum": 391
+        },
+        "patch_replay_validation_us": {
+          "samples": 3,
+          "minimum": 302,
+          "median": 313,
+          "maximum": 344
+        },
+        "manifest_canonical_and_hash_us": {
+          "samples": 3,
+          "minimum": 30,
+          "median": 31,
+          "maximum": 33
+        },
+        "materialization_us": {
+          "samples": 3,
+          "minimum": 23661,
+          "median": 24109,
+          "maximum": 36860
+        },
+        "checks_including_backend_setup_us": {
+          "samples": 3,
+          "minimum": 351050,
+          "median": 371659,
+          "maximum": 600720
+        },
+        "source_cleanup_us": {
+          "samples": 3,
+          "minimum": 2896,
+          "median": 3169,
+          "maximum": 4311
+        },
+        "persistence_us": {
+          "samples": 3,
+          "minimum": 205299,
+          "median": 212276,
+          "maximum": 219407
+        },
+        "engine_evidence_admission_us": {
+          "samples": 3,
+          "minimum": 9123,
+          "median": 9562,
+          "maximum": 11500
+        },
+        "total_run_us": {
+          "samples": 3,
+          "minimum": 593643,
+          "median": 631912,
+          "maximum": 862649
+        },
+        "receipt_query_us": {
+          "samples": 3,
+          "minimum": 15,
+          "median": 17,
+          "maximum": 34
+        },
+        "envelope_read_us": {
+          "samples": 3,
+          "minimum": 465,
+          "median": 480,
+          "maximum": 525
+        },
+        "cache_key_us": {
+          "samples": 3,
+          "minimum": 3,
+          "median": 3,
+          "maximum": 4
+        }
+      },
+      "backend_phase_metrics_us": {
+        "preparation": {
+          "samples": 3,
+          "minimum": 84408,
+          "median": 105090,
+          "maximum": 321553
+        },
+        "startup": {
+          "samples": 3,
+          "minimum": 93386,
+          "median": 96652,
+          "maximum": 104423
+        },
+        "command_supervision": {
+          "samples": 3,
+          "minimum": 5828,
+          "median": 6474,
+          "maximum": 8655
+        },
+        "runtime_cleanup": {
+          "samples": 3,
+          "minimum": 128392,
+          "median": 130909,
+          "maximum": 133267
+        }
+      },
+      "guest_observed_wall_ms": {
+        "samples": 3,
+        "minimum": 99,
+        "median": 105,
+        "maximum": 110
+      },
+      "guest_observed_cpu_us": {
+        "samples": 3,
+        "minimum": 35443,
+        "median": 36229,
+        "maximum": 38947
+      },
+      "guest_observed_peak_memory_bytes": {
+        "samples": 3,
+        "minimum": 3371008,
+        "median": 3387392,
+        "maximum": 3629056
+      },
+      "host_current_rss_bytes": {
+        "samples": 3,
+        "minimum": 29638656,
+        "median": 33701888,
+        "maximum": 33701888
+      },
+      "host_process_lifetime_high_water_rss_bytes": {
+        "samples": 3,
+        "minimum": 29638656,
+        "median": 33701888,
+        "maximum": 33701888
+      },
+      "provisional_timing_ceilings_us": {
+        "patch_apply_us": 391,
+        "patch_replay_validation_us": 344,
+        "manifest_canonical_and_hash_us": 33,
+        "materialization_us": 36860,
+        "checks_including_backend_setup_us": 600720,
+        "source_cleanup_us": 4311,
+        "persistence_us": 219407,
+        "engine_evidence_admission_us": 11500,
+        "total_run_us": 862649,
+        "receipt_query_us": 34,
+        "envelope_read_us": 525,
+        "cache_key_us": 4
+      }
+    },
+    "64KiB-source": {
+      "materialized_files": 3,
+      "copied_source_bytes": 65701,
+      "metrics_us": {
+        "patch_apply_us": {
+          "samples": 3,
+          "minimum": 4535,
+          "median": 4717,
+          "maximum": 5413
+        },
+        "patch_replay_validation_us": {
+          "samples": 3,
+          "minimum": 4390,
+          "median": 4394,
+          "maximum": 4725
+        },
+        "manifest_canonical_and_hash_us": {
+          "samples": 3,
+          "minimum": 332,
+          "median": 360,
+          "maximum": 383
+        },
+        "materialization_us": {
+          "samples": 3,
+          "minimum": 138751,
+          "median": 144945,
+          "maximum": 145639
+        },
+        "checks_including_backend_setup_us": {
+          "samples": 3,
+          "minimum": 445516,
+          "median": 455538,
+          "maximum": 485210
+        },
+        "source_cleanup_us": {
+          "samples": 3,
+          "minimum": 3055,
+          "median": 4386,
+          "maximum": 4573
+        },
+        "persistence_us": {
+          "samples": 3,
+          "minimum": 334230,
+          "median": 367186,
+          "maximum": 367501
+        },
+        "engine_evidence_admission_us": {
+          "samples": 3,
+          "minimum": 22729,
+          "median": 23668,
+          "maximum": 25090
+        },
+        "total_run_us": {
+          "samples": 3,
+          "minimum": 951496,
+          "median": 1003589,
+          "maximum": 1031442
+        },
+        "receipt_query_us": {
+          "samples": 3,
+          "minimum": 11,
+          "median": 16,
+          "maximum": 27
+        },
+        "envelope_read_us": {
+          "samples": 3,
+          "minimum": 591,
+          "median": 658,
+          "maximum": 715
+        },
+        "cache_key_us": {
+          "samples": 3,
+          "minimum": 3,
+          "median": 4,
+          "maximum": 7
+        }
+      },
+      "backend_phase_metrics_us": {
+        "preparation": {
+          "samples": 3,
+          "minimum": 108413,
+          "median": 108875,
+          "maximum": 109075
+        },
+        "startup": {
+          "samples": 3,
+          "minimum": 122415,
+          "median": 123857,
+          "maximum": 127132
+        },
+        "command_supervision": {
+          "samples": 3,
+          "minimum": 15206,
+          "median": 15926,
+          "maximum": 22006
+        },
+        "runtime_cleanup": {
+          "samples": 3,
+          "minimum": 127785,
+          "median": 135632,
+          "maximum": 137401
+        }
+      },
+      "guest_observed_wall_ms": {
+        "samples": 3,
+        "minimum": 139,
+        "median": 142,
+        "maximum": 144
+      },
+      "guest_observed_cpu_us": {
+        "samples": 3,
+        "minimum": 36701,
+        "median": 36933,
+        "maximum": 37567
+      },
+      "guest_observed_peak_memory_bytes": {
+        "samples": 3,
+        "minimum": 3125248,
+        "median": 3166208,
+        "maximum": 3371008
+      },
+      "host_current_rss_bytes": {
+        "samples": 3,
+        "minimum": 30412800,
+        "median": 33701888,
+        "maximum": 33701888
+      },
+      "host_process_lifetime_high_water_rss_bytes": {
+        "samples": 3,
+        "minimum": 30412800,
+        "median": 33701888,
+        "maximum": 33701888
+      },
+      "provisional_timing_ceilings_us": {
+        "patch_apply_us": 5413,
+        "patch_replay_validation_us": 4725,
+        "manifest_canonical_and_hash_us": 383,
+        "materialization_us": 145639,
+        "checks_including_backend_setup_us": 485210,
+        "source_cleanup_us": 4573,
+        "persistence_us": 367501,
+        "engine_evidence_admission_us": 25090,
+        "total_run_us": 1031442,
+        "receipt_query_us": 27,
+        "envelope_read_us": 715,
+        "cache_key_us": 7
+      }
+    },
+    "64KiB-with-128-assets": {
+      "materialized_files": 131,
+      "copied_source_bytes": 98469,
+      "metrics_us": {
+        "patch_apply_us": {
+          "samples": 3,
+          "minimum": 7137,
+          "median": 7375,
+          "maximum": 9573
+        },
+        "patch_replay_validation_us": {
+          "samples": 3,
+          "minimum": 7519,
+          "median": 7932,
+          "maximum": 8540
+        },
+        "manifest_canonical_and_hash_us": {
+          "samples": 3,
+          "minimum": 658,
+          "median": 724,
+          "maximum": 836
+        },
+        "materialization_us": {
+          "samples": 3,
+          "minimum": 3372004,
+          "median": 3378464,
+          "maximum": 3378517
+        },
+        "checks_including_backend_setup_us": {
+          "samples": 3,
+          "minimum": 508401,
+          "median": 520212,
+          "maximum": 546109
+        },
+        "source_cleanup_us": {
+          "samples": 3,
+          "minimum": 7422,
+          "median": 7819,
+          "maximum": 8843
+        },
+        "persistence_us": {
+          "samples": 3,
+          "minimum": 428979,
+          "median": 435067,
+          "maximum": 455790
+        },
+        "engine_evidence_admission_us": {
+          "samples": 3,
+          "minimum": 29635,
+          "median": 31970,
+          "maximum": 36370
+        },
+        "total_run_us": {
+          "samples": 3,
+          "minimum": 4359214,
+          "median": 4406499,
+          "maximum": 4410427
+        },
+        "receipt_query_us": {
+          "samples": 3,
+          "minimum": 12,
+          "median": 12,
+          "maximum": 13
+        },
+        "envelope_read_us": {
+          "samples": 3,
+          "minimum": 477,
+          "median": 628,
+          "maximum": 749
+        },
+        "cache_key_us": {
+          "samples": 3,
+          "minimum": 3,
+          "median": 4,
+          "maximum": 4
+        }
+      },
+      "backend_phase_metrics_us": {
+        "preparation": {
+          "samples": 3,
+          "minimum": 127381,
+          "median": 132200,
+          "maximum": 174786
+        },
+        "startup": {
+          "samples": 3,
+          "minimum": 118379,
+          "median": 121508,
+          "maximum": 133386
+        },
+        "command_supervision": {
+          "samples": 3,
+          "minimum": 22563,
+          "median": 22652,
+          "maximum": 24966
+        },
+        "runtime_cleanup": {
+          "samples": 3,
+          "minimum": 134262,
+          "median": 135429,
+          "maximum": 140097
+        }
+      },
+      "guest_observed_wall_ms": {
+        "samples": 3,
+        "minimum": 141,
+        "median": 144,
+        "maximum": 158
+      },
+      "guest_observed_cpu_us": {
+        "samples": 3,
+        "minimum": 33163,
+        "median": 37062,
+        "maximum": 38801
+      },
+      "guest_observed_peak_memory_bytes": {
+        "samples": 3,
+        "minimum": 3088384,
+        "median": 3350528,
+        "maximum": 3624960
+      },
+      "host_current_rss_bytes": {
+        "samples": 3,
+        "minimum": 32378880,
+        "median": 33701888,
+        "maximum": 33701888
+      },
+      "host_process_lifetime_high_water_rss_bytes": {
+        "samples": 3,
+        "minimum": 32378880,
+        "median": 33701888,
+        "maximum": 33701888
+      },
+      "provisional_timing_ceilings_us": {
+        "patch_apply_us": 9573,
+        "patch_replay_validation_us": 8540,
+        "manifest_canonical_and_hash_us": 836,
+        "materialization_us": 3378517,
+        "checks_including_backend_setup_us": 546109,
+        "source_cleanup_us": 8843,
+        "persistence_us": 455790,
+        "engine_evidence_admission_us": 36370,
+        "total_run_us": 4410427,
+        "receipt_query_us": 13,
+        "envelope_read_us": 749,
+        "cache_key_us": 4
+      }
+    }
+  },
+  "capacity_and_recovery": {
+    "busy_rejection_us": {
+      "samples": 3,
+      "minimum": 17185,
+      "median": 18850,
+      "maximum": 19552
+    },
+    "preparation_and_controlled_failure_us": {
+      "samples": 3,
+      "minimum": 126084,
+      "median": 126165,
+      "maximum": 129636
+    },
+    "owned_orphan_recovery_us": {
+      "samples": 3,
+      "minimum": 82388,
+      "median": 85534,
+      "maximum": 91184
+    },
+    "idempotent_repeated_recovery_us": {
+      "samples": 3,
+      "minimum": 457,
+      "median": 466,
+      "maximum": 813
+    }
+  },
+  "input_sha256": {
+    "run.json": "b0aabd460a93218f30fa3ab90a2b758a3cdc4267ba593ce8976959175fdcf960",
+    "celetixo-t0.json": "e17dc8e68ada9d8b0be52fbc07d30f4060bf90a9914a402fc944c498c06888dd",
+    "xxhash-t0.json": "5db07b30708cff782497ab184ccfd837f4c5e8323e3a4226ece0cfb20a30a1f5",
+    "generated-t1.json": "755812510a5403f164ca55ccced6b7bddb2ede3418f886be30eced5cbce2d0de"
+  }
+}
