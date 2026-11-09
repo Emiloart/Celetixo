@@ -381,3 +381,35 @@ Formatting and strict all-target execution Clippy passed. The
 commands, current kernel and the actually used tool-closure hashes. Tool origin
 and signature records remain in the preceding component's
 [toolchain provenance](goal-03-execution-validation/toolchain.json).
+
+
+## 03.6a: reproducible measurement runners
+
+The [benchmark protocol](../benchmarks/goal-03-protocol.md) separates actual Git
+repository T0 measurements from generated finite-reference T1 executions.
+Operation/file-size, replay/hash, copying, source cleanup, resource observations,
+artifact publication/read, Engine admission, disabled-cache identity and actual
+capacity/orphan recovery have explicit measurement fields. Equal repeated fixture
+captures must retain their snapshot identity. CI also runs the T0 runner against
+its selected immutable source tree.
+
+Generated inputs include fixed Git commit dates, repository-owned check selection,
+a retained module manifest and controlled source/asset sizes. The actual structural
+analysis remains incomplete; only the separately identified reference model admits
+these known checks. Benchmark preparation does not promote arbitrary real-source
+analysis. Raw baseline measurements and targets will bind a committed runner
+source and are still outstanding for the complete Goal 03 exit gate.
+
+The preceding recovery milestone is `4c6d7baf16c26a98ca293a885ba56eb892504547`.
+
+The new actual end-to-end test rejects a mismatched immutable base before claim,
+recovers an interrupted first attempt without fabricating evidence, executes a
+fresh attempt through isolated verification and Engine admission, and proves
+failed history, duplicate delivery and source-publication rejection are preserved.
+The source-bound runner checks passed seven T0 cases over three repetitions,
+three generated T1 cases over three repetitions, and three actual bounded
+capacity/recovery probes. Existing 48 execution tests and all nine prior live
+OCI groups passed; the new live retry/base-mismatch group also passed. These are
+runner/integration proofs, not the published representative baseline yet.
+Milestone 03.4b's [CI run](https://github.com/Emiloart/Celetixo/actions/runs/42547309224)
+passed.

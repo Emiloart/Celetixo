@@ -195,17 +195,20 @@ image identity.
 With the required user manager and delegation available:
 
 ```sh
-CELETIXO_OCI_HOME=/reviewed/private/tooling cargo test --locked   -p celetixo-execution --test oci -- --ignored --test-threads=1
+CELETIXO_OCI_HOME=/reviewed/private/tooling cargo test --locked -p celetixo-execution --test oci --test source_flow -- --ignored --test-threads=1
 ```
 
 The tests include actual isolation/resource boundaries, source immutability,
 cancellation, timeout, controller loss, owned cleanup, publication faults, PID
-publication and patch-to-Engine-evidence integration. Ordinary filesystem and
+publication, mismatched-base rejection and fresh retry with preserved failed
+history, plus patch-to-Engine-evidence integration. Ordinary filesystem and
 finite fake-backend tests prove their stated contracts; they do not substitute
 for these actual containment tests.
 
-A benchmark runner exists but representative results and targets remain a
-separate exit gate:
+The [measurement protocol](../benchmarks/goal-03-protocol.md) covers actual-repository
+T0 patch/copy probes and generated finite-reference T1 checks, evidence and
+capacity/recovery probes. Representative results and targets remain a separate
+exit gate:
 
 ```sh
 CELETIXO_OCI_HOME=/reviewed/private/tooling cargo run --release --locked   -p celetixo-execution --example source_execution_bench -- --iterations 3

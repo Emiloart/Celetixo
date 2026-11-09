@@ -57,3 +57,5 @@ jobs:
         run: cargo run --locked -p celetixo-repository --example inspect_repository -- . --git-tree "$(git rev-parse HEAD)" --changed crates/engine/src/engine.rs > /tmp/goal02-inspection.json
       - name: Check reproducible benchmark harness
         run: cargo run --locked -p celetixo-repository --example repository_bench -- --copies 1 --iterations 1 --queries 3 > /tmp/goal02-benchmark-smoke.json
+      - name: Check source patch measurement runner on this immutable tree
+        run: cargo run --locked -p celetixo-execution --example source_patch_bench -- . "$(git rev-parse HEAD)" --iterations 1 > /tmp/goal03-patch-benchmark-smoke.json

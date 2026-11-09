@@ -133,6 +133,28 @@ pub(crate) fn admitted_command(
     args: &[&str],
     limits: ResourceLimits,
 ) -> AdmittedFixture {
+    admitted_source(
+        backend,
+        candidate,
+        executable,
+        args,
+        limits,
+        b"package main\n\nfunc main() {}\n",
+        &[],
+    )
+}
+
+/// Generated, completely enumerated reference inputs, never an arbitrary real
+/// repository's inferred semantic model. Extra public assets cannot be patched.
+pub(crate) fn admitted_source(
+    backend: &OciBackend,
+    candidate: &[u8],
+    executable: &str,
+    args: &[&str],
+    limits: ResourceLimits,
+    base_source: &[u8],
+    assets: &[(String, Vec<u8>)],
+) -> AdmittedFixture {
     let (store, admin) = InMemoryStore::new();
     let engine = Engine::new(store);
     let owner = admin
@@ -218,6 +240,8 @@ pub(crate) fn admitted_command(
             .env("PATH", "/usr/bin:/bin")
             .env("GIT_CONFIG_NOSYSTEM", "1")
             .env("GIT_CONFIG_GLOBAL", "/dev/null")
+            .env("GIT_AUTHOR_DATE", "2000-01-01T00:00:00Z")
+            .env("GIT_COMMITTER_DATE", "2000-01-01T00:00:00Z")
             .args(args)
             .output()
             .unwrap();
@@ -229,11 +253,18 @@ pub(crate) fn admitted_command(
         String::from_utf8(output.stdout).unwrap().trim().to_owned()
     };
     git(&["init", "-q"]);
-    fs::write(
-        root.path().join("main.go"),
-        b"package main\n\nfunc main() {}\n",
-    )
-    .unwrap();
+    fs::write(root.path().join("main.go"), base_source).unwrap();
+    for (name, bytes) in assets {
+        assert!(name != "main.go" && name != "celetixo.harness.json");
+        assert!(
+            std::path::Path::new(name)
+                .components()
+                .all(|c| matches!(c, std::path::Component::Normal(_)))
+        );
+        let path = root.path().join(name);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, bytes).unwrap();
+    }
     let configuration = serde_json::to_vec(&serde_json::json!({"version":1,"checks":[{"id":check.as_str(),"definition":definition.digest().to_string()}]})).unwrap();
     fs::write(root.path().join("celetixo.harness.json"), configuration).unwrap();
     git(&["add", "."]);
