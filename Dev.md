@@ -4,6 +4,8 @@
 
 This document is the practical build guide for Celetixo developers. It translates ADR-0001 through ADR-0004 into implementation discipline, sequencing, and acceptance criteria.
 
+Start with the [documentation index](docs/README.md) for reader routing and document authority. The [capability/support matrix](docs/reference/capability-support-matrix.md) is the compact implementation-status view; the [threat model](docs/spec/threat-model.md) and [local Linux T1 runbook](docs/operations/local-linux-t1-runbook.md) govern security review and the currently validated local execution profile.
+
 **The objective is to build the complete accepted architecture without weakening correctness, security, independence or scalability.** Implementation may proceed in validated stages, but build time is not an architectural constraint. Do not omit necessary capabilities or choose inferior permanent designs merely to shorten delivery.
 
 Read these documents before changing core behavior:
@@ -45,11 +47,11 @@ Follow [ADR-0004](docs/adr/0004-internal-first-public-capable-architecture.md) a
 7. **Never fake completion.** No placeholder implementation presented as working, no success response without an operation, and no skipped verification hidden behind a green status.
 8. **Keep scope narrow and cadence high.** Every change should compile, have focused tests, and leave the repository in a known state.
 
-## 2. First Build Target
+## 2. Goal 01 Baseline (Completed Historical Milestone)
 
-The first milestone is a runnable Rust Engineering State Engine prototype with a deterministic concurrency test harness.
+The original first milestone was a runnable Rust Engineering State Engine reference implementation with deterministic concurrency tests. That milestone has since been implemented and its bounded behavior is documented in [Goal 01](docs/implementation/goal-01.md) and [Goal 01 validation](docs/implementation/validation.md).
 
-The initial executable slice should prove that Celetixo can:
+The original acceptance scenario was to prove that Celetixo could:
 
 1. Register a repository state identified by an immutable revision.
 2. Accept a transaction intent with explicit reads, writes, and invariants.
@@ -149,9 +151,11 @@ Introduce Tree-sitter parsing, stable file/symbol identity, reference edges, and
 
 The implementation commands, capture policies, source-analysis authority contract, supported structural/LSP relationships and limitations are documented in [Goal 02](docs/implementation/goal-02.md). Reproduce the [recorded benchmarks](docs/benchmarks/goal-02.md) before changing performance targets. Tests must preserve known dynamic-reference misses and their incomplete-coverage result; passing a parser or a single language-server query cannot clear that result.
 
-### Phase 5 — Goal 03: controlled patch application and verification
+### Phase 5 — Goal 03: controlled patch application and verification (Completed)
 
-Implement [Goal 03](docs/implementation/goal-03.md) before connecting real workers or broad distributed orchestration. This phase turns Goal 02's immutable repository intelligence into an Engine-governed patch and verification path.
+[Goal 03](docs/implementation/goal-03.md) has an implementation and acceptance record. The validated scope includes exact-base source patches, scoped execution admission, policy-owned checks, a concrete Linux T1 path, persisted local evidence admission and owned-runtime recovery. See the [acceptance audit](docs/implementation/goal-03-acceptance.md), [milestone history](docs/implementation/goal-03-progress.md), [execution component](docs/implementation/goal-03-execution.md) and [measured baseline](docs/benchmarks/goal-03.md).
+
+The completion claim is bounded: source revision publication, durable distributed authority, T2/T3, broad language execution harnesses and production operations remain unsupported or target-only.
 
 Required sequence:
 1. Canonical, exact-base patch contracts and deterministic application to a private snapshot-derived workspace.
