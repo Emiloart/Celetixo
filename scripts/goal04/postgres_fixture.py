@@ -17,7 +17,6 @@ import sys
 import time
 
 
-IMAGE = "sha256:8bb11c4aae5819656e9a197dda176d826f62da8ad5eb5612702a60a2533302ee"
 REPO_DIGEST = "postgres@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609"
 DEFAULT_ROOT = Path.home() / ".local/share/celetixo-goal04/service-fixtures/postgres17"
 DATABASE = "celetixo"
@@ -88,6 +87,18 @@ class Fixture:
         self.root = root
         self.name = "celetixo-goal04-pg17-" + hashlib.sha256(str(root).encode()).hexdigest()[:12]
         self.secret_values = []
+        self.image = None
+
+    def cached_image(self):
+        if self.image is None:
+            result = self.run(["docker", "image", "inspect", REPO_DIGEST])
+            image = json.loads(result.stdout)[0]
+            if (REPO_DIGEST not in image.get("RepoDigests", [])
+                    or image.get("Os") != "linux" or image.get("Architecture") != "amd64"
+                    or not image.get("Id", "").startswith("sha256:")):
+                raise FixtureError("cached image does not match the reviewed repository digest/platform")
+            self.image = image
+        return self.image
 
     def run(self, args, *, sql=None, check=True, timeout=45):
         result = subprocess.run(
@@ -114,7 +125,7 @@ class Fixture:
         item = json.loads(result.stdout)[0]
         if item["Config"].get("Labels", {}).get(LABEL) != str(self.root):
             raise FixtureError("container name is occupied by a different owner")
-        if item["Image"] != IMAGE or item["Config"]["User"] != f"{os.getuid()}:{os.getgid()}":
+        if item["Image"] != self.cached_image()["Id"] or item["Config"]["User"] != f"{os.getuid()}:{os.getgid()}":
             raise FixtureError("existing fixture container has different image or user")
         if item["HostConfig"]["NetworkMode"] != "none" or item["HostConfig"]["PortBindings"]:
             raise FixtureError("existing fixture container unexpectedly exposes a network")
@@ -150,9 +161,7 @@ class Fixture:
         host = str(self.root / "socket")
         if len(os.fsencode(host + "/.s.PGSQL.5432")) >= 108:
             raise FixtureError("fixture Unix-socket path exceeds the Linux path budget")
-        image = json.loads(self.run(["docker", "image", "inspect", IMAGE]).stdout)[0]
-        if REPO_DIGEST not in image.get("RepoDigests", []):
-            raise FixtureError("cached image lacks the reviewed repository digest; no automatic pull")
+        image = self.cached_image()
         roles = {}
         for key, user in ROLES.items():
             password_file = self.root / "secrets" / (key + ".password")
@@ -201,13 +210,13 @@ log_connections = off
 log_disconnections = off
 """)
         manifest = {"schema_version": 1, "host": host, "port": 5432, "database": DATABASE,
-                    "roles": roles, "container_name": self.name, "image_id": IMAGE,
+                    "roles": roles, "container_name": self.name, "image_id": image["Id"],
                     "repository_digest": REPO_DIGEST}
         private_write(self.root / "connection.json", json.dumps(manifest, indent=2) + "\n")
         return manifest
 
     def common(self):
-        args = ["--network", "none", "--read-only", "--cap-drop", "ALL",
+        args = ["--pull", "never", "--platform", "linux/amd64", "--network", "none", "--read-only", "--cap-drop", "ALL",
                 "--security-opt", "no-new-privileges", "--user", f"{os.getuid()}:{os.getgid()}",
                 "--cpus", "1", "--memory", "384m", "--memory-swap", "384m",
                 "--pids-limit", "96", "--shm-size", "32m", "--ulimit", "nofile=4096:4096",
@@ -255,14 +264,14 @@ log_disconnections = off
             if any((self.root / "data").iterdir()):
                 raise FixtureError("incomplete initial PGDATA requires operator review; never deleted automatically")
             self.run(["docker", "run", "--rm", *self.common(), "--entrypoint", "/usr/local/bin/initdb",
-                      IMAGE, "-D", "/var/lib/postgresql/data", "--username=" + ROLES["admin"],
+                      REPO_DIGEST, "-D", "/var/lib/postgresql/data", "--username=" + ROLES["admin"],
                       "--pwfile=/run/secrets/admin.password", "--auth-local=scram-sha-256",
                       "--auth-host=reject", "--encoding=UTF8", "--no-locale", "--data-checksums"], timeout=90)
         if private_read(self.root / "data/PG_VERSION").strip() != "17":
             raise FixtureError("unexpected PostgreSQL data major version")
         if item is None:
             self.run(["docker", "create", "--name", self.name, *self.common(), "--entrypoint",
-                      "/usr/local/bin/postgres", IMAGE, "-D", "/var/lib/postgresql/data",
+                      "/usr/local/bin/postgres", REPO_DIGEST, "-D", "/var/lib/postgresql/data",
                       "-c", "config_file=/etc/celetixo/postgresql.conf", "-c", "hba_file=/etc/celetixo/pg_hba.conf",
                       "-c", "ident_file=/etc/celetixo/pg_ident.conf"])
             item = self.inspect()

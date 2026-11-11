@@ -107,6 +107,16 @@ It runs locally before publication and in CI. The separate
 and results. The original foundation source manifest and raw test logs remain
 unchanged. A configured job is not a passing hosted run.
 
+The [corrected hosted run](https://github.com/Emiloart/Celetixo/actions/runs/43106365291)
+started its jobs: protocol generation/intake and attribution passed, while the
+database fixture failed to resolve a hardcoded local image ID after successfully
+pulling the selected repository digest. The fixture now selects the same immutable
+repository digest directly, checks its cached platform metadata and prohibits
+automatic pulls. Local daemon image IDs remain provenance/reopen checks. A fresh
+fixture creation and the five real database groups were rerun for this change;
+[image-selection validation](goal-04-foundation/image-selection.json) records the
+source and results. This changes neither the schema nor Engine semantics.
+
 ### Reproduce the database tests
 
 Provision the exact cached image explicitly as an operator if it is absent, then

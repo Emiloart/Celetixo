@@ -11,7 +11,14 @@ pulls an image automatically. Acquire the selected immutable image explicitly if
 
 ```sh
 docker pull postgres@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
-``` Docker daemon access is privileged operator access;
+```
+
+The repository digest is the portable pin. The fixture resolves it from the local
+cache, checks Linux/amd64 metadata, and uses that digest with `--pull=never` for
+container creation. The daemon's local image ID is recorded as provenance and
+compared when reopening its container; it is not hardcoded across Docker stores.
+
+Docker daemon access is privileged operator access;
 do not expose this script or its socket to workers.
 
 ```sh

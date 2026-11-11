@@ -1,0 +1,85 @@
+{
+  "schema": "celetixo/goal04-fixture-image-selection/v1",
+  "source_parent": "54614867019e8776218dece5ba9ccb7b68edc6fd",
+  "recorded_utc": "2026-11-11T21:54:25.517048+00:00",
+  "source_files": {
+    "scripts/goal04/postgres_fixture.py": "a95f4071f97d95d0e8c4613c5aebddb90bd1c8238df9ec1fed9cd8ed6340e1e4",
+    "scripts/goal04/README.md": "653d8a8c88a48605200c3c76e33aac9f0b4c84eda3fe9d3bcc867f6fdedbf327",
+    "docs/implementation/goal-04-progress.md": "ebb800898248104da5efa466ee83233337436e8c3a430d8f5afc4caacbf628cb"
+  },
+  "fresh_fixture_start": {
+    "connection_file": "/home/emiloart/.local/share/celetixo-goal04/pg17-ci/connection.json",
+    "container_name": "celetixo-goal04-pg17-2b936b485d76",
+    "running": true,
+    "version": "PostgreSQL 17.9 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "settings": {
+      "fsync": "on",
+      "full_page_writes": "on",
+      "synchronous_commit": "on",
+      "listen_addresses": "",
+      "password_encryption": "scram-sha-256",
+      "data_checksums": "on"
+    },
+    "scram_rejects_invalid_password": true,
+    "host_socket_requires_scram": true,
+    "application_roles_are_nonprivileged": true,
+    "network_mode": "none",
+    "published_ports": [],
+    "data_bytes": 47889755,
+    "data_files": 1270,
+    "data_budget_bytes": 1073741824,
+    "backing_free_bytes": 1699164160,
+    "guard_is_hard_quota": false,
+    "roles": {
+      "admin": "celetixo_fixture_admin",
+      "migration": "celetixo_migration",
+      "runtime": "celetixo_runtime",
+      "runtime_other": "celetixo_runtime_other"
+    }
+  },
+  "postgres_test": {
+    "argv": [
+      "cargo",
+      "test",
+      "-p",
+      "celetixo-postgres",
+      "--test",
+      "foundation",
+      "--locked",
+      "--offline",
+      "--",
+      "--ignored",
+      "--skip",
+      "migration_crash_child",
+      "--test-threads=1"
+    ],
+    "fixture_config": "/home/emiloart/.local/share/celetixo-goal04/pg17-ci/connection.json",
+    "exit_code": 0,
+    "log": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.70s\n     Running tests/foundation.rs (/mnt/c/dev/celetixo/target/debug/deps/foundation-aa64b531d35a375d)\n\nrunning 5 tests\ntest durable_payloads_cannot_forge_content_scope_format_or_manifest ... ok\ntest migration_checksum_version_skew_and_concurrent_migrators_fail_closed ... ok\ntest process_death_rolls_back_ddl_and_ledger_before_successful_recovery ... ok\ntest snapshot_catalog_survives_actual_database_process_restart ... ok\ntest snapshot_reopen_scope_isolation_immutable_rows_and_exact_u64_revision ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 6.45s\n\n"
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        ".github/scripts/check-workflows.py",
+        "--cache-dir",
+        "/home/emiloart/.local/share/celetixo-goal04/tools/workflow-lint",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "stdout": "actionlint 1.7.12, archive SHA-256 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8\nWorkflow semantics and invalid-context regression passed\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "scope": "Fresh cached-digest container init/create/start plus all five actual database groups. Existing fixture data preserved. Schema/Rust unchanged. Hosted rerun pending publication."
+}
