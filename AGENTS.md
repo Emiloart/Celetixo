@@ -8,7 +8,12 @@ This is the repository-level operating contract for AI coding agents working on 
 
 ## 1. Authority and required reading
 
-Accepted architectural decisions are authoritative. Read the relevant documents before changing the affected subsystem:
+Start with the [documentation index](docs/README.md) to identify normative authority, implementation contracts and validation evidence. Read the relevant documents before changing the affected subsystem:
+
+- [Threat model](docs/spec/threat-model.md) for security boundaries and control status.
+- [Capability/support matrix](docs/reference/capability-support-matrix.md) before claiming a supported language, platform or execution tier.
+- [Local Linux T1 runbook](docs/operations/local-linux-t1-runbook.md) before changing or operating the validated execution profile.
+- [Protocol reference](docs/reference/protocol.md) before changing cross-service contracts.
 
 1. [ADR-0001: Engineering-state coordination](docs/adr/0001-celetixo-engineering-state-coordination.md)
 2. [ADR-0002: Platform, Brain, clients and correctness extensions](docs/adr/0002-platform-brain-client-and-correctness-extensions.md)
