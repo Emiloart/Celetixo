@@ -427,7 +427,7 @@ The internal contract carries:
 
 The Engineering State Engine decides the transaction mechanics.
 
-The protocol is defined in **Protobuf v3** and documented in [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md).
+The accepted target uses Protobuf v3; the ADR-0001 TaskIntent example is architectural, not an implemented wire schema. No canonical .proto source, generated bindings or deployed RPC service is currently present. See the [protocol reference](docs/reference/protocol.md).
 
 ---
 
@@ -536,9 +536,9 @@ See [ADR-0001](docs/adr/0001-celetixo-engineering-state-coordination.md), [ADR-0
 ## Status
 
 **Architecture:** ADR-0001 baseline plus ADR-0002, ADR-0003 and ADR-0004 accepted extensions  
-**Implementation:** in-memory Rust transaction Engine plus repository capture, versioned structural/LSP indexes and impact analysis; [Goal 01](docs/implementation/goal-01.md) and [Goal 02](docs/implementation/goal-02.md) describe validated scope and limits separately from the full architectural target<br>
+**Implementation:** in-memory Rust reference Engine; repository capture, versioned structural/LSP indexes and impact analysis; exact-base source patches, scoped execution admission, local persisted evidence and a validated Linux x86_64 rootless-runc T1 profile. See [Goal 01](docs/implementation/goal-01.md), [Goal 02](docs/implementation/goal-02.md), [Goal 03 acceptance](docs/implementation/goal-03-acceptance.md) and the [capability matrix](docs/reference/capability-support-matrix.md). Source revision publication, durable distributed authority, T2/T3 and production multi-tenant operation remain unsupported or target-only.  
 **Training:** deferred until trajectory quality, rights and governance are established  
-**Evaluation:** repository-intelligence measurements and manual impact labels; the three-arm agent evaluation remains future work
+**Evaluation:** Goal 02/03 measurements are published; the confirmatory three-arm agent evaluation remains future work
 
 Celetixo will make performance claims only from its own reproducible engineering measurements.
 
