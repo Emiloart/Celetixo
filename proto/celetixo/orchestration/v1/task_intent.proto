@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package celetixo.orchestration.v1;
+
+// Canonical task request, preserving ADR-0001 section 8 field numbers and types.
+// This is an instruction proposal, never an authorization or completeness grant.
+message TaskIntent {
+  string task_id = 1;
+  string parent_task_id = 2;
+  string repository_id = 3;
+  string base_revision = 4;
+  string objective_description = 5;
+  repeated string explicit_reads = 6;
+  repeated string explicit_writes = 7;
+  repeated string invariant_contracts = 8;
+  repeated string depends_on_task_ids = 9;
+  ImpactPolicy impact_policy = 10;
+  VerificationRequirements verification = 11;
+  ResourceBudget budget = 12;
+  RetryPolicy retry_policy = 13;
+  RollbackPolicy rollback_policy = 14;
+  EscalationPolicy escalation_policy = 15;
+  Provenance provenance = 16;
+}
+
+message ImpactPolicy {
+  uint32 max_reference_depth = 1;
+  repeated string allowed_domains = 2;
+  repeated string forbidden_domains = 3;
+}
+
+message VerificationRequirements {
+  // 0 is T0, 1 is T1, 2 is T2, 3 is T3. Unknown numbers reject at intake.
+  // This requests a minimum; it never overrides Engine execution policy.
+  uint32 minimum_sandbox_tier = 1;
+  repeated string required_test_targets = 2;
+  bool require_strict_typecheck = 3;
+  bool allow_adaptive_escalation = 4;
+}
+
+message ResourceBudget {
+  // Zero tokens/cost permits no use of that resource; it never means unlimited.
+  uint64 max_token_limit = 1;
+  uint64 timeout_seconds = 2;
+  uint64 max_cost_microusd = 3;
+}
+
+message RetryPolicy {
+  uint32 max_attempts = 1;
+  bool allow_rebase = 2;
+}
+
+message RollbackPolicy {
+  bool preserve_failed_artifacts = 1;
+  bool preserve_failed_patch = 2;
+}
+
+message EscalationPolicy {
+  string fallback_target = 1;
+  uint32 max_escalations = 2;
+}
+
+message Provenance {
+  string model_name = 1;
+  string model_version = 2;
+  string prompt_template_hash = 3;
+  string agent_version = 4;
+}

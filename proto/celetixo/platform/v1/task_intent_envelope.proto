@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package celetixo.platform.v1;
+
+import "celetixo/orchestration/v1/task_intent.proto";
+
+// Selectors supplied by a caller. A receiving service must authenticate the
+// caller independently and resolve/authorize every scope before acting.
+message ScopeSelector {
+  string organization_id = 1;
+  string workspace_id = 2;
+  string repository_id = 3;
+}
+
+// A versioned request envelope, not authenticated authority. Authentication and
+// policy evaluation belong to the receiving boundary; there is no principal,
+// reservation, evidence-pass, or commit capability a caller can self-issue here.
+message TaskIntentEnvelope {
+  uint32 contract_version = 1;
+  ScopeSelector scope = 2;
+  celetixo.orchestration.v1.TaskIntent intent = 3;
+  string idempotency_key = 4;
+  string trace_id = 5;
+  repeated string required_capabilities = 6;
+}

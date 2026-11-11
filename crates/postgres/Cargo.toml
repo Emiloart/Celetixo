@@ -1,0 +1,21 @@
+[package]
+name = "celetixo-postgres"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Scoped PostgreSQL persistence foundation for the Rust Engineering State Engine"
+
+[dependencies]
+celetixo-engine = { path = "../engine" }
+postgres.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+serde.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

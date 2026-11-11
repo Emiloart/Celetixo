@@ -1,8 +1,8 @@
 # Capability and Support Matrix
 
-**Status date:** 2026-11-11  
-**Repository revision reviewed:** `456bb375108532d9503c82fa8f6e7acfdfedddaf`  
-**Evidence basis:** Goal 02 contract/validation/benchmarks and Goal 03 execution/acceptance/benchmarks. Recheck the linked records before relying on this matrix after a code change.
+**Status date:** 2026-11-11
+**Repository scope reviewed:** Goal 03 acceptance plus the Goal 04 foundation source manifest linked below
+**Evidence basis:** Goal 02 contract/validation/benchmarks and Goal 03 execution/acceptance/benchmarks and [Goal 04 foundation validation](../implementation/goal-04-progress.md). Recheck the linked records before relying on this matrix after a code change.
 
 This matrix separates four questions that must not be conflated:
 
@@ -76,7 +76,8 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 | Central metrics/traces/alerting | **Target only** | Local records and test/benchmark outputs exist; no production observability platform |
 | Backup/restore automation | **Target only** | Local artifact store has persistence/reopen behavior; no coordinated platform backup/DR service |
 | Secrets management and credential delivery | **Target only / unsupported in T1** | Do not mount host credentials or inject secrets into the runner |
-| Protobuf RPC service and generated bindings | **Target only** | ADR describes TaskIntent semantics; no canonical .proto source, RPC service or generated bindings is present in the reviewed repository state |
+| PostgreSQL immutable snapshot catalog | **Validated foundation (local Linux)** | Actual PostgreSQL 17.9 migration/checksum/crash rollback, exact snapshot reopen/restart and mapped-role isolation; existing Engine transactions still use in-memory authority |
+| Protobuf TaskIntent messages / Rust intake | **Validated message foundation** | Canonical full-ADR .proto, generated Rust, strict bounded decoding, request identity and reproducible bindings; no RPC service, Go/Python bindings or authenticated Engine adapter |
 
 ## 6. Authoritative evidence
 
@@ -88,6 +89,7 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 - [Goal 03 detailed contract comparison](../implementation/goal-03-contract-review.md): full-objective review, fresh focused/live checks and explicit distinctions between supported operations and unsupported conditional capabilities.
 - [Goal 03 measured baseline](../benchmarks/goal-03.md): raw measurements, environment, provisional targets and scope.
 - [Local Linux T1 runbook](../operations/local-linux-t1-runbook.md): preflight, reproduction, storage, recovery and upgrade procedures.
+- [Goal 04 foundation record](../implementation/goal-04-progress.md): exact implemented scope, database/protocol checks and pending milestones.
 - [Protocol reference](protocol.md): current canonical schema and generated-binding status.
 
 ## 7. Update rule

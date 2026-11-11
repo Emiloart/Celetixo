@@ -1,0 +1,66 @@
+
+ˇ
++celetixo/orchestration/v1/task_intent.protoceletixo.orchestration.v1"§
+
+TaskIntent
+task_id (	RtaskId$
+parent_task_id (	RparentTaskId#
+repository_id (	RrepositoryId#
+base_revision (	RbaseRevision3
+objective_description (	RobjectiveDescription%
+explicit_reads (	RexplicitReads'
+explicit_writes (	RexplicitWrites/
+invariant_contracts (	RinvariantContracts-
+depends_on_task_ids	 (	RdependsOnTaskIdsL
+impact_policy
+ (2'.celetixo.orchestration.v1.ImpactPolicyRimpactPolicyW
+verification (23.celetixo.orchestration.v1.VerificationRequirementsRverificationA
+budget (2).celetixo.orchestration.v1.ResourceBudgetRbudgetI
+retry_policy (2&.celetixo.orchestration.v1.RetryPolicyRretryPolicyR
+rollback_policy (2).celetixo.orchestration.v1.RollbackPolicyRrollbackPolicyX
+escalation_policy (2+.celetixo.orchestration.v1.EscalationPolicyRescalationPolicyE
+
+provenance (2%.celetixo.orchestration.v1.ProvenanceR
+provenance"î
+ImpactPolicy.
+max_reference_depth (RmaxReferenceDepth'
+allowed_domains (	RallowedDomains+
+forbidden_domains (	RforbiddenDomains"ˆ
+VerificationRequirements0
+minimum_sandbox_tier (RminimumSandboxTier2
+required_test_targets (	RrequiredTestTargets8
+require_strict_typecheck (RrequireStrictTypecheck:
+allow_adaptive_escalation (RallowAdaptiveEscalation"ç
+ResourceBudget&
+max_token_limit (RmaxTokenLimit'
+timeout_seconds (RtimeoutSeconds*
+max_cost_microusd (RmaxCostMicrousd"S
+RetryPolicy!
+max_attempts (RmaxAttempts!
+allow_rebase (RallowRebase"Ä
+RollbackPolicy:
+preserve_failed_artifacts (RpreserveFailedArtifacts2
+preserve_failed_patch (RpreserveFailedPatch"d
+EscalationPolicy'
+fallback_target (	RfallbackTarget'
+max_escalations (RmaxEscalations"ß
+
+Provenance
+
+model_name (	R	modelName#
+model_version (	RmodelVersion0
+prompt_template_hash (	RpromptTemplateHash#
+agent_version (	RagentVersionbproto3
+¥
+/celetixo/platform/v1/task_intent_envelope.protoceletixo.platform.v1+celetixo/orchestration/v1/task_intent.proto"Ä
+ScopeSelector'
+organization_id (	RorganizationId!
+workspace_id (	RworkspaceId#
+repository_id (	RrepositoryId"≤
+TaskIntentEnvelope)
+contract_version (RcontractVersion9
+scope (2#.celetixo.platform.v1.ScopeSelectorRscope=
+intent (2%.celetixo.orchestration.v1.TaskIntentRintent'
+idempotency_key (	RidempotencyKey
+trace_id (	RtraceId3
+required_capabilities (	RrequiredCapabilitiesbproto3

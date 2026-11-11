@@ -7,6 +7,7 @@ pub mod evidence;
 pub mod ids;
 pub mod model;
 pub mod patch;
+pub mod persistence;
 pub mod repository;
 pub mod snapshot;
 pub mod source_evidence;

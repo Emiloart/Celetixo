@@ -1,0 +1,46 @@
+contract_version: 1
+scope {
+  organization_id: "organization:example"
+  workspace_id: "workspace:main"
+  repository_id: "repository:sample"
+}
+intent {
+  task_id: "task:refactor"
+  parent_task_id: "task:objective"
+  repository_id: "repository:sample"
+  base_revision: "revision:12"
+  objective_description: "Preserve the parser contract while updating its implementation."
+  explicit_reads: "symbol:parser"
+  explicit_reads: "config:parser"
+  explicit_writes: "symbol:parse"
+  invariant_contracts: "parser-preserves-valid-inputs:v1"
+  depends_on_task_ids: "task:baseline"
+  impact_policy {
+    max_reference_depth: 8
+    allowed_domains: "parser"
+    forbidden_domains: "credentials"
+  }
+  verification {
+    minimum_sandbox_tier: 1
+    required_test_targets: "parser-tests"
+    require_strict_typecheck: true
+    allow_adaptive_escalation: true
+  }
+  budget {
+    max_token_limit: 32000
+    timeout_seconds: 600
+    max_cost_microusd: 2000000
+  }
+  retry_policy { max_attempts: 2 allow_rebase: true }
+  rollback_policy { preserve_failed_artifacts: true preserve_failed_patch: true }
+  escalation_policy { fallback_target: "supervisor:parser" max_escalations: 1 }
+  provenance {
+    model_name: "fixture-model"
+    model_version: "fixture-version-1"
+    prompt_template_hash: "fixture-prompt-template-v1"
+    agent_version: "fixture-agent-v1"
+  }
+}
+idempotency_key: "request:task-refactor"
+trace_id: "trace:fixture"
+required_capabilities: "task-intent.v1"

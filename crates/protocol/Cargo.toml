@@ -1,0 +1,15 @@
+[package]
+name = "celetixo-protocol"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Canonical versioned Celetixo protocol types and fail-closed request intake"
+
+[dependencies]
+prost.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

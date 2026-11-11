@@ -35,6 +35,56 @@ jobs:
       - name: Test attribution enforcement
         run: bash .github/scripts/test-commit-attribution.sh
 
+  protocol:
+    name: Canonical TaskIntent and reproducible bindings
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.94.1 --profile minimal --component rustfmt
+      - name: Verify schema integrity, ADR preservation and compatibility mutations
+        run: |
+          python3 scripts/protocol/check.py
+          python3 -O scripts/protocol/test_compatibility.py
+      - name: Compare the published base descriptor when present
+        env:
+          PROTOCOL_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [[ "$PROTOCOL_BASE_SHA" =~ ^[0-9a-f]{40}$ ]] && git cat-file -e "$PROTOCOL_BASE_SHA:proto/descriptor.bin" 2>/dev/null; then
+            python3 scripts/protocol/check.py --against-ref "$PROTOCOL_BASE_SHA"
+          fi
+      - name: Fetch locked generator dependencies
+        run: cargo fetch --manifest-path scripts/protocol/generator/Cargo.toml --locked
+      - name: Reproduce bindings, descriptor and golden wire with pinned protoc
+        run: python3 scripts/protocol/regenerate.py --check
+      - name: Test strict Rust intake
+        run: cargo test --locked -p celetixo-protocol
+
+  postgres-foundation:
+    name: Real PostgreSQL migration, restart and isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CELETIXO_PG_TEST_CONFIG: ${{ runner.temp }}/celetixo-pg17/connection.json
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.94.1 --profile minimal
+      - name: Cache the reviewed PostgreSQL image explicitly
+        run: docker pull postgres@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
+      - name: Start and verify private SCRAM-authenticated Unix-socket fixture
+        run: |
+          python3 scripts/goal04/postgres_fixture.py start --root "$RUNNER_TEMP/celetixo-pg17"
+          python3 scripts/goal04/postgres_fixture.py verify --root "$RUNNER_TEMP/celetixo-pg17"
+      - name: Test the real database, including process death and actual database restart
+        run: cargo test --locked -p celetixo-postgres --test foundation -- --ignored --skip migration_crash_child --test-threads=1
+      - name: Stop this fixture
+        if: always()
+        run: python3 scripts/goal04/postgres_fixture.py stop --root "$RUNNER_TEMP/celetixo-pg17"
+
   engine:
     runs-on: ubuntu-latest
     steps:

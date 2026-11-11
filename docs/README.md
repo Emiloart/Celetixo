@@ -29,7 +29,7 @@ Implementation evidence can reveal that an accepted decision is flawed, but it d
 |---|---|
 | New contributor or reviewer | This index, [README](../README.md), [CONTRIBUTING](../CONTRIBUTING.md), then [AGENTS](../AGENTS.md) |
 | System/solution architect | ADR-0001 through ADR-0004, then the normative specifications |
-| Rust Engine developer | [Dev guide](../Dev.md), ADR-0001/0003, transaction and identity specifications, Goal 01–03 implementation records |
+| Rust Engine developer | [Dev guide](../Dev.md), ADR-0001/0003, transaction and identity specifications, Goal 01–04 implementation records |
 | Repository-intelligence developer | [Goal 02 contract](implementation/goal-02.md), [Goal 02 validation](implementation/goal-02-validation.md), [Engine contract](implementation/goal-02-engine-contract.md) |
 | Execution/security engineer | [Threat model](spec/threat-model.md), [failure model](spec/failure-model.md), [Linux T1 runbook](operations/local-linux-t1-runbook.md), Goal 03 execution and acceptance |
 | Operator of the validated local profile | [Local Linux T1 runbook](operations/local-linux-t1-runbook.md) |
@@ -73,7 +73,9 @@ Implementation evidence can reveal that an accepted decision is flawed, but it d
 | [Goal 03 detailed contract comparison](implementation/goal-03-contract-review.md) | Validation | Full-objective cross-check, conditional capability boundaries and fresh focused/live evidence |
 | [Goals 01–03 regression audit](implementation/goals-01-03-audit.md) | Validation | Cross-goal requirement review, fresh checks, evidence integrity and reporting/history corrections |
 | [Goal 03 progress](implementation/goal-03-progress.md) | Historical / implementation | Chronological milestones; consult acceptance record for current status |
-| [Goal 04: Durable orchestration and distributed commit](implementation/goal-04.md) | Implementation | Accepted contract for durable authority, multi-instance commit, workflow/event coordination, evidence storage and recovery; not yet implemented |
+| [Goal 04 foundation progress](implementation/goal-04-progress.md) | Implementation / validation | Verified 04.1a schema, snapshot catalog and canonical protocol foundation; full durable Engine and later milestones remain pending |
+| [Goal 04 PostgreSQL schema](implementation/goal-04-postgres-schema.md) | Implementation | Scoped schema and required Rust authority integration |
+| [Goal 04: Durable orchestration and distributed commit](implementation/goal-04.md) | Implementation | Accepted contract for durable authority, multi-instance commit, workflow/event coordination, evidence storage and recovery; implementation in progress |
 
 ## Security, operations and support references
 
@@ -82,7 +84,7 @@ Implementation evidence can reveal that an accepted decision is flawed, but it d
 | [Threat model](spec/threat-model.md) | Normative model with implementation-status mapping | Security review and control traceability |
 | [Local Linux T1 operations runbook](operations/local-linux-t1-runbook.md) | Operational procedure with explicit validation scope | Reproduce and operate only the reviewed local Linux profile |
 | [Capability and support matrix](reference/capability-support-matrix.md) | Dated status reference | Separate parsing, semantic analysis, execution and environment validation |
-| [Protocol reference](reference/protocol.md) | Protocol status/reference | Identify accepted wire-contract semantics and the current absence of an implemented canonical schema |
+| [Protocol reference](reference/protocol.md) | Protocol status/reference | Identify accepted wire-contract semantics and the canonical TaskIntent schema, strict Rust intake and remaining service boundary |
 
 ## Evaluation and benchmarks
 

@@ -187,6 +187,8 @@ Preserve the authority boundaries:
 
 Implement Goal 04 in its seven documented milestones. Use real PostgreSQL, NATS, Temporal and object-store integration tests for claims about durability and distributed behavior. Independent Engine processes must race against the same durable state. No process-local mutex, workflow completion, event arrival or worker response may substitute for atomic commit.
 
+The [Goal 04 progress record](docs/implementation/goal-04-progress.md) tracks verified submilestones and pending work. The initial 04.1a schema, checked snapshot catalog and canonical TaskIntent messages do not replace the reference Engine’s in-memory authority or complete milestone 04.1.
+
 **Exit gate:** the complete Goal 04 definition of done passes, including multi-instance concurrency, crash ambiguity, idempotent recovery, durable evidence retrieval, isolation, backup/restore and operational proof.
 
 ### Phase 7 — Real worker integration and evaluation

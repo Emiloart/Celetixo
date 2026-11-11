@@ -1,0 +1,5 @@
+9
+organization:exampleworkspace:mainrepository:sample
+task:refactortask:objectiverepository:sample"revision:12*?Preserve the parser contract while updating its implementation.2symbol:parser2config:parser:symbol:parseB parser-preserves-valid-inputs:v1Jtask:baselineRparsercredentialsZparser-tests b€úØ€‰zjrz
+supervisor:parser‚P
+fixture-modelfixture-version-1fixture-prompt-template-v1"fixture-agent-v1"request:task-refactor*trace:fixture2task-intent.v1

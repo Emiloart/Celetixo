@@ -1,0 +1,150 @@
+{
+  "schema": "celetixo/goal04-foundation-development-validation/v1",
+  "source_parent": "117479221eb0830fdcab6918ef76a7ed293cabe7",
+  "started_utc": "2026-11-11T21:42:13.266104+00:00",
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/mnt/c/dev/celetixo/target",
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC",
+    "CELETIXO_PG_TEST_CONFIG": "/home/emiloart/.local/share/celetixo-goal04/service-fixtures/postgres17/foundation-v1.json"
+  },
+  "checks": [
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.84
+    },
+    {
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.728
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 36.836
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-postgres",
+        "--test",
+        "foundation",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--skip",
+        "migration_crash_child",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 14.489
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/protocol/check.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.088
+    },
+    {
+      "argv": [
+        "python3",
+        "-O",
+        "scripts/protocol/test_compatibility.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.64
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/protocol/regenerate.py",
+        "--cache-dir",
+        "/home/emiloart/.local/share/celetixo-goal04/tools",
+        "--offline",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.337
+    },
+    {
+      "argv": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--examples",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.285
+    },
+    {
+      "argv": [
+        "cargo",
+        "run",
+        "-p",
+        "celetixo-engine",
+        "--example",
+        "concurrent_transactions",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.555
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-repository",
+        "--test",
+        "lsp",
+        "--locked",
+        "--offline",
+        "--",
+        "--include-ignored"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.989
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.147
+    }
+  ],
+  "finished_utc": "2026-11-11T21:43:19.638970+00:00",
+  "log_sha256": "e365195d4d2efa05f6e3febcbd923637b9511bddc21f1c0540902829bbb543bb"
+}

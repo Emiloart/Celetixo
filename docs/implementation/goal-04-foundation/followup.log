@@ -1,0 +1,115 @@
+
+COMMAND cargo fmt --all -- --check
+
+EXIT 0
+
+COMMAND rustfmt --edition 2024 --check scripts/protocol/generator/src/main.rs
+
+EXIT 0
+
+COMMAND python3 scripts/protocol/check.py
+protocol integrity and compatibility passed (10 canonical messages)
+
+EXIT 0
+
+COMMAND python3 -O scripts/protocol/test_compatibility.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.047s
+
+OK
+
+EXIT 0
+
+COMMAND python3 scripts/protocol/regenerate.py --cache-dir /home/emiloart/.local/share/celetixo-goal04/tools --offline --check
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.78s
+     Running `/mnt/c/dev/celetixo/target/debug/celetixo-protocol-codegen /home/emiloart/.local/share/celetixo-goal04/worktree /home/emiloart/.local/share/celetixo-goal04/tools/protoc-33.3/bin/protoc /tmp/tmpqymz1yf2`
+canonical protocol regeneration verified
+
+EXIT 0
+
+COMMAND python3 -c import yaml; from pathlib import Path; d=yaml.safe_load(Path('.github/workflows/ci.yml').read_text()); assert set(d['jobs'])=={'attribution','protocol','postgres-foundation','engine'}; print('CI YAML parses and expected jobs exist')
+CI YAML parses and expected jobs exist
+
+EXIT 0
+
+COMMAND bash .github/scripts/test-commit-attribution.sh
+PASS: CI permits human author, committer, and co-author
+PASS: CI permits ordinary AI and [bot] body mentions
+PASS: CI does not match automation substrings inside human words
+PASS: CI rejects automated author name
+PASS: CI rejects automated author address
+PASS: CI rejects automated committer name
+PASS: CI rejects automated committer address
+PASS: CI rejects automated co-author
+PASS: CI rejects compact case-insensitive attribution
+PASS: CI fails an invalid revision range
+PASS: CI rejects option injection as a range
+PASS: CI accepts an empty valid revision range
+PASS: CI checks raw author identity despite mailmap
+PASS: CI checks raw committer identity despite mailmap
+PASS: CI rejects automated co-author in a large message
+PASS: actual hook permits human attribution and AI body discussion
+PASS: actual hook rejects --author override
+PASS: actual hook rejects author environment address
+PASS: actual hook rejects committer environment
+PASS: actual hook rejects automated co-author
+PASS: actual hook rejects compact automated co-author
+PASS: actual hook rejects a large automated co-author message
+PASS: actual hook permits a human --author override
+PASS: CI accepts actual-hook human override commit
+PASS: hook fails when its message file is missing
+Commit attribution regression fixtures passed: 25 checks.
+
+EXIT 0
+
+COMMAND python3 scripts/goal04/postgres_fixture.py verify
+{
+  "container_name": "celetixo-goal04-pg17-3c2612abf964",
+  "running": true,
+  "version": "PostgreSQL 17.9 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "settings": {
+    "fsync": "on",
+    "full_page_writes": "on",
+    "synchronous_commit": "on",
+    "listen_addresses": "",
+    "password_encryption": "scram-sha-256",
+    "data_checksums": "on"
+  },
+  "scram_rejects_invalid_password": true,
+  "host_socket_requires_scram": true,
+  "application_roles_are_nonprivileged": true,
+  "network_mode": "none",
+  "published_ports": [],
+  "data_bytes": 76269746,
+  "data_files": 1879,
+  "data_budget_bytes": 1073741824,
+  "backing_free_bytes": 1692663808,
+  "guard_is_hard_quota": false
+}
+
+EXIT 0
+
+COMMAND cargo test --locked --offline -p celetixo-postgres --test foundation -- --ignored --skip migration_crash_child --test-threads=1
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.65s
+     Running tests/foundation.rs (/mnt/c/dev/celetixo/target/debug/deps/foundation-aa64b531d35a375d)
+
+running 5 tests
+test durable_payloads_cannot_forge_content_scope_format_or_manifest ... ok
+test migration_checksum_version_skew_and_concurrent_migrators_fail_closed ... ok
+test process_death_rolls_back_ddl_and_ledger_before_successful_recovery ... ok
+test snapshot_catalog_survives_actual_database_process_restart ... ok
+test snapshot_reopen_scope_isolation_immutable_rows_and_exact_u64_revision ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 5.98s
+
+
+EXIT 0
+
+COMMAND git diff --check
+
+EXIT 0
+
+COMMAND git diff --cached --check
+
+EXIT 0

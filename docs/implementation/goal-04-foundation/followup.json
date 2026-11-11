@@ -1,0 +1,123 @@
+{
+  "schema": "celetixo/goal04-foundation-followup/v1",
+  "started_utc": "2026-11-11T21:43:54.851496+00:00",
+  "checks": [
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.084
+    },
+    {
+      "argv": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "scripts/protocol/generator/src/main.rs"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.041
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/protocol/check.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.083
+    },
+    {
+      "argv": [
+        "python3",
+        "-O",
+        "scripts/protocol/test_compatibility.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.538
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/protocol/regenerate.py",
+        "--cache-dir",
+        "/home/emiloart/.local/share/celetixo-goal04/tools",
+        "--offline",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.153
+    },
+    {
+      "argv": [
+        "python3",
+        "-c",
+        "import yaml; from pathlib import Path; d=yaml.safe_load(Path('.github/workflows/ci.yml').read_text()); assert set(d['jobs'])=={'attribution','protocol','postgres-foundation','engine'}; print('CI YAML parses and expected jobs exist')"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.059
+    },
+    {
+      "argv": [
+        "bash",
+        ".github/scripts/test-commit-attribution.sh"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.766
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/goal04/postgres_fixture.py",
+        "verify"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.995
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "-p",
+        "celetixo-postgres",
+        "--test",
+        "foundation",
+        "--",
+        "--ignored",
+        "--skip",
+        "migration_crash_child",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 7.726
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.106
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.163
+    }
+  ],
+  "finished_utc": "2026-11-11T21:44:08.568259+00:00",
+  "log_sha256": "5431237d57af83bd55c4ce39901823f0bdcb4ccfe9d11f6e0df04b426bfef3de"
+}

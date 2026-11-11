@@ -1,0 +1,531 @@
+{
+  "files": [
+    {
+      "name": "celetixo/orchestration/v1/task_intent.proto",
+      "package": "celetixo.orchestration.v1",
+      "syntax": "proto3"
+    },
+    {
+      "name": "celetixo/platform/v1/task_intent_envelope.proto",
+      "package": "celetixo.platform.v1",
+      "syntax": "proto3"
+    }
+  ],
+  "messages": {
+    "celetixo.orchestration.v1.EscalationPolicy": [
+      {
+        "name": "fallback_target",
+        "number": 1,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "fallbackTarget",
+        "proto3_optional": false
+      },
+      {
+        "name": "max_escalations",
+        "number": 2,
+        "label": 1,
+        "type": 13,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "maxEscalations",
+        "proto3_optional": false
+      }
+    ],
+    "celetixo.orchestration.v1.ImpactPolicy": [
+      {
+        "name": "max_reference_depth",
+        "number": 1,
+        "label": 1,
+        "type": 13,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "maxReferenceDepth",
+        "proto3_optional": false
+      },
+      {
+        "name": "allowed_domains",
+        "number": 2,
+        "label": 3,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "allowedDomains",
+        "proto3_optional": false
+      },
+      {
+        "name": "forbidden_domains",
+        "number": 3,
+        "label": 3,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "forbiddenDomains",
+        "proto3_optional": false
+      }
+    ],
+    "celetixo.orchestration.v1.Provenance": [
+      {
+        "name": "model_name",
+        "number": 1,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "modelName",
+        "proto3_optional": false
+      },
+      {
+        "name": "model_version",
+        "number": 2,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "modelVersion",
+        "proto3_optional": false
+      },
+      {
+        "name": "prompt_template_hash",
+        "number": 3,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "promptTemplateHash",
+        "proto3_optional": false
+      },
+      {
+        "name": "agent_version",
+        "number": 4,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "agentVersion",
+        "proto3_optional": false
+      }
+    ],
+    "celetixo.orchestration.v1.ResourceBudget": [
+      {
+        "name": "max_token_limit",
+        "number": 1,
+        "label": 1,
+        "type": 4,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "maxTokenLimit",
+        "proto3_optional": false
+      },
+      {
+        "name": "timeout_seconds",
+        "number": 2,
+        "label": 1,
+        "type": 4,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "timeoutSeconds",
+        "proto3_optional": false
+      },
+      {
+        "name": "max_cost_microusd",
+        "number": 3,
+        "label": 1,
+        "type": 4,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "maxCostMicrousd",
+        "proto3_optional": false
+      }
+    ],
+    "celetixo.orchestration.v1.RetryPolicy": [
+      {
+        "name": "max_attempts",
+        "number": 1,
+        "label": 1,
+        "type": 13,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "maxAttempts",
+        "proto3_optional": false
+      },
+      {
+        "name": "allow_rebase",
+        "number": 2,
+        "label": 1,
+        "type": 8,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "allowRebase",
+        "proto3_optional": false
+      }
+    ],
+    "celetixo.orchestration.v1.RollbackPolicy": [
+      {
+        "name": "preserve_failed_artifacts",
+        "number": 1,
+        "label": 1,
+        "type": 8,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "preserveFailedArtifacts",
+        "proto3_optional": false
+      },
+      {
+        "name": "preserve_failed_patch",
+        "number": 2,
+        "label": 1,
+        "type": 8,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "preserveFailedPatch",
+        "proto3_optional": false
+      }
+    ],
+    "celetixo.orchestration.v1.TaskIntent": [
+      {
+        "name": "task_id",
+        "number": 1,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "taskId",
+        "proto3_optional": false
+      },
+      {
+        "name": "parent_task_id",
+        "number": 2,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "parentTaskId",
+        "proto3_optional": false
+      },
+      {
+        "name": "repository_id",
+        "number": 3,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "repositoryId",
+        "proto3_optional": false
+      },
+      {
+        "name": "base_revision",
+        "number": 4,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "baseRevision",
+        "proto3_optional": false
+      },
+      {
+        "name": "objective_description",
+        "number": 5,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "objectiveDescription",
+        "proto3_optional": false
+      },
+      {
+        "name": "explicit_reads",
+        "number": 6,
+        "label": 3,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "explicitReads",
+        "proto3_optional": false
+      },
+      {
+        "name": "explicit_writes",
+        "number": 7,
+        "label": 3,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "explicitWrites",
+        "proto3_optional": false
+      },
+      {
+        "name": "invariant_contracts",
+        "number": 8,
+        "label": 3,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "invariantContracts",
+        "proto3_optional": false
+      },
+      {
+        "name": "depends_on_task_ids",
+        "number": 9,
+        "label": 3,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "dependsOnTaskIds",
+        "proto3_optional": false
+      },
+      {
+        "name": "impact_policy",
+        "number": 10,
+        "label": 1,
+        "type": 11,
+        "type_name": ".celetixo.orchestration.v1.ImpactPolicy",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "impactPolicy",
+        "proto3_optional": false
+      },
+      {
+        "name": "verification",
+        "number": 11,
+        "label": 1,
+        "type": 11,
+        "type_name": ".celetixo.orchestration.v1.VerificationRequirements",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "verification",
+        "proto3_optional": false
+      },
+      {
+        "name": "budget",
+        "number": 12,
+        "label": 1,
+        "type": 11,
+        "type_name": ".celetixo.orchestration.v1.ResourceBudget",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "budget",
+        "proto3_optional": false
+      },
+      {
+        "name": "retry_policy",
+        "number": 13,
+        "label": 1,
+        "type": 11,
+        "type_name": ".celetixo.orchestration.v1.RetryPolicy",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "retryPolicy",
+        "proto3_optional": false
+      },
+      {
+        "name": "rollback_policy",
+        "number": 14,
+        "label": 1,
+        "type": 11,
+        "type_name": ".celetixo.orchestration.v1.RollbackPolicy",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "rollbackPolicy",
+        "proto3_optional": false
+      },
+      {
+        "name": "escalation_policy",
+        "number": 15,
+        "label": 1,
+        "type": 11,
+        "type_name": ".celetixo.orchestration.v1.EscalationPolicy",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "escalationPolicy",
+        "proto3_optional": false
+      },
+      {
+        "name": "provenance",
+        "number": 16,
+        "label": 1,
+        "type": 11,
+        "type_name": ".celetixo.orchestration.v1.Provenance",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "provenance",
+        "proto3_optional": false
+      }
+    ],
+    "celetixo.orchestration.v1.VerificationRequirements": [
+      {
+        "name": "minimum_sandbox_tier",
+        "number": 1,
+        "label": 1,
+        "type": 13,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "minimumSandboxTier",
+        "proto3_optional": false
+      },
+      {
+        "name": "required_test_targets",
+        "number": 2,
+        "label": 3,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "requiredTestTargets",
+        "proto3_optional": false
+      },
+      {
+        "name": "require_strict_typecheck",
+        "number": 3,
+        "label": 1,
+        "type": 8,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "requireStrictTypecheck",
+        "proto3_optional": false
+      },
+      {
+        "name": "allow_adaptive_escalation",
+        "number": 4,
+        "label": 1,
+        "type": 8,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "allowAdaptiveEscalation",
+        "proto3_optional": false
+      }
+    ],
+    "celetixo.platform.v1.ScopeSelector": [
+      {
+        "name": "organization_id",
+        "number": 1,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "organizationId",
+        "proto3_optional": false
+      },
+      {
+        "name": "workspace_id",
+        "number": 2,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "workspaceId",
+        "proto3_optional": false
+      },
+      {
+        "name": "repository_id",
+        "number": 3,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "repositoryId",
+        "proto3_optional": false
+      }
+    ],
+    "celetixo.platform.v1.TaskIntentEnvelope": [
+      {
+        "name": "contract_version",
+        "number": 1,
+        "label": 1,
+        "type": 13,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "contractVersion",
+        "proto3_optional": false
+      },
+      {
+        "name": "scope",
+        "number": 2,
+        "label": 1,
+        "type": 11,
+        "type_name": ".celetixo.platform.v1.ScopeSelector",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "scope",
+        "proto3_optional": false
+      },
+      {
+        "name": "intent",
+        "number": 3,
+        "label": 1,
+        "type": 11,
+        "type_name": ".celetixo.orchestration.v1.TaskIntent",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "intent",
+        "proto3_optional": false
+      },
+      {
+        "name": "idempotency_key",
+        "number": 4,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "idempotencyKey",
+        "proto3_optional": false
+      },
+      {
+        "name": "trace_id",
+        "number": 5,
+        "label": 1,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "traceId",
+        "proto3_optional": false
+      },
+      {
+        "name": "required_capabilities",
+        "number": 6,
+        "label": 3,
+        "type": 9,
+        "type_name": "",
+        "default_value": "",
+        "oneof_index": null,
+        "json_name": "requiredCapabilities",
+        "proto3_optional": false
+      }
+    ]
+  }
+}
