@@ -171,20 +171,21 @@ Keep source revision publication and production distributed commit explicitly ou
 
 The [Goal 03 acceptance record](docs/implementation/goal-03-acceptance.md) maps that gate to implemented contracts, actual integration checks, immutable source/evidence versions, known limits and the [measured baseline](docs/benchmarks/goal-03.md). Its reference Engine and reviewed Linux T1 profile do not provide source publication or durable distributed authority.
 
-### Phase 6 — Durable services and execution
+### Phase 6 — Goal 04: durable orchestration and distributed commit coordination
 
-Integrate the remaining architectural components when the preceding contracts are stable:
+[Goal 04](docs/implementation/goal-04.md) is the accepted implementation contract for durable transaction state, multi-instance Engine coordination, atomic distributed commit, persisted reservations/fencing, transactional outbox, NATS JetStream, Temporal workflows, immutable object storage, ClickHouse analytics, shared service lifecycle and operational recovery.
 
-1. PostgreSQL for authoritative current state.
-2. NATS JetStream for asynchronous events, heartbeats, and streamed diagnostics.
-3. Temporal for durable workflows, retries, compensation, and DAG state.
-4. Shared, version-aware LSP services.
-5. Tiered execution adapters, adding stronger isolation for untrusted workloads.
-6. Immutable trajectory/evidence storage and analytical pipelines.
+Preserve the authority boundaries:
+1. Rust Engine alone evaluates semantic admissibility and makes transaction decisions.
+2. PostgreSQL owns durable authoritative transaction/repository state and the atomic commit linearization point.
+3. Temporal owns durable workflow progress, not transaction truth.
+4. NATS distributes events; outbox/inbox processing is idempotent and replayable.
+5. Object storage holds immutable evidence/artifacts; PostgreSQL controls metadata and admission.
+6. ClickHouse is derived analytics and never authoritative.
 
-Keep component responsibilities separate. Do not use NATS as a workflow engine, Temporal as a high-frequency event bus, ClickHouse as authoritative state, or object storage as a transactional database.
+Implement Goal 04 in its seven documented milestones. Use real PostgreSQL, NATS, Temporal and object-store integration tests for claims about durability and distributed behavior. Independent Engine processes must race against the same durable state. No process-local mutex, workflow completion, event arrival or worker response may substitute for atomic commit.
 
-**Exit gate:** service failures, retries, duplicate events, stale results, and worker crashes have explicit tested behavior.
+**Exit gate:** the complete Goal 04 definition of done passes, including multi-instance concurrency, crash ambiguity, idempotent recovery, durable evidence retrieval, isolation, backup/restore and operational proof.
 
 ### Phase 7 — Real worker integration and evaluation
 
