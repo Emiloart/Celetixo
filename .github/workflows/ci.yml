@@ -106,8 +106,18 @@ jobs:
       - name: Check benchmark reporting rejects invalid measurements
         run: python3 .github/scripts/test-goal03-benchmark-summary.py
       - name: Inspect exact repository tree through the Engine
-        run: cargo run --locked -p celetixo-repository --example inspect_repository -- . --git-tree "$(git rev-parse HEAD)" --changed crates/engine/src/engine.rs > /tmp/goal02-inspection.json
+        run: >-
+          cargo run --locked -p celetixo-repository --example inspect_repository -- . --git-tree "$(git rev-parse HEAD)" --changed crates/engine/src/engine.rs
+          --reviewed-public-input crates/postgres/src/lib.rs=fa3681476468a03afc62d4738a529d532362bfbc2a531640a39c03073b12db7b
+          --reviewed-public-input docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce
+          --reviewed-public-input docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067
+          --reviewed-public-input scripts/goal04/postgres_fixture.py=1f6298b7fa3b0901ac99864cce7ab14cd2525225ae31604d74478c7bcd865d05 > /tmp/goal02-inspection.json
       - name: Check reproducible benchmark harness
         run: cargo run --locked -p celetixo-repository --example repository_bench -- --copies 1 --iterations 1 --queries 3 > /tmp/goal02-benchmark-smoke.json
       - name: Check source patch measurement runner on this immutable tree
-        run: cargo run --locked -p celetixo-execution --example source_patch_bench -- . "$(git rev-parse HEAD)" --iterations 1 > /tmp/goal03-patch-benchmark-smoke.json
+        run: >-
+          cargo run --locked -p celetixo-execution --example source_patch_bench -- . "$(git rev-parse HEAD)" --iterations 1
+          --reviewed-public-input crates/postgres/src/lib.rs=fa3681476468a03afc62d4738a529d532362bfbc2a531640a39c03073b12db7b
+          --reviewed-public-input docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce
+          --reviewed-public-input docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067
+          --reviewed-public-input scripts/goal04/postgres_fixture.py=1f6298b7fa3b0901ac99864cce7ab14cd2525225ae31604d74478c7bcd865d05 > /tmp/goal03-patch-benchmark-smoke.json

@@ -7,6 +7,7 @@ use celetixo_engine::snapshot::{FileMode, InputKind, Snapshot, effective_workspa
 use celetixo_engine::source_patch::*;
 use celetixo_execution::materialize::{CleanupOutcome, PrivateWorkspace};
 use celetixo_repository::capture::{CaptureRequest, capture_git_tree};
+use celetixo_repository::reviewed_inputs::add_exact_review;
 use serde_json::{Value, json};
 use std::error::Error;
 use std::time::Instant;
@@ -85,11 +86,23 @@ fn measure(
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
-    let (root, oid, iterations) = match args.as_slice() {
-        [root, oid] => (root, oid, 3),
-        [root, oid, flag, n] if flag == "--iterations" => (root, oid, n.parse::<usize>()?),
-        _ => return Err("usage: source_patch_bench ROOT FULL_GIT_OID [--iterations 1..20]".into()),
-    };
+    if args.len() < 2 || (args.len() - 2) % 2 != 0 {
+        return Err("usage: source_patch_bench ROOT FULL_GIT_OID [--iterations 1..20] [--reviewed-public-input PATH=CONTENT_DIGEST]...".into());
+    }
+    let (root, oid) = (&args[0], &args[1]);
+    let mut iterations = 3;
+    let mut selected_iterations = false;
+    let mut credentials = celetixo_engine::credentials::CredentialPolicy::default();
+    for pair in args[2..].chunks_exact(2) {
+        match pair[0].as_str() {
+            "--iterations" if !selected_iterations => {
+                iterations = pair[1].parse::<usize>()?;
+                selected_iterations = true;
+            }
+            "--reviewed-public-input" => add_exact_review(&mut credentials, &pair[1])?,
+            _ => return Err("unknown or repeated benchmark option".into()),
+        }
+    }
     if !(1..=20).contains(&iterations) {
         return Err("iterations must be 1..20".into());
     }
@@ -102,8 +115,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut first_snapshot = None;
     for iteration in 0..iterations {
         let start = Instant::now();
-        let captured =
-            capture_git_tree(&CaptureRequest::new(root, scope.clone(), Revision(0)), oid)?;
+        let mut request = CaptureRequest::new(root, scope.clone(), Revision(0));
+        request.policy.credentials = credentials.clone();
+        let captured = capture_git_tree(&request, oid)?;
         let capture_us = micros(start);
         if !captured.report.complete() {
             return Err("incomplete capture is not a benchmark input".into());

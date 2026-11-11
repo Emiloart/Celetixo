@@ -1,0 +1,196 @@
+{
+  "schema": "celetixo/public-review-validation/v1",
+  "started_utc": "2026-11-11T22:04:08.256113+00:00",
+  "input_commit": "b31539c526f0d75ccc54b0253d64d8117a495c74",
+  "checks": [
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.739,
+      "output_file": null
+    },
+    {
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 10.863,
+      "output_file": null
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 81.957,
+      "output_file": null
+    },
+    {
+      "argv": [
+        "python3",
+        ".github/scripts/check-workflows.py",
+        "--cache-dir",
+        "/home/emiloart/.local/share/celetixo-goal04/tools/workflow-lint",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.18,
+      "output_file": null
+    },
+    {
+      "argv": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--examples",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.284,
+      "output_file": null
+    },
+    {
+      "argv": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "-p",
+        "celetixo-repository",
+        "--example",
+        "inspect_repository",
+        "--",
+        ".",
+        "--git-tree",
+        "b31539c526f0d75ccc54b0253d64d8117a495c74",
+        "--changed",
+        "crates/engine/src/engine.rs",
+        "--reviewed-public-input",
+        "crates/postgres/src/lib.rs=fa3681476468a03afc62d4738a529d532362bfbc2a531640a39c03073b12db7b",
+        "--reviewed-public-input",
+        "docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce",
+        "--reviewed-public-input",
+        "docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067",
+        "--reviewed-public-input",
+        "scripts/goal04/postgres_fixture.py=1f6298b7fa3b0901ac99864cce7ab14cd2525225ae31604d74478c7bcd865d05"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 429.283,
+      "output_file": "inspection.json"
+    },
+    {
+      "argv": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "-p",
+        "celetixo-repository",
+        "--example",
+        "repository_bench",
+        "--",
+        "--copies",
+        "1",
+        "--iterations",
+        "1",
+        "--queries",
+        "3"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 10.836,
+      "output_file": "benchmark.json"
+    },
+    {
+      "argv": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "-p",
+        "celetixo-execution",
+        "--example",
+        "source_patch_bench",
+        "--",
+        ".",
+        "b31539c526f0d75ccc54b0253d64d8117a495c74",
+        "--iterations",
+        "1",
+        "--reviewed-public-input",
+        "crates/postgres/src/lib.rs=fa3681476468a03afc62d4738a529d532362bfbc2a531640a39c03073b12db7b",
+        "--reviewed-public-input",
+        "docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce",
+        "--reviewed-public-input",
+        "docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067",
+        "--reviewed-public-input",
+        "scripts/goal04/postgres_fixture.py=1f6298b7fa3b0901ac99864cce7ab14cd2525225ae31604d74478c7bcd865d05"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 126.681,
+      "output_file": "source-patch.json"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.113,
+      "output_file": null
+    }
+  ],
+  "finished_utc": "2026-11-11T22:15:29.009323+00:00",
+  "log_sha256": "037627c5651556a02ded13ba42029a3d2f3d376337ac79da327f3ab85ec8ea6e",
+  "source_files": {
+    ".github/workflows/ci.yml": "cff8e1292e40e303789e842c70c0c506347e978c1b8b940335fe582c28a6fcc5",
+    "crates/repository/src/lib.rs": "ffa3731dfdd0b2b7a47532d5e6d2bf87bafda2ffb01940de87dcd228c42f0b88",
+    "crates/repository/src/reviewed_inputs.rs": "54d1e98cc696f3b571c6acd1b24033391b4cc80839300b15040a17721d522d4e",
+    "crates/repository/tests/reviewed_inputs.rs": "367a8ac4315c7e0656df8c9ea4fa6301c3d01fca13498a305ca953e459fb171a",
+    "crates/repository/examples/inspect_repository.rs": "fdaef9f30e6dec319e5d558b7dd1c1739b6336124af38fccdc7c40aa9bbf031c",
+    "crates/execution/examples/source_patch_bench.rs": "decf27c3fee8bb137517a8863689e1b896a5d65dea279df1e1c94137087d6208"
+  },
+  "workspace_tests": {
+    "passed": 356,
+    "failed": 0,
+    "ignored": 18
+  },
+  "default_capture_negative": {
+    "exit_code": 1,
+    "diagnostic": "Error: SensitiveInput(\"crates/postgres/src/lib.rs\")\n"
+  },
+  "inspection_summary": {
+    "snapshot": "10ef5f1d3c3a1ca95e4f9f62653ddca45f7248fad51fb2e0999721fc923c7a6b",
+    "index_generation": "309f0dfdefbf535dded503a8cc89a1043d067a721cec40fcf559f77beb592c58",
+    "capture_complete": true,
+    "files": 237,
+    "elements": 13148,
+    "edges": 38809,
+    "engine_impact_complete": false,
+    "source_mutation_supported": false,
+    "gap_count": 24570,
+    "output_sha256": "597b361a62e995957239c0ce5482f8b158120d0a65e0b612516f99d5c09d59a2"
+  },
+  "patch_smoke": {
+    "case_count": 7,
+    "capture_complete": true,
+    "output_sha256": "099b5f42ce33deb5c42c109c0dfbfd07a28275435204e828e3fbbe06bcc2b5b0"
+  },
+  "scope": "Development validation against exact input b31539c. Current Rust source hashes recorded separately. Whole CLI times include compilation and are exploratory smoke observations, not isolated phase benchmarks or capacity targets. Original admission rules unchanged; default capture still rejects the flagged source."
+}

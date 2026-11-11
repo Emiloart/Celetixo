@@ -7,16 +7,18 @@ use celetixo_engine::ids::{
 use celetixo_repository::capture::{CaptureRequest, capture, capture_git_tree};
 use celetixo_repository::impact::{ImpactAnalyzer, ImpactRequest};
 use celetixo_repository::index::{IndexConfig, Indexer};
+use celetixo_repository::reviewed_inputs::add_exact_review;
 use serde_json::json;
 use std::collections::BTreeSet;
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut args = std::env::args().skip(1);
-    let root = args.next().ok_or("usage: inspect_repository ROOT [--git-tree FULL_OID] [--exclude PATH] [--changed PATH] [--organization ID] [--workspace ID] [--repository ID]")?;
+    let root = args.next().ok_or("usage: inspect_repository ROOT [--git-tree FULL_OID] [--exclude PATH] [--changed PATH] [--organization ID] [--workspace ID] [--repository ID] [--reviewed-public-input PATH=CONTENT_DIGEST]...")?;
     let mut oid = None;
     let mut exclusions = BTreeSet::new();
     let mut changed = BTreeSet::new();
+    let mut credentials = celetixo_engine::credentials::CredentialPolicy::default();
     let mut organization = "local-inspection".to_owned();
     let mut workspace = "local-workspace".to_owned();
     let mut repository = "local-repository".to_owned();
@@ -33,6 +35,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             "--organization" => organization = value,
             "--workspace" => workspace = value,
             "--repository" => repository = value,
+            "--reviewed-public-input" => add_exact_review(&mut credentials, &value)?,
             _ => return Err(format!("unknown or repeated option {option}").into()),
         }
     }
@@ -42,6 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         repository: RepositoryId::new(repository)?,
     };
     let mut request = CaptureRequest::new(root, scope.clone(), Revision(0));
+    request.policy.credentials = credentials;
     for path in exclusions {
         request.policy.excluded_paths.insert(
             path,

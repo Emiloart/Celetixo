@@ -117,6 +117,33 @@ fixture creation and the five real database groups were rerun for this change;
 [image-selection validation](goal-04-foundation/image-selection.json) records the
 source and results. This changes neither the schema nor Engine semantics.
 
+### Public input review in repository smoke checks
+
+The hosted Engine job passed Rust tests, Clippy and the actual rust-analyzer probe,
+then correctly rejected credential-like text during capture of Celetixo itself.
+The four reviewed public inputs are the PostgreSQL Rust connection implementation,
+the trusted fixture script, the foundation follow-up log and image-selection
+record. The source contains declarations and generated/private-file references;
+the records contain the public `scram-sha-256` setting. They contain no fixture
+credential values. Their exact content digests are installed explicitly in the CI
+inspection and T0 patch-benchmark commands using the existing credential policy.
+
+`inspect_repository` and `source_patch_bench` accept repeated
+`--reviewed-public-input PATH=CONTENT_DIGEST` arguments from their trusted operator.
+The digest is the Engine's domain-separated `celetixo/source-content/v1` address,
+not raw SHA-256. A shared bounded argument parser validates canonical paths,
+lowercase digest encoding, policy version and duplicate reviews before mutating
+the policy. It never discovers or approves policy from repository files. Capture
+retains these inputs and binds the installed policy into snapshot provenance;
+changed bytes or a different path still reject. The default policy is unchanged.
+
+Regression tests cover exact admission, changed bytes/path rejection, invalid
+arguments without partial policy mutation, duplicate reviews, multiple explicit
+versions and unsupported policies. [Public-review validation](goal-04-foundation/public-review.json)
+records the source and checks. This is trusted read-only tool configuration;
+transaction execution and evidence admission remain subject to their existing
+Engine-owned policy boundaries.
+
 ### Reproduce the database tests
 
 Provision the exact cached image explicitly as an operator if it is absent, then

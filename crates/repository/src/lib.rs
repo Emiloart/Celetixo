@@ -4,3 +4,4 @@ pub mod harness;
 pub mod impact;
 pub mod index;
 pub mod lsp;
+pub mod reviewed_inputs;
