@@ -576,7 +576,7 @@ Unknown or incomplete impact is explicit; it is never silently interpreted as sa
 
 ## Protocol and Security
 
-Protobuf v3 remains the canonical internal schema. Preserve the full ADR-0001 TaskIntent semantics during evolution; schema compatibility does not establish transaction correctness. gRPC serves typed RPC, NATS JetStream asynchronous events, HTTPS/JSON external APIs, and authenticated bidirectional channels interactive updates.
+Protobuf v3 is the accepted target for canonical internal typed contracts. ADR-0001 contains the TaskIntent architectural example, but the reviewed repository does not yet contain a canonical .proto source, generated bindings, or a deployed RPC service. See the [protocol reference](docs/reference/protocol.md); do not describe the wire protocol as implemented. The target architecture assigns gRPC to typed RPC, NATS JetStream to asynchronous events, and HTTPS/JSON to external interoperability.
 
 An actor identifier is attribution, not authorization. Human approvals bind to the exact transaction, snapshot, diff and evidence. Force-rebase requests semantic reanalysis and revalidation; they never bypass commit checks.
 
@@ -588,6 +588,10 @@ See [ADR-0002](docs/adr/0002-platform-brain-client-and-correctness-extensions.md
 
 Detailed contracts: [transaction semantics](docs/spec/transaction-semantics.md), [engineering identity](docs/spec/engineering-identity.md), [trajectory governance](docs/spec/trajectory-governance.md), [failure and recovery](docs/spec/failure-model.md), and [comparative evaluation](EVALUATION.md).
 
-## License
+## Licensing and Distribution
 
-License and contribution policy will be defined as implementation begins.
+No repository-wide software license has been selected or published. Celetixo is developed internal-first; no public redistribution license is granted by the repository. [CONTRIBUTING.md](CONTRIBUTING.md) already defines human-only Git attribution and its enforcement; it is not a software license. See the [licensing and distribution policy](docs/spec/licensing-and-distribution.md) before copying or distributing project material.
+
+## Documentation
+
+Start with the [documentation index](docs/README.md), which identifies intended readers, normative authority, implementation contracts, validation records, historical milestones and current support status. Key references: [threat model](docs/spec/threat-model.md), [local Linux T1 operations runbook](docs/operations/local-linux-t1-runbook.md), [capability/support matrix](docs/reference/capability-support-matrix.md), and [protocol reference](docs/reference/protocol.md).
