@@ -88,6 +88,25 @@ workaround `CRATE_CC_NO_DEFAULTS=1` and
 Build/test elapsed times in the raw record are observations of this development
 run, not cold benchmarks, performance targets or capacity measurements.
 
+### Hosted workflow correction
+
+Foundation commit `7eba8338bf5f097e941fb846eab47dd8b80077bf` was pushed with
+human author/committer attribution. Its [first hosted run](https://github.com/Emiloart/Celetixo/actions/runs/43105839130)
+failed before starting jobs: `runner.temp` was used in a job-level `env` context.
+The local YAML parser had not checked GitHub expression semantics. The database
+job now selects the fixture configuration from `RUNNER_TEMP` inside its running
+step. No Rust, SQL or protocol behavior changed in this correction.
+
+The [workflow checker](../../.github/scripts/check-workflows.py) pins the official
+[actionlint 1.7.12 release](https://github.com/rhysd/actionlint/releases/tag/v1.7.12)
+by archive SHA-256, parses every workflow without executing jobs, and verifies
+rejection of the invalid-context regression. ShellCheck/Pyflakes subprocesses are
+disabled; this check covers workflow semantics, not arbitrary shell/Python code.
+It runs locally before publication and in CI. The separate
+[correction record](goal-04-foundation/ci-correction.json) binds its exact source
+and results. The original foundation source manifest and raw test logs remain
+unchanged. A configured job is not a passing hosted run.
+
 ### Reproduce the database tests
 
 Provision the exact cached image explicitly as an operator if it is absent, then

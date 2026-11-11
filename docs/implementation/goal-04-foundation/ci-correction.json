@@ -1,0 +1,57 @@
+{
+  "schema": "celetixo/goal04-workflow-correction/v1",
+  "parent": "7eba8338bf5f097e941fb846eab47dd8b80077bf",
+  "recorded_utc": "2026-11-11T21:48:44.038906+00:00",
+  "first_hosted_run": {
+    "url": "https://github.com/Emiloart/Celetixo/actions/runs/43105839130",
+    "status": "completed",
+    "conclusion": "failure",
+    "jobs_started": 0
+  },
+  "prior_workflow_lint": {
+    "exit_code": 1,
+    "diagnostics": "<stdin>:71:36: context \"runner\" is not allowed here. available contexts are \"github\", \"inputs\", \"matrix\", \"needs\", \"secrets\", \"strategy\", \"vars\". see https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability for more details [expression]\n   |\n71 |       CELETIXO_PG_TEST_CONFIG: ${{ runner.temp }}/celetixo-pg17/connection.json\n   |                                    ^~~~~~~~~~~\n"
+  },
+  "source_files": {
+    ".github/scripts/check-workflows.py": "3424bc85c8ce0013650ded776cd64bd6c1c2e97576a842ee4861ff9b01b394fd",
+    ".github/workflows/ci.yml": "35bd5738b8c4c9c251b0120ae30f1de7c04ebaa7599679a5c09fc09f18ecf15f",
+    "Dev.md": "193c8aeabb7a211ea8aaf443f8b0a2f66dcd0ef270688ca36d2df9130512c3f5",
+    "docs/implementation/goal-04-progress.md": "806b47d1adc76e8b65650f2a37aa235e6211caf2254a06951fb0614ba5baaa48"
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        ".github/scripts/check-workflows.py",
+        "--cache-dir",
+        "/home/emiloart/.local/share/celetixo-goal04/tools/workflow-lint",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "stdout": "actionlint 1.7.12, archive SHA-256 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8\nWorkflow semantics and invalid-context regression passed\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/protocol/check.py",
+        "--against-ref",
+        "7eba8338bf5f097e941fb846eab47dd8b80077bf"
+      ],
+      "exit_code": 0,
+      "stdout": "protocol integrity and compatibility passed (10 canonical messages)\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "scope": "Workflow-only correction; unchanged Rust/SQL/protocol validated in the foundation record. Hosted execution of the corrected workflow is pending publication."
+}

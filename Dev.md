@@ -237,6 +237,7 @@ These specifications operationalize accepted ADR decisions. If implementation re
 ### Before marking a task complete
 
 1. Run formatting and linting supported by the changed component.
+   For GitHub Actions changes, run `python3 .github/scripts/check-workflows.py` on Linux x86_64 before pushing. It provisions the pinned actionlint release, checks workflow semantics and verifies rejection of an invalid job-level context; `--offline` requires its cached archive. A YAML parse alone does not validate GitHub expression contexts.
 2. Run focused tests, then relevant package or workspace tests.
 3. Run type checking/build checks where applicable.
 4. Inspect the complete diff, including generated files and lockfiles.
