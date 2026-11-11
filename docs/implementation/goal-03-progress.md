@@ -7,6 +7,12 @@ The [acceptance record](goal-03-acceptance.md) audits the implemented exit gate,
 actual validation scope, measured baseline and remaining architectural boundaries.
 The milestone history below retains each stage's original limitations.
 
+**Historical record:** Statements such as “remaining” and “exit gate remains
+open” describe the named milestone when it was published. Current completion is
+established by the [acceptance record](goal-03-acceptance.md) and
+[full-contract comparison](goal-03-contract-review.md), rather than those earlier
+status statements. The final 03.6b entry below closes the historical sequence.
+
 ## 03.1: deterministic source patches
 
 `celetixo_engine::source_patch` implements a pure T0 transformation over immutable

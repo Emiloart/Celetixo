@@ -70,6 +70,7 @@ Implementation evidence can reveal that an accepted decision is flawed, but it d
 | [Goal 03: Controlled patch and verification](implementation/goal-03.md) | Implementation | Accepted source-mutation and execution objective |
 | [Goal 03 execution component](implementation/goal-03-execution.md) | Implementation / validation | Actual private materialization, Linux T1 runner, evidence and recovery behavior |
 | [Goal 03 acceptance](implementation/goal-03-acceptance.md) | Validation | Current acceptance audit, measured source revisions, integration evidence and limitations |
+| [Goal 03 detailed contract comparison](implementation/goal-03-contract-review.md) | Validation | Full-objective cross-check, conditional capability boundaries and fresh focused/live evidence |
 | [Goals 01–03 regression audit](implementation/goals-01-03-audit.md) | Validation | Cross-goal requirement review, fresh checks, evidence integrity and reporting/history corrections |
 | [Goal 03 progress](implementation/goal-03-progress.md) | Historical / implementation | Chronological milestones; consult acceptance record for current status |
 | [Goal 04: Durable orchestration and distributed commit](implementation/goal-04.md) | Implementation | Accepted contract for durable authority, multi-instance commit, workflow/event coordination, evidence storage and recovery; not yet implemented |

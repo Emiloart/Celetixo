@@ -85,6 +85,7 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 - [Goal 02 measured baseline](../benchmarks/goal-02.md): measured repository-intelligence performance and quality limitations.
 - [Goal 03 execution component](../implementation/goal-03-execution.md): concrete T1 controls, toolchain, recovery and actual Go check.
 - [Goal 03 acceptance record](../implementation/goal-03-acceptance.md): complete acceptance mapping, actual integration evidence and known limitations.
+- [Goal 03 detailed contract comparison](../implementation/goal-03-contract-review.md): full-objective review, fresh focused/live checks and explicit distinctions between supported operations and unsupported conditional capabilities.
 - [Goal 03 measured baseline](../benchmarks/goal-03.md): raw measurements, environment, provisional targets and scope.
 - [Local Linux T1 runbook](../operations/local-linux-t1-runbook.md): preflight, reproduction, storage, recovery and upgrade procedures.
 - [Protocol reference](protocol.md): current canonical schema and generated-binding status.

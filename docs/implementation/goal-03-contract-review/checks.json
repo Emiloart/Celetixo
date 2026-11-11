@@ -1,0 +1,90 @@
+{
+  "source_commit": "9538e107a688e21aa0730a23a6cf00b3719ce73d",
+  "initial_status": "",
+  "started_utc": "2026-11-11T20:02:05.830900+00:00",
+  "environment": {
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/mnt/c/dev/celetixo/target",
+    "CELETIXO_OCI_HOME": "/home/emiloart/.local/share/celetixo-goal03"
+  },
+  "checks": [
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-engine",
+        "--test",
+        "source_patches",
+        "--test",
+        "source_attempts",
+        "--test",
+        "source_execution_plans",
+        "--test",
+        "source_evidence",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.648
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-repository",
+        "--test",
+        "harness",
+        "--locked",
+        "--offline",
+        "immutable_multilanguage_capture_selects_checks_without_erasing_structural_coverage_gaps",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 7.311
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-execution",
+        "--test",
+        "source_flow",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 6.71
+    }
+  ],
+  "final_status": "",
+  "log_sha256": "951cb14dd55a213db5dc60642cf8c6e0cb8562d9b0e4c991e403f955589c94b4",
+  "finished_utc": "2026-11-11T20:02:21.627925+00:00",
+  "schema": "celetixo/goal03-contract-review-validation/v1",
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "architecture": "x86_64",
+  "tooling_sha256": {
+    "runc-1.5.2": "599f6f94ff8c5057241eff0d54c3c74f95c34935b6457b33fe545defc61e9488",
+    "celetixo-exec-init": "41cd4284dfc010dca9c2a3f95bc6b82e2d01075c16d385e34b64dabf7b2bbfe9",
+    "toolchain/gofmt": "0802a3784f7b2a924ccde5b34f6727ffe74e0193a1c0eea4cd773863fce4528a",
+    "toolchain/lib/libc.so.6": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+    "toolchain/lib/ld-linux-x86-64.so.2": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+  },
+  "counts": {
+    "focused_engine_tests": 78,
+    "actual_incomplete_harness_rejection": 1,
+    "live_oci_source_flow": 1,
+    "total_passed": 80,
+    "failed": 0,
+    "ignored": 0
+  }
+}

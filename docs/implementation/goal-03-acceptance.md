@@ -5,6 +5,14 @@ from `2c42f67d3e9492c2dcd2cc49ab6a4870f608dec8`. It describes the implemented
 reference Engine and its validated local execution profile. It does not expand
 those results into production, distributed-authority or language-wide claims.
 
+The [2026-11-11 contract comparison](goal-03-contract-review.md) rechecks the
+full objective against `Dev.md`, the implementation, support matrix, runbook and
+measurements. Its clean-checkout validation at `9538e10` passed 78 focused Engine
+tests, actual incomplete-analysis rejection and the live patch/recovery/retry
+flow. The [cross-goal audit](goals-01-03-audit.md) records the broader regression
+run and benchmark-reporting correction. Neither review changes the measured
+runtime source below or promotes unsupported capabilities.
+
 ## Exact source and clean-checkout evidence
 
 The measured runtime and runner source is
@@ -219,6 +227,8 @@ derivation are preserved; safety cannot be offset by speed.
 | 03.6a measurement runners/actual retry | `80dafd0a12b7a4c44b083b7bdf88a92cceed8fb4` |
 | Explicit evidence v2 attestation | `fa888ed49cda2f151f64491986aa8ea9d7afbb36` |
 | Hosted LSP loading-window correction | `8e64ee43a46b1969d32b40970fe67b13c3d5b831` |
+| 03.6b measured baseline and acceptance publication | `456bb375108532d9503c82fa8f6e7acfdfedddaf` |
+| Cross-goal regression audit and benchmark-reporting hardening | `9538e107a688e21aa0730a23a6cf00b3719ce73d` |
 
 Rust retains all transaction and commit authority. This milestone does not
 provide source revision publication, durable/distributed PostgreSQL authority,

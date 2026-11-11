@@ -171,6 +171,8 @@ Keep source revision publication and production distributed commit explicitly ou
 
 The [Goal 03 acceptance record](docs/implementation/goal-03-acceptance.md) maps that gate to implemented contracts, actual integration checks, immutable source/evidence versions, known limits and the [measured baseline](docs/benchmarks/goal-03.md). Its reference Engine and reviewed Linux T1 profile do not provide source publication or durable distributed authority.
 
+The [detailed Goal 03 contract comparison](docs/implementation/goal-03-contract-review.md) checks the full objective against the implementation and supporting documents, including the distinction between validated capabilities, unsupported requests that reject and later architectural work. Candidate checks in the language matrix are targets; they are not evidence that every language harness is implemented.
+
 ### Phase 6 — Goal 04: durable orchestration and distributed commit coordination
 
 [Goal 04](docs/implementation/goal-04.md) is the accepted implementation contract for durable transaction state, multi-instance Engine coordination, atomic distributed commit, persisted reservations/fencing, transactional outbox, NATS JetStream, Temporal workflows, immutable object storage, ClickHouse analytics, shared service lifecycle and operational recovery.

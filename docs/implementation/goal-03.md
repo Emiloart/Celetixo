@@ -6,6 +6,12 @@
 - **Primary implementation boundary:** versioned source mutation and isolated verification
 - **Explicit non-goal:** production distributed commit publication or agent/provider integration
 
+**Implementation status:** The defined exit gate is validated for the reference
+Engine and reviewed local Linux T1 profile. Read the [acceptance record](goal-03-acceptance.md)
+and [detailed contract comparison](goal-03-contract-review.md) for source-bound
+evidence, conditional capabilities and limits. This status does not change the
+requirements below or establish general language support or production readiness.
+
 ## 1. Objective
 
 Goal 03 closes the gap between repository intelligence and executable engineering changes.
