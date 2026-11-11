@@ -177,6 +177,15 @@ grant, policy, attempt, store registration/generation and expiry before recordin
 the outcome. A registration row cannot resurrect an absent reader adapter. Cleanup
 authority cannot become execution, evidence or commit authority.
 
+The reference Engine now separates adapter-free records from the embedding's live
+capability allocation identity and artifact-reader registry (04.1b). Copying those
+records does not authenticate an old session, executor, cleanup grant or storage
+capability, and does not restore a reader. This is a prerequisite for checked
+reconstruction, not a public restore API or an implemented PostgreSQL lifecycle.
+Runtime identity is not durable authorization. The database-backed path must still
+authenticate each request, load current scoped grants and policy, and bind trusted
+adapters to their current registration before using them.
+
 Authoritative clock policy, lock ordering, bounded retries, statement deadlines,
 database availability behavior, fencing use and terminal-state reconstruction must
 be documented and tested with the routed backend. This migration alone does not

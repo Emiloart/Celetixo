@@ -1,0 +1,159 @@
+{
+  "schema": "celetixo/goal04-runtime-boundary-development-validation/v1",
+  "source_parent": "f7199a3625bba2d55f661e6d5c15bdb727dc9ace",
+  "started_utc": "2026-11-11T22:47:26.499509+00:00",
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/mnt/c/dev/celetixo/target",
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC",
+    "CELETIXO_OCI_HOME": "/home/emiloart/.local/share/celetixo-goal03"
+  },
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "architecture": "x86_64",
+  "source_sha256": {
+    "crates/engine/src/engine.rs": "29b1b86b5978329ac313e6bd6078d5a03dadc7cabf864ace3da8e4b7a059be08",
+    "crates/engine/src/engine/runtime.rs": "10a2b4937a1a4c69d5c7388a72689c4e2ba09b98e6e22f70cb5deddc56116a60",
+    "crates/engine/src/engine/source_attempts.rs": "08029e4a9521613b41b1f3293692e963ad2ab9d08ace419f9ece8459be584a90",
+    "crates/engine/src/engine/source_cleanup.rs": "b8f1a368f2c7b24a930afddd44f55f78223fa1d11c22e19044664c49d7c39a8c",
+    "crates/engine/src/engine/source_evidence_gate.rs": "ed098739c54b01d485ed87413b3342cd82f1236886ab1f39e59f20034ed116d9",
+    "Cargo.lock": "74efdddaa0457fc5e95edfc4fbea07d23920eb2c9b3549eba72c3283dff90b5e"
+  },
+  "tooling_sha256": {
+    "runc-1.5.2": "599f6f94ff8c5057241eff0d54c3c74f95c34935b6457b33fe545defc61e9488",
+    "celetixo-exec-init": "41cd4284dfc010dca9c2a3f95bc6b82e2d01075c16d385e34b64dabf7b2bbfe9",
+    "toolchain/gofmt": "0802a3784f7b2a924ccde5b34f6727ffe74e0193a1c0eea4cd773863fce4528a",
+    "toolchain/lib/libc.so.6": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+    "toolchain/lib/ld-linux-x86-64.so.2": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+  },
+  "checks": [
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.883
+    },
+    {
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 17.298
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 126.271
+    },
+    {
+      "argv": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--examples",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.289
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-execution",
+        "--test",
+        "oci",
+        "--test",
+        "source_flow",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 117.771
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/protocol/check.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.093
+    },
+    {
+      "argv": [
+        "bash",
+        ".github/scripts/test-commit-attribution.sh"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.896
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.15
+    }
+  ],
+  "finished_utc": "2026-11-11T22:51:58.157197+00:00",
+  "log_sha256": "565c0aadf9a020ec0b11426a1f9cda83293735e019ccd2b800befb12729efbed",
+  "counts": {
+    "workspace": {
+      "passed": 361,
+      "failed": 0,
+      "ignored": 18
+    },
+    "live_linux_t1": {
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0
+    },
+    "attribution_fixtures": 25
+  },
+  "unrun": [
+    {
+      "check": "opt-in real PostgreSQL foundation groups",
+      "reason": "PostgreSQL schema/catalog/fixture unchanged; prior source-bound results and hosted CI remain separately recorded."
+    },
+    {
+      "check": "opt-in actual rust-analyzer probe",
+      "reason": "No LSP code changed; ordinary LSP tests ran in the workspace suite."
+    },
+    {
+      "check": "durable Engine and NATS/Temporal/S3/ClickHouse integration",
+      "reason": "These Goal 04 paths are not implemented by this prerequisite; no distributed recovery or completion claim."
+    }
+  ],
+  "preflight_observed": {
+    "uid": 1000,
+    "systemd_user_manager": "running",
+    "cgroup_filesystem": "cgroup2fs"
+  }
+}

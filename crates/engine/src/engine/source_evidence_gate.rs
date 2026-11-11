@@ -9,15 +9,15 @@ use source_attempts::{attempt_key, validate_executor_store, validate_source_admi
 
 #[derive(Clone)]
 pub struct SourceArtifactStoreCapability {
-    store: Arc<Mutex<Database>>,
+    store: Arc<StoreIdentity>,
     token: u64,
     scope: Scope,
 }
 
 #[derive(Clone)]
+// Registration metadata only; the reader is a process-local runtime resource.
 pub(super) struct RegisteredSourceArtifactStore {
     scope: Scope,
-    reader: Arc<dyn SourceArtifactReader>,
     retention: Digest,
     provenance: Digest,
     active: bool,
@@ -62,7 +62,9 @@ impl Administrator {
             .next_source_artifact_store
             .checked_add(1)
             .ok_or(EngineError::CounterExhausted)?;
-        db.next_source_artifact_store = token;
+        // Lock order is state then runtime. Acquire both before publishing any
+        // registration so a poisoned runtime cannot leave partial state.
+        let mut readers = self.store.artifact_readers()?;
         let mut c = Canonical::default();
         c.u64(token);
         c.str(scope.organization.as_str());
@@ -73,14 +75,15 @@ impl Administrator {
             token,
             RegisteredSourceArtifactStore {
                 scope: scope.clone(),
-                reader,
                 retention,
                 provenance: c.finish("celetixo/source-artifact-store/v1"),
                 active: true,
             },
         );
+        readers.insert(token, reader);
+        db.next_source_artifact_store = token;
         Ok(SourceArtifactStoreCapability {
-            store: self.store.inner.clone(),
+            store: self.store.identity.clone(),
             token,
             scope,
         })
@@ -90,15 +93,20 @@ impl Administrator {
         &self,
         store: &SourceArtifactStoreCapability,
     ) -> Result<(), EngineError> {
-        if !Arc::ptr_eq(&self.store.inner, &store.store) {
+        if !Arc::ptr_eq(&self.store.identity, &store.store) {
             return Err(EngineError::Unauthorized);
         }
-        self.store
-            .lock()?
-            .source_artifact_stores
-            .get_mut(&store.token)
-            .ok_or(EngineError::Unauthorized)?
-            .active = false;
+        let reader = {
+            let mut db = self.store.lock()?;
+            let mut readers = self.store.artifact_readers()?;
+            db.source_artifact_stores
+                .get_mut(&store.token)
+                .ok_or(EngineError::Unauthorized)?
+                .active = false;
+            readers.remove(&store.token)
+        };
+        // A reader's destructor can perform I/O or reenter the embedding, too.
+        drop(reader);
         Ok(())
     }
 }
@@ -132,7 +140,7 @@ impl Engine {
         envelope: SourceArtifactReference,
         fault: SourceEvidenceFault,
     ) -> Result<SourceEvidenceReceipt, EngineError> {
-        let (registered, expected_provenance, artifact_budget) = {
+        let (registered, reader, expected_provenance, artifact_budget) = {
             let db = self.store.lock()?;
             validate_executor_store(self, executor)?;
             source_attempts::validate_executor_for_admission(&db, executor, admission, true)?;
@@ -200,7 +208,8 @@ impl Engine {
                 .input()
                 .resource_ceiling
                 .artifact_bytes;
-            (registered, expected, budget)
+            let reader = self.store.artifact_reader(storage.token)?;
+            (registered, reader, expected, budget)
         };
         let mut total = envelope.bytes;
         for object in evidence.provenance().values().chain(
@@ -234,7 +243,7 @@ impl Engine {
             admission,
             executor.principal(),
             &envelope,
-            registered.reader.as_ref(),
+            reader.as_ref(),
             &expected_provenance,
         )?;
         if fault == SourceEvidenceFault::AfterArtifactRead {
@@ -249,8 +258,10 @@ impl Engine {
         validate_executor_store(self, executor)?;
         source_attempts::validate_executor_for_admission(&db, executor, admission, true)?;
         let current_store = self.source_storage(&db, storage, &admission.binding().scope)?;
-        if !Arc::ptr_eq(&current_store.reader, &registered.reader)
+        let current_reader = self.store.artifact_reader(storage.token)?;
+        if !Arc::ptr_eq(&current_reader, &reader)
             || current_store.retention != registered.retention
+            || current_store.provenance != registered.provenance
         {
             return Err(EngineError::Unauthorized);
         }
@@ -364,7 +375,7 @@ impl Engine {
         storage: &SourceArtifactStoreCapability,
         scope: &Scope,
     ) -> Result<&'a RegisteredSourceArtifactStore, EngineError> {
-        if !Arc::ptr_eq(&self.store.inner, &storage.store) || storage.scope != *scope {
+        if !Arc::ptr_eq(&self.store.identity, &storage.store) || storage.scope != *scope {
             return Err(EngineError::Unauthorized);
         }
         let registered = db

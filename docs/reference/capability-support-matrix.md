@@ -70,6 +70,7 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 |---|---|---|
 | Transaction admission/OCC reference semantics | **Validated in-memory** | Not a durable multi-instance database transaction service |
 | Repository analysis installation | **Validated in-memory** | Embedding supplies trusted authentication/administration authority |
+| Engine records / live capability boundary | **Validated in-memory** | Grant and storage registration records contain no live capability identity or artifact reader. [04.1b checks](../implementation/goal-04-runtime-boundary/checks.json) include copied-record rejection and actual T1 regression; no durable lifecycle or public restore API |
 | Exact-base source patch application | **Validated** | In-process versioned domain format; source publication is unsupported |
 | T1 evidence persistence/admission | **Validated (local)** | Content-addressed local artifact store; no distributed object store or durable Engine state |
 | Runtime ownership/recovery | **Validated (local T1)** | Exact cleanup grant and ownership journal; does not restore lost transaction authority |

@@ -1,6 +1,6 @@
 # Goal 04 progress and foundation validation
 
-**Status:** active; 04.1a foundation verified; Goal 04 and milestone 04.1 remain incomplete.
+**Status:** active; 04.1a foundation and 04.1b runtime separation verified; Goal 04 and milestone 04.1 remain incomplete.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -12,13 +12,62 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 
 | Milestone | Current evidence / remaining work |
 |---|---|
-| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a below supplies migrations, checked immutable snapshot storage and protocol prerequisites. Routing the complete Engine lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
+| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a below supplies migrations, checked immutable snapshot storage and protocol prerequisites. 04.1b separates live capabilities/readers from engineering records. Routing the complete Engine lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
 | 04.2 — Multi-instance atomic commit | Pending: independent Engine processes, authoritative SQL commit/CAS, complete request-bound idempotency, races and crash-ambiguity reconciliation. |
 | 04.3 — Transactional events | Schema placeholders exist. No outbox publisher, inbox consumer or real NATS integration yet. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. Existing local Goal 03 storage is unchanged. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
 | 04.7 — End-to-end operational proof | Pending: complete real-service path, multi-instance/fault/security/load tests, backup/restore drills and measured operational baselines. |
+
+## 04.1b — Engineering records and live embedding resources
+
+The reference Engine separates its cloneable engineering records from live
+capability identity and artifact readers. Sessions, executors, cleanup grants and
+storage capabilities authenticate against the embedding's private allocation
+identity, then retain their existing scoped grant, permission, expiry, revocation
+and attempt checks. Multiple Engine handles sharing a store share that identity;
+a new store with copied records does not.
+
+Artifact registration metadata retains scope, retention, provenance and active
+state. The reader lives in a separate process-local registry. New evidence
+admission requires an installed reader; missing or poisoned runtime resources
+return `StoreUnavailable`. Previously retained exact delivery receipts still
+acknowledge history through the existing claim/registration checks. Reader I/O
+remains outside Engine locks. Final admission rechecks current authority, metadata
+and the exact reader handle after I/O.
+
+Registration acquires state and runtime locks, in that order, before publishing
+either record or handle. Revocation marks the registration inactive and removes
+the reader together; it releases both locks before dropping adapter resources.
+An in-flight read may retain its handle but cannot admit evidence after
+revocation. This preserves the existing read/recheck boundary and permits adapter
+destructors to reenter the embedding without a lock deadlock.
+
+Record copying is confined to private tests. There is no public restore API,
+whole-Database serialization, reconstructed authentication, SQL transaction
+lifecycle or new source publication capability. Checked normalized reconstruction,
+authenticated durable grant resolution, database-clock leases/fencing and atomic
+multi-process commit remain required work for 04.1–04.2.
+
+### Validation performed for 04.1b
+
+[The source-bound record](goal-04-runtime-boundary/checks.json) and
+[raw log](goal-04-runtime-boundary/checks.log) record 361 ordinary workspace tests
+passed (18 opt-in tests ignored), 10 additional actual Linux T1 OCI/source-flow
+tests passed, strict workspace Clippy, formatting, example builds, protocol
+integrity and 25 attribution fixtures. Four new tests cover copied records across
+all capability types, missing readers, resource release, destructor reentry and
+poisoned-runtime publication failure. Existing authority changes during storage
+I/O, concurrent delivery, exact replay and lost-response tests also pass.
+
+The real T1 run uses the previously reviewed local Linux x86_64 rootless-runc
+profile; the record includes exact runtime, launcher, formatter and library
+hashes. This reruns current source-to-evidence behavior, not distributed recovery
+or a new sandbox profile. PostgreSQL opt-in groups and the actual rust-analyzer
+probe were not rerun locally for this Engine-only change; their implementations
+are unchanged and prior evidence remains separately scoped. There are no new
+performance or production-readiness claims.
 
 ## 04.1a — Schema, immutable snapshots and typed request prerequisites
 

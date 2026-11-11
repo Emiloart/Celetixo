@@ -202,5 +202,6 @@ Before completion:
 6. report exact checks run, checks not run and why;
 7. update documentation to match actual behavior.
 8. commit and push each verified milestone separately, preserving remote contributions and checking attribution before publication.
+9. after every successful push, tell the user which milestone was pushed and include its commit identity.
 
 > **Models propose changes. The Engine decides admissibility. Verification supplies evidence. The atomic commit boundary protects repository state.**

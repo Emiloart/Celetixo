@@ -257,7 +257,7 @@ pub struct SourceRejectionView {
 
 #[derive(Clone)]
 pub struct SourceExecutorCapability {
-    store: Arc<Mutex<Database>>,
+    store: Arc<StoreIdentity>,
     token: u64,
     principal: PrincipalId,
     backend: BackendIdentity,
@@ -431,7 +431,7 @@ impl Administrator {
             },
         );
         Ok(SourceExecutorCapability {
-            store: self.store.inner.clone(),
+            store: self.store.identity.clone(),
             token,
             principal,
             backend,
@@ -442,7 +442,7 @@ impl Administrator {
         &self,
         executor: &SourceExecutorCapability,
     ) -> Result<(), EngineError> {
-        if !Arc::ptr_eq(&self.store.inner, &executor.store) {
+        if !Arc::ptr_eq(&self.store.identity, &executor.store) {
             return Err(EngineError::Unauthorized);
         }
         let mut db = self.store.lock()?;
@@ -989,7 +989,7 @@ pub(super) fn validate_executor_store(
     engine: &Engine,
     executor: &SourceExecutorCapability,
 ) -> Result<(), EngineError> {
-    if !Arc::ptr_eq(&engine.store.inner, &executor.store) {
+    if !Arc::ptr_eq(&engine.store.identity, &executor.store) {
         return Err(EngineError::Unauthorized);
     }
     Ok(())

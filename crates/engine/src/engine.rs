@@ -11,10 +11,12 @@ use crate::patch::{Patch, PatchError};
 use crate::repository::{RepositoryAnalysis, RepositoryAnalysisError, RepositoryImpact};
 use crate::snapshot::{Snapshot, SnapshotError};
 use crate::transaction::{TransactionIntent, TransactionState, TransactionView};
+use runtime::{SourceArtifactReaders, StoreIdentity};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex, MutexGuard};
 use thiserror::Error;
 
+mod runtime;
 mod source_attempts;
 mod source_cleanup;
 mod source_evidence_gate;
@@ -60,7 +62,7 @@ impl Permission {
 /// Opaque in-process capability. Identifiers alone cannot construct or authenticate it.
 #[derive(Clone)]
 pub struct Session {
-    store: Arc<Mutex<Database>>,
+    store: Arc<StoreIdentity>,
     token: u64,
     principal: PrincipalId,
 }
@@ -73,6 +75,9 @@ impl Session {
 #[derive(Clone)]
 pub struct InMemoryStore {
     inner: Arc<Mutex<Database>>,
+    // Live capabilities and adapters belong to this embedding, never to stored state.
+    identity: Arc<StoreIdentity>,
+    source_artifact_readers: Arc<Mutex<SourceArtifactReaders>>,
 }
 
 /// Held only by the trusted embedding application, separate from worker Engine handles.
@@ -362,6 +367,9 @@ struct RecordedOperation {
 }
 
 #[derive(Clone, Default)]
+// Adapter-free engineering records. Cloning records must not copy live authority
+// or retain storage readers. This remains an in-memory reference representation;
+// a durable backend must decode checked, normalized records, not serialize this blob.
 struct Database {
     now: u64,
     next_token: u64,
@@ -389,6 +397,8 @@ impl InMemoryStore {
     pub fn new() -> (Self, Administrator) {
         let store = Self {
             inner: Arc::new(Mutex::new(Database::default())),
+            identity: Arc::new(StoreIdentity),
+            source_artifact_readers: Arc::new(Mutex::new(SourceArtifactReaders::default())),
         };
         let admin = Administrator {
             store: store.clone(),
@@ -423,13 +433,13 @@ impl Administrator {
             },
         );
         Ok(Session {
-            store: self.store.inner.clone(),
+            store: self.store.identity.clone(),
             token,
             principal,
         })
     }
     pub fn revoke(&self, session: &Session) -> Result<(), EngineError> {
-        if !Arc::ptr_eq(&self.store.inner, &session.store) {
+        if !Arc::ptr_eq(&self.store.identity, &session.store) {
             return Err(EngineError::Unauthorized);
         }
         let mut db = self.store.lock()?;
@@ -491,7 +501,7 @@ impl Engine {
         scope: &Scope,
         action: Permission,
     ) -> Result<(), EngineError> {
-        if !Arc::ptr_eq(&self.store.inner, &session.store) {
+        if !Arc::ptr_eq(&self.store.identity, &session.store) {
             return Err(EngineError::Unauthorized);
         }
         let grant = db

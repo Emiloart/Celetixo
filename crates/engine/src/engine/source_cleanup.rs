@@ -4,7 +4,7 @@ use super::*;
 
 #[derive(Clone)]
 pub struct SourceCleanupCapability {
-    store: Arc<Mutex<Database>>,
+    store: Arc<StoreIdentity>,
     token: u64,
     principal: PrincipalId,
     scope: Scope,
@@ -57,7 +57,7 @@ impl Administrator {
             },
         );
         Ok(SourceCleanupCapability {
-            store: self.store.inner.clone(),
+            store: self.store.identity.clone(),
             token,
             principal,
             scope,
@@ -69,7 +69,7 @@ impl Administrator {
         &self,
         capability: &SourceCleanupCapability,
     ) -> Result<(), EngineError> {
-        if !Arc::ptr_eq(&self.store.inner, &capability.store) {
+        if !Arc::ptr_eq(&self.store.identity, &capability.store) {
             return Err(EngineError::Unauthorized);
         }
         self.store
@@ -92,7 +92,7 @@ impl Engine {
         scope: &Scope,
         backend: Digest,
     ) -> Result<(), EngineError> {
-        if !Arc::ptr_eq(&self.store.inner, &capability.store) {
+        if !Arc::ptr_eq(&self.store.identity, &capability.store) {
             return Err(EngineError::Unauthorized);
         }
         let db = self.store.lock()?;
