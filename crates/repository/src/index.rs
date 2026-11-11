@@ -2115,13 +2115,52 @@ impl LexicalLookup {
     }
 }
 
+/// Import candidates retain pending order, including separate ambiguous imports.
+/// Repeated bindings within one import must not duplicate that import: the scan
+/// uses `any` over bindings. Scope visibility/ranking remains checked per query.
+struct ImportLookup<'a> {
+    bindings: BTreeMap<(&'a str, &'a str), Vec<&'a PendingImport>>,
+}
+
+impl<'a> ImportLookup<'a> {
+    fn new(pending: &'a [Pending]) -> Self {
+        let mut bindings: BTreeMap<_, Vec<_>> = BTreeMap::new();
+        for item in pending {
+            let Pending::Import(import) = item else {
+                continue;
+            };
+            let aliases: BTreeSet<_> = import
+                .bindings
+                .iter()
+                .map(|(local, _)| local.as_str())
+                .collect();
+            for alias in aliases {
+                bindings
+                    .entry((import.path.as_str(), alias))
+                    .or_default()
+                    .push(import);
+            }
+        }
+        Self { bindings }
+    }
+
+    fn candidates(&self, path: &str, alias: &str) -> Vec<&'a PendingImport> {
+        self.bindings
+            .get(&(path, alias))
+            .cloned()
+            .unwrap_or_default()
+    }
+}
+
 fn resolve_references(index: &mut SourceIndex, pending: &[Pending]) {
     let lookup = LexicalLookup::new(index);
+    let imports = ImportLookup::new(pending);
     resolve_references_using(
         index,
         pending,
         |_, reference| lookup.candidates(reference),
         |_, path, name| lookup.top_level(path, name),
+        |path, alias| imports.candidates(path, alias),
     );
 }
 
@@ -2132,14 +2171,34 @@ fn resolve_references_by_scan(index: &mut SourceIndex, pending: &[Pending]) {
         pending,
         lexical_candidates_by_scan,
         top_level_symbol_by_scan,
+        |path, alias| import_candidates_by_scan(pending, path, alias),
     );
 }
 
-fn resolve_references_using(
+#[cfg(test)]
+fn import_candidates_by_scan<'a>(
+    pending: &'a [Pending],
+    path: &str,
+    alias: &str,
+) -> Vec<&'a PendingImport> {
+    pending
+        .iter()
+        .filter_map(|item| match item {
+            Pending::Import(import) => Some(import),
+            Pending::Reference(_) => None,
+        })
+        .filter(|import| {
+            import.path == path && import.bindings.iter().any(|(local, _)| local == alias)
+        })
+        .collect()
+}
+
+fn resolve_references_using<'a>(
     index: &mut SourceIndex,
-    pending: &[Pending],
+    pending: &'a [Pending],
     lexical_candidates: impl Fn(&SourceIndex, &PendingReference) -> Vec<ElementId>,
     top_level_candidates: impl Fn(&SourceIndex, &str, &str) -> Vec<ElementId>,
+    import_candidates: impl Fn(&str, &str) -> Vec<&'a PendingImport>,
 ) {
     // Import facts are intentionally recomputed from resolved module occurrences, so reuse
     // of a syntax tree never reuses a dependency decision from an earlier snapshot.
@@ -2176,22 +2235,13 @@ fn resolve_references_using(
             .filter_map(|id| index.nodes[id].parent.as_ref())
             .map(rank)
             .min();
-        let visible_imports = pending
-            .iter()
-            .filter_map(|pending| {
-                if let Pending::Import(import) = pending {
-                    Some(import)
-                } else {
-                    None
-                }
-            })
+        let visible_imports = import_candidates(&reference.path, alias)
+            .into_iter()
             .filter(|import| {
-                import.path == reference.path
-                    && import.bindings.iter().any(|(local, _)| local == alias)
-                    && index
-                        .nodes
-                        .get(&import.container)
-                        .is_some_and(|scope| scope.span.contains(&reference.span))
+                index
+                    .nodes
+                    .get(&import.container)
+                    .is_some_and(|scope| scope.span.contains(&reference.span))
             })
             .collect::<Vec<_>>();
         let import_rank = visible_imports
@@ -2949,6 +2999,54 @@ mod lexical_lookup_tests {
     use celetixo_engine::snapshot::{
         FileMode, InclusionPolicy, InputLayer, SnapshotManifest, State, WorkspaceInput,
     };
+
+    #[test]
+    fn import_lookup_preserves_scan_order_duplicate_aliases_and_file_boundaries() {
+        let mut pending = Vec::new();
+        for number in 0..96 {
+            let path = format!("file-{}.py", number % 8);
+            let container = ElementId::new(format!("container:{number}")).unwrap();
+            let mut bindings = vec![("work".into(), "remote".into())];
+            if number % 3 == 0 {
+                bindings.push(("work".into(), "another".into()));
+                bindings.push(("alias".into(), "remote".into()));
+            }
+            pending.push(Pending::Reference(PendingReference {
+                path: path.clone(),
+                span: SourceSpan::default(),
+                name: "work".into(),
+                kind: OccurrenceKind::Reference,
+                container: container.clone(),
+            }));
+            pending.push(Pending::Import(PendingImport {
+                path,
+                span: SourceSpan::default(),
+                source: format!("source-{number}"),
+                bindings,
+                language: Language::Python,
+                container,
+            }));
+        }
+        let lookup = ImportLookup::new(&pending);
+        for number in 0..9 {
+            for alias in ["work", "alias", "missing"] {
+                let path = format!("file-{number}.py");
+                let indexed = lookup.candidates(&path, alias);
+                let scanned = import_candidates_by_scan(&pending, &path, alias);
+                assert_eq!(
+                    indexed
+                        .iter()
+                        .map(|item| std::ptr::from_ref(*item))
+                        .collect::<Vec<_>>(),
+                    scanned
+                        .iter()
+                        .map(|item| std::ptr::from_ref(*item))
+                        .collect::<Vec<_>>(),
+                    "candidate identity, multiplicity and order: {path}:{alias}"
+                );
+            }
+        }
+    }
 
     fn snapshot(files: Vec<(String, Vec<u8>)>) -> Snapshot {
         Snapshot::new(

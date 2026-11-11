@@ -144,6 +144,40 @@ records the source and checks. This is trusted read-only tool configuration;
 transaction execution and evidence admission remain subject to their existing
 Engine-owned policy boundaries.
 
+All four [hosted CI jobs for `106935a`](https://github.com/Emiloart/Celetixo/actions/runs/43110552462)
+passed: Engine regression/examples/smoke checks, canonical protocol generation and
+intake, real PostgreSQL migration/restart/isolation, and attribution/workflow
+validation. [The hosted record](goal-04-foundation/hosted-ci-106935a.json) binds this
+claim to that exact commit. Milestone 04.1 remains partial; the database catalog
+and schema have not become a durable Engine transaction backend.
+
+### Import lookup cost during real-repository integration
+
+A two-second CPU profile of the read-only inspection attributed 61.22% of 98
+samples to the pending-import filter. Each reference scanned all pending imports
+and references. The resolver now builds a fresh lookup by exact file and local
+alias for each generation, retaining pending order and deduplicating repeated
+bindings within one import. Scope visibility, lexical shadowing, ambiguity,
+module resolution, occurrences and uncertainty handling keep their existing rules.
+
+The test-only implementation retains the full scan as an independent oracle.
+All language fixtures, rename/deletion/move/copy transitions and incremental/clean
+rebuild comparisons pass, with a new order/multiplicity/file-boundary regression.
+The complete inspection JSON for input commit `b31539c` is byte-identical before
+and after the change: snapshot, generation, 237 files, 13,148 elements, 38,809 edges
+and all 24,570 impact gaps remain unchanged. Semantic impact remains incomplete
+and source mutation unsupported.
+
+The two development commands took 429.283 seconds before and 209.275 seconds after,
+including 13.60 and 14.67 seconds of compilation respectively. This single pair
+includes capture, indexing and Engine queries under ambient development activity;
+it is not an isolated cold-index benchmark, a service SLO or a capacity target.
+[The lookup validation](goal-04-foundation/import-lookup.json) and
+[raw check log](goal-04-foundation/import-lookup-checks.log) record exact source,
+input, output digest and commands. Workspace Clippy, all 357 ordinary tests,
+format checks and 28 LSP tests including actual rust-analyzer passed. This bounded
+integration improvement does not complete any remaining durable-platform gate.
+
 ### Reproduce the database tests
 
 Provision the exact cached image explicitly as an operator if it is absent, then

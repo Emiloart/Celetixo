@@ -1,0 +1,45 @@
+{
+  "schema": "celetixo/goal04-foundation-hosted-ci/v1",
+  "recorded_utc": "2026-11-11T22:26:25.397780+00:00",
+  "run": {
+    "id": 43110552462,
+    "head_branch": "main",
+    "head_sha": "106935a87150ac39cc1d785aeb2a426a53d89eba",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/Emiloart/Celetixo/actions/runs/43110552462",
+    "created_at": "2026-11-11T22:17:48Z",
+    "updated_at": "2026-11-11T22:22:07Z"
+  },
+  "jobs": [
+    {
+      "name": "Commit attribution policy",
+      "status": "completed",
+      "conclusion": "success",
+      "active_steps": [],
+      "failed_steps": []
+    },
+    {
+      "name": "Real PostgreSQL migration, restart and isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "active_steps": [],
+      "failed_steps": []
+    },
+    {
+      "name": "engine",
+      "status": "completed",
+      "conclusion": "success",
+      "active_steps": [],
+      "failed_steps": []
+    },
+    {
+      "name": "Canonical TaskIntent and reproducible bindings",
+      "status": "completed",
+      "conclusion": "success",
+      "active_steps": [],
+      "failed_steps": []
+    }
+  ],
+  "scope": "Hosted foundation checks for the exact recorded commit. This does not complete Goal 04 or validate a durable transaction Engine, NATS, Temporal, S3 or ClickHouse."
+}

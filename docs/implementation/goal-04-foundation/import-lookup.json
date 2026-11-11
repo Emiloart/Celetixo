@@ -1,0 +1,127 @@
+{
+  "schema": "celetixo/import-lookup-development-validation/v1",
+  "source_parent": "106935a87150ac39cc1d785aeb2a426a53d89eba",
+  "started_utc": "2026-11-11T22:20:34.702312+00:00",
+  "input_commit": "b31539c526f0d75ccc54b0253d64d8117a495c74",
+  "checks": [
+    {
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "output_file": null,
+      "exit_code": 0,
+      "elapsed_seconds": 10.434
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "output_file": null,
+      "exit_code": 0,
+      "elapsed_seconds": 82.638
+    },
+    {
+      "argv": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "-p",
+        "celetixo-repository",
+        "--example",
+        "inspect_repository",
+        "--",
+        ".",
+        "--git-tree",
+        "b31539c526f0d75ccc54b0253d64d8117a495c74",
+        "--changed",
+        "crates/engine/src/engine.rs",
+        "--reviewed-public-input",
+        "crates/postgres/src/lib.rs=fa3681476468a03afc62d4738a529d532362bfbc2a531640a39c03073b12db7b",
+        "--reviewed-public-input",
+        "docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce",
+        "--reviewed-public-input",
+        "docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067",
+        "--reviewed-public-input",
+        "scripts/goal04/postgres_fixture.py=1f6298b7fa3b0901ac99864cce7ab14cd2525225ae31604d74478c7bcd865d05"
+      ],
+      "output_file": "inspection.json",
+      "exit_code": 0,
+      "elapsed_seconds": 209.275
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-repository",
+        "--test",
+        "lsp",
+        "--locked",
+        "--offline",
+        "--",
+        "--include-ignored"
+      ],
+      "output_file": null,
+      "exit_code": 0,
+      "elapsed_seconds": 6.958
+    },
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "output_file": null,
+      "exit_code": 0,
+      "elapsed_seconds": 1.151
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "output_file": null,
+      "exit_code": 0,
+      "elapsed_seconds": 0.157
+    }
+  ],
+  "full_inspection_bytes_equivalent": true,
+  "finished_utc": "2026-11-11T22:25:52.539984+00:00",
+  "log_sha256": "a5b1a9b7c6eef8b210fc2cddbe3cace4dd69b5ad3b105c6d69f0f6abaa9acbaa",
+  "source_files": {
+    "crates/repository/src/index.rs": "a8250529cafd2b468de2db13244115913be939272f14f3113eee3a48b272ebcb"
+  },
+  "baseline_index_source_sha256": "2220339a9718b0453819ff99a037edd6b4b5e991b70f30f753ff6d77d056cafa",
+  "inspection_output_sha256": "597b361a62e995957239c0ce5482f8b158120d0a65e0b612516f99d5c09d59a2",
+  "baseline_command_elapsed_seconds": 429.283,
+  "optimized_command_elapsed_seconds": 209.275,
+  "baseline_compilation_seconds": 13.6,
+  "optimized_compilation_seconds": 14.67,
+  "profile": {
+    "duration_seconds": 2,
+    "samples": 98,
+    "lost_samples": 0,
+    "pending_import_filter_samples_percent": 61.22,
+    "baseline_file_offset": "0x8a2ea3",
+    "elf_text_vaddr_delta": "0x1000",
+    "baseline_function": "resolve_references_using::closure",
+    "baseline_source_line": 2182
+  },
+  "scope": "Single development command pair, not cold-index or service-capacity measurements. Full output equality includes uncertainty and source-mutation rejection. PostgreSQL lifecycle authority remains pending."
+}
