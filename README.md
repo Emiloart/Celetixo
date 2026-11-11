@@ -12,6 +12,8 @@ The central abstraction is a **semantic transaction**:
 
 AI models generate the changes. Celetixo owns the engineering state around those changes.
 
+**Documentation:** Start with the [documentation index](docs/README.md) for intended readers, document authority and implementation/validation status.
+
 ## Run the current Engine
 
 Install Rust through rustup; this repository pins the toolchain and dependency lockfile. From the repository root:
