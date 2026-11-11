@@ -1,0 +1,223 @@
+{
+  "schema": "celetixo/repository-benchmark/v1",
+  "fixture": "celetixo-mixed-language-fixture/v1",
+  "reference": "celetixo-manual-impact-reference/v1",
+  "reference_unit": "unit000",
+  "copies": 1,
+  "repository_commit": null,
+  "change_path": null,
+  "capture_mode": "live-git-workspace-and-dirty-edits",
+  "fixture_content_digest": "e0d4c47086831b4a060dd17081d25ecb7e9d7292082e126f2095743fe7304232",
+  "manual_reference_digest": "ac5f78fe7bfceef0a566bdee903002a96adb0c98c0c98f9de602721b2be59bf1",
+  "iterations": 1,
+  "queries_per_iteration": 3,
+  "build_profile": "release",
+  "native_cflags_at_build": "-target x86_64-linux-gnu -fPIC -O3",
+  "crate_cc_no_defaults_at_build": "1",
+  "rustc_version_recorded_at_build": null,
+  "native_compiler_recorded_at_build": null,
+  "rustup_toolchain_at_build": "1.94.1-x86_64-unknown-linux-gnu",
+  "analyzer": "celetixo-structural/v2",
+  "parsers": [
+    "tree-sitter-go/0.25.0",
+    "tree-sitter-javascript/0.25.0",
+    "tree-sitter-python/0.25.0",
+    "tree-sitter-rust/0.24.0",
+    "tree-sitter-typescript/0.23.2"
+  ],
+  "measurement_implementation_digest": "4dd67bdcf29c34e71f4e85f997328d61e331a81623bdcd2d2d2c645a0fb04b1b",
+  "git_version": "git version 2.43.0",
+  "operating_system": "6.18.54.1-microsoft-standard-WSL2",
+  "architecture": "x86_64",
+  "cpu": "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz",
+  "capture_filesystem": "ext2/ext3",
+  "samples": [
+    {
+      "iteration": 0,
+      "clean_snapshot": "2fd2ab29937dee92a9b2ba6355bcba2eaf593b6f59de2c32d95547e571a3ba21",
+      "immutable_git_snapshot": "128bbff4b7fed5b1dc0abcc21a6cbfea7030e3ef3fce0edb6ccc5773b53db884",
+      "dirty_snapshot": "023d3f56dad00c06d5f912fb776b69a46d76c5a564e71d9d1f15190d3f617bcc",
+      "clean_generation": "7333cd78b576e371d5e294c3ff823056627dda2dfa9c58d0fc660731131b55c0",
+      "dirty_generation": "daf30bdeb22deb5fcf7dfaab41803b6da9770270f032ae0dbc2393a1da322fb6",
+      "configuration": "319ccc72726be443b3f5118c97f77dcbdd8d6e1b6f2ca8767ac112176a234954",
+      "effective_files": 30,
+      "source_files": {
+        "Go": 4,
+        "JavaScript": 4,
+        "Python": 6,
+        "Rust": 6,
+        "TypeScript": 4
+      },
+      "effective_bytes": 2064,
+      "clean_capture_manifest_inputs": 88,
+      "dirty_capture_manifest_inputs": 89,
+      "nodes": 113,
+      "edges": 262,
+      "issues": 56,
+      "changed_nodes": 115,
+      "changed_edges": 298,
+      "changed_issues": 57,
+      "changed_effective_bytes": 2080,
+      "capture_clean_ns": 595135307,
+      "capture_repeat_ns": 578394032,
+      "capture_git_tree_ns": 147587968,
+      "capture_dirty_ns": 591933084,
+      "cold_index_ns": 30892318,
+      "incremental_index_ns": 4704431,
+      "rebuild_index_ns": 5340030,
+      "graph_prepare_ns": 2417716,
+      "impact_query_complete": false,
+      "impact_query_affected_files": 3,
+      "impact_query_gap_count": 53,
+      "cached_impact_query_ns": [
+        192742,
+        186979,
+        182211
+      ],
+      "cold_parsed_files": 24,
+      "incremental_parsed_files": 1,
+      "incremental_reused_files": 23,
+      "rebuild_equivalent": true,
+      "repeat_capture_equivalent": true,
+      "live_capture_complete": false,
+      "live_capture_census_complete": true,
+      "immutable_git_capture_complete": true,
+      "memory_before": {
+        "rss_kib": 2840,
+        "lifetime_peak_rss_kib": 2840
+      },
+      "memory_after_cold": {
+        "rss_kib": 7716,
+        "lifetime_peak_rss_kib": 7716
+      },
+      "memory_after_incremental_and_rebuild": {
+        "rss_kib": 9168,
+        "lifetime_peak_rss_kib": 9168
+      },
+      "memory_after_queries": {
+        "rss_kib": 8368,
+        "lifetime_peak_rss_kib": 8368
+      },
+      "quality": [
+        {
+          "case": "typescript-base",
+          "changed_element": "source:c5f59a65c18aa6bcd936265f0b8da10f8ad7d109c27b3afd0433418cdec3c1e7",
+          "predicted_files": [
+            "typescript/unit000/app.test.ts",
+            "typescript/unit000/app.ts",
+            "typescript/unit000/math.ts"
+          ],
+          "reference_files": [
+            "typescript/unit000/app.test.ts",
+            "typescript/unit000/app.ts",
+            "typescript/unit000/math.ts"
+          ],
+          "missed_files": [],
+          "extra_files": [],
+          "true_positives": 3,
+          "false_positives": 0,
+          "false_negatives": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "incomplete": true,
+          "rationale": "app directly calls base; test_app calls app; unrelated has no dependency."
+        },
+        {
+          "case": "javascript-base",
+          "changed_element": "source:363cce2d15c579fff80dfc9dfcb5e51739d6a22c56a667d1cf9a5a4acf2a1ea4",
+          "predicted_files": [
+            "javascript/unit000/app.js",
+            "javascript/unit000/app.test.js",
+            "javascript/unit000/math.js"
+          ],
+          "reference_files": [
+            "javascript/unit000/app.js",
+            "javascript/unit000/app.test.js",
+            "javascript/unit000/math.js"
+          ],
+          "missed_files": [],
+          "extra_files": [],
+          "true_positives": 3,
+          "false_positives": 0,
+          "false_negatives": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "incomplete": true,
+          "rationale": "app directly calls base; test_app calls app; unrelated has no dependency."
+        },
+        {
+          "case": "python-base-with-dynamic-consumer",
+          "changed_element": "source:08e3509d3a81ffda9d02ce478443abea38c9a49b43f3485175050bc5c6eb2e0d",
+          "predicted_files": [
+            "python/unit000/app.py",
+            "python/unit000/math_ops.py",
+            "python/unit000/test_app.py"
+          ],
+          "reference_files": [
+            "python/unit000/app.py",
+            "python/unit000/dynamic.py",
+            "python/unit000/math_ops.py",
+            "python/unit000/test_app.py"
+          ],
+          "missed_files": [
+            "python/unit000/dynamic.py"
+          ],
+          "extra_files": [],
+          "true_positives": 3,
+          "false_positives": 0,
+          "false_negatives": 1,
+          "precision": 1.0,
+          "recall": 0.75,
+          "incomplete": true,
+          "rationale": "app calls base; test_app calls app. dynamic_entry retrieves the string-named base attribute and calls it, so dynamic.py is affected even if structural extraction cannot resolve it. unrelated has no dependency."
+        },
+        {
+          "case": "go-base",
+          "changed_element": "source:2fb8febfd706194a151f9db50ccbb817e3370cb9261f8447b3b09d429f9e3edc",
+          "predicted_files": [
+            "go/unit000/app.go",
+            "go/unit000/app_test.go",
+            "go/unit000/math.go"
+          ],
+          "reference_files": [
+            "go/unit000/app.go",
+            "go/unit000/app_test.go",
+            "go/unit000/math.go"
+          ],
+          "missed_files": [],
+          "extra_files": [],
+          "true_positives": 3,
+          "false_positives": 0,
+          "false_negatives": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "incomplete": true,
+          "rationale": "App calls Base in the same Go package; TestApp calls App; Unrelated has no dependency."
+        },
+        {
+          "case": "rust-base",
+          "changed_element": "source:f94069a8edae346b6e9f4f3377fec98a359bb6c38de74579ea02d467092e6401",
+          "predicted_files": [
+            "src/unit000/app.rs",
+            "src/unit000/math.rs",
+            "src/unit000/test_app.rs"
+          ],
+          "reference_files": [
+            "src/unit000/app.rs",
+            "src/unit000/math.rs",
+            "src/unit000/test_app.rs"
+          ],
+          "missed_files": [],
+          "extra_files": [],
+          "true_positives": 3,
+          "false_positives": 0,
+          "false_negatives": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "incomplete": true,
+          "rationale": "app imports and calls math::base; test_app imports and calls app; unrelated has no dependency."
+        }
+      ]
+    }
+  ]
+}

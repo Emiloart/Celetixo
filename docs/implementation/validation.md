@@ -2,6 +2,8 @@
 
 This record separates observations from planned checks. The [implementation contract](goal-01.md) defines the proof boundary and commands. A local pass does not imply that remote CI, deployment or distributed services have been validated.
 
+This is the historical Goal 01 record. Its test totals and then-unvalidated capabilities describe that milestone. Later capabilities and fresh regression checks are recorded in the [Goals 01–03 audit](goals-01-03-audit.md), [Goal 02 validation](goal-02-validation.md) and [Goal 03 acceptance](goal-03-acceptance.md). The milestone references below use the current human-attributed history; their Git trees are identical to the originally recorded revisions.
+
 ## Initial inspection
 
 The initial repository inspection found branch `main` at `c667e10`, a clean working tree and thirteen tracked Markdown files. There was no Cargo manifest, application implementation, executable test suite or CI configuration. Rust/Cargo 1.94.1, rustfmt and Clippy were available. These are baseline observations recorded before implementation, not descriptions of the completed worktree.
@@ -10,9 +12,9 @@ The initial repository inspection found branch `main` at `c667e10`, a clean work
 
 | Milestone | Commit | Checks and result |
 |---|---|---|
-| Reproducible Rust workspace and domain foundation | `3a27fa6` | Format, strict Clippy, locked test and build checks passed; 15 unit + 11 snapshot tests |
-| Transaction authority, OCC and evidence-gated reference commit | `24b32f8` | Format, strict Clippy, locked test and build checks passed; core integration suite: 23 tests |
-| Deterministic histories, adversarial review and executable example | `2a55387` | Full suite: 62 tests passed, including 192 generated histories; strict Clippy/build/format and example passed |
+| Reproducible Rust workspace and domain foundation | `da623358728937f7b43b8106f8385009d9d1aca7` | Format, strict Clippy, locked test and build checks passed; 15 unit + 11 snapshot tests |
+| Transaction authority, OCC and evidence-gated reference commit | `7331071fad9810b86e616cf9a3382c558ced0f71` | Format, strict Clippy, locked test and build checks passed; core integration suite: 23 tests |
+| Deterministic histories, adversarial review and executable example | `dac9ea59df74c00e6f988e91be24fe470455a6b9` | Full suite: 62 tests passed, including 192 generated histories; strict Clippy/build/format and example passed |
 
 Populate this table only with actual commit identities and completed checks. A milestone may cite detailed results below. Do not infer passing status from a configured CI file or a previous command run against different code.
 
@@ -46,9 +48,9 @@ These results were observed in the development worktree using Rust/Cargo 1.94.1 
 
 ## Completion audit
 
-A separate detached Git worktree at committed source revision `2a55387` started clean with no build artifacts. All five documented commands above passed there using the pinned toolchain and lockfile. The complete suite again reported 62 passed, zero failed or ignored; the example produced both expected final states and all assertions passed. The check rebuilt the dependencies and Engine in that checkout, establishing that no uncommitted development file or existing target directory was needed.
+A separate detached Git worktree at the tree now published as `dac9ea59df74c00e6f988e91be24fe470455a6b9` started clean with no build artifacts. All five documented commands above passed there using the pinned toolchain and lockfile. The complete suite again reported 62 passed, zero failed or ignored; the example produced both expected final states and all assertions passed. The check rebuilt the dependencies and Engine in that checkout, establishing that no uncommitted development file or existing target directory was needed.
 
-Local links in the changed documentation resolve, and staged changes passed `git diff --cached --check`. The subsequent completion-record commit changes only this validation document; runtime code and CI configuration remain exactly the source revision checked above. The development working tree is clean after the implementation commits. Commits are local; remote CI has not been executed.
+Local links in the changed documentation resolve, and staged changes passed `git diff --cached --check`. The subsequent completion-record commit changes only this validation document; runtime code and CI configuration remain exactly the source revision checked above. The development working tree was clean after the implementation commits. At the time of this original record, commits were local and remote CI had not been executed.
 
 Goal 01 is validated within the documented in-memory reference environment. Source indexing, external execution, durable storage and production distributed atomicity are outside that environment and are not presented as completed capabilities.
 
@@ -69,4 +71,4 @@ Goal 01 is validated within the documented in-memory reference environment. Sour
 
 ## Unvalidated targets
 
-Remote GitHub CI, production distributed atomicity, process-restart durability, real repository capture, semantic extraction, supported-language harnesses, sandbox execution and deployed tenant isolation require their own implementation and validation evidence. This reference environment does not establish those properties. No benchmark or comparative evaluation result is implied by the correctness tests.
+At the Goal 01 milestone, remote GitHub CI, production distributed atomicity, process-restart durability, real repository capture, semantic extraction, supported-language harnesses, sandbox execution and deployed tenant isolation required their own implementation and validation evidence. This reference environment does not establish those properties. Later records linked above establish only their explicitly stated additional scope. No benchmark or comparative evaluation result is implied by the Goal 01 correctness tests.

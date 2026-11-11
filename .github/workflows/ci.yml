@@ -53,6 +53,8 @@ jobs:
         run: cargo build --workspace --examples --locked
       - name: Run concurrent transaction example
         run: cargo run --locked -p celetixo-engine --example concurrent_transactions
+      - name: Check benchmark reporting rejects invalid measurements
+        run: python3 .github/scripts/test-goal03-benchmark-summary.py
       - name: Inspect exact repository tree through the Engine
         run: cargo run --locked -p celetixo-repository --example inspect_repository -- . --git-tree "$(git rev-parse HEAD)" --changed crates/engine/src/engine.rs > /tmp/goal02-inspection.json
       - name: Check reproducible benchmark harness

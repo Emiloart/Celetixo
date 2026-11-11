@@ -1,0 +1,31 @@
+{
+  "capture_census_complete": true,
+  "capture_complete": true,
+  "capture_consistency": "GitTree",
+  "edges": 35379,
+  "elements": 11947,
+  "engine_analysis_artifact": "b290317030fa26b9f41c3a91a7d8c1c36f6e032c7c7484ae4b6b0c7bfdabe425",
+  "engine_impact_complete": false,
+  "files": 181,
+  "index_generation": "1552021ee6f90b47bdc2fb48951f1924676b92dffc4e86a1f75c36cfbe90c831",
+  "schema": "celetixo/repository-inspection/v1",
+  "snapshot": "41ba85e256179726a782921f8b18d90a3f981d1e59562376f7416c573a93d110",
+  "source_mutation_supported": false,
+  "selected_git_commit": "32dd36da6dade8c3fc1e9b184f13ebec75969a49",
+  "full_report_sha256": "5fc5326e8fbdb94fc823b725e9e6d977f1cdaa5222aa6ba63c96864884064e55",
+  "impact": {
+    "complete": false,
+    "id": "a7b5e3c6eb249c717382a213e95e6aadf036f55243f2186752bf9b6d9d6f2bb0",
+    "request": "421a9a6dd631317c7f1835215492fcb57eb9b3740ab622f3eb7b4d1f33654b43",
+    "counts": {
+      "affected_files": 2,
+      "direct_changes": 1,
+      "direct_consumers": 1,
+      "downstream": 448,
+      "gaps": 22634,
+      "verification": 4
+    },
+    "changed_file_is_affected": true
+  },
+  "retention": "Condensed public result. Full deterministic query output retained in the local audit directory; exact command and full-report digest permit reproduction."
+}

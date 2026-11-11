@@ -1,0 +1,57 @@
+
+COMMAND python3 .github/scripts/test-goal03-benchmark-summary.py
+..
+----------------------------------------------------------------------
+Ran 2 tests in 10.827s
+
+OK
+
+EXIT 0
+
+COMMAND python3 -O docs/benchmarks/goal-02-compare.py docs/benchmarks
+| Corpus | Artifact equality | Baseline / optimized cold median ms | Baseline / optimized incremental median ms |
+|---|---|---:|---:|
+| copies-1 | Exact recorded identities/graph/quality | 7.785 / 10.690 | 5.379 / 8.453 |
+| copies-5 | Exact recorded identities/graph/quality | 33.426 / 28.771 | 34.154 / 26.719 |
+| copies-20 | Exact recorded identities/graph/quality | 246.639 / 131.641 | 253.935 / 130.475 |
+| actual-celetixo | Exact recorded identities/graph/quality | 3591.137 / 1009.132 | 3651.163 / 1011.453 |
+
+Snapshot/index-generation digests bind complete artifacts, while raw reports retain separate implementation fingerprints. This comparison does not claim performance significance from three observations.
+
+EXIT 0
+
+COMMAND python3 -O docs/benchmarks/goal-02-summary.py --targets docs/benchmarks/goal-02-copies-1.json docs/benchmarks/goal-02-copies-5.json docs/benchmarks/goal-02-copies-20.json docs/benchmarks/goal-02-actual-celetixo.json
+| Corpus / copies | Files / bytes | Capture clean median [min, max] ms | Capture changed median ms | Git-tree capture median ms | Cold index median ms | Incremental median ms | Rebuild median ms | Query p50 / p95 ms | Process peak MiB |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 30 / 2064 | 591.181 [587.371, 595.369] | 597.302 | 159.713 | 5.051 | 6.533 | 6.480 | 0.239 / 0.600 | 9.85 |
+| 5 | 122 / 7716 | 2392.490 [2290.384, 2691.648] | 2181.575 | 621.335 | 25.284 | 25.922 | 26.836 | 0.526 / 0.737 | 16.82 |
+| 20 | 467 / 28911 | 10113.088 [7705.336, 10431.233] | 10277.905 | 3017.850 | 143.972 | 132.446 | 125.382 | 1.990 / 2.817 | 43.18 |
+| Actual repository | 42 / 462750 | 3934.212 [3897.187, 4598.234] | 4075.214 | 3934.212 | 1013.859 | 888.466 | 967.605 | 11.438 / 15.096 | 114.99 |
+
+Times are observed wall times. Query percentiles pool all recorded queries at each scale; no outliers are removed.
+
+| Corpus / copies | Capture ceiling ms | Cold index ceiling ms | Incremental ceiling ms | Rebuild ceiling ms | Single-query ceiling ms | Process peak ceiling MiB |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 800 | 100 | 100 | 100 | 11 | 10 |
+| 5 | 2700 | 100 | 100 | 100 | 2 | 17 |
+| 20 | 10900 | 200 | 200 | 200 | 6 | 44 |
+| Actual repository | 4600 | 1100 | 1500 | 1000 | 24 | 115 |
+
+Investigation ceilings round every observed phase maximum upward to 100ms, every query maximum upward to 1ms, and peak RSS upward to 1MiB. These are local regression targets, not production SLOs or correctness gates.
+
+EXIT 0
+
+COMMAND cargo build --release --locked --offline -p celetixo-repository --example inspect_repository --example repository_bench
+   Compiling celetixo-engine v0.1.0 (/home/emiloart/.local/share/celetixo-goals-audit-20261111/worktree/crates/engine)
+   Compiling celetixo-repository v0.1.0 (/home/emiloart/.local/share/celetixo-goals-audit-20261111/worktree/crates/repository)
+    Finished `release` profile [optimized] target(s) in 53.77s
+
+EXIT 0
+
+COMMAND /mnt/c/dev/celetixo/target/release/examples/inspect_repository /home/emiloart/.local/share/celetixo-goals-audit-20261111/worktree --git-tree 32dd36da6dade8c3fc1e9b184f13ebec75969a49 --changed crates/engine/src/engine.rs
+
+EXIT 0
+
+COMMAND /mnt/c/dev/celetixo/target/release/examples/repository_bench --copies 1 --iterations 1 --queries 3
+
+EXIT 0

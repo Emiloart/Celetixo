@@ -1,0 +1,155 @@
+{
+  "schema": "celetixo/development-audit/v1",
+  "started_utc": "2026-11-11T19:42:23.016201+00:00",
+  "source_commit": "949cda584649026b31551824374a860ea992b8ae",
+  "initial_worktree_status": "",
+  "environment": {
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/mnt/c/dev/celetixo/target",
+    "CELETIXO_OCI_HOME": "/home/emiloart/.local/share/celetixo-goal03"
+  },
+  "checks": [
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.498
+    },
+    {
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 22.797
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 113.963
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-repository",
+        "--test",
+        "lsp",
+        "--locked",
+        "--offline",
+        "--",
+        "--include-ignored"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 17.027
+    },
+    {
+      "argv": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--examples",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.14
+    },
+    {
+      "argv": [
+        "cargo",
+        "run",
+        "-p",
+        "celetixo-engine",
+        "--example",
+        "concurrent_transactions",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.501
+    },
+    {
+      "argv": [
+        "bash",
+        ".github/scripts/test-commit-attribution.sh"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.789
+    },
+    {
+      "argv": [
+        "bash",
+        ".github/scripts/check-commit-attribution.sh",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 27.5
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-execution",
+        "--test",
+        "oci",
+        "--test",
+        "source_flow",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 75.377
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.092
+    }
+  ],
+  "final_worktree_status": " M .github/workflows/ci.yml\n M docs/benchmarks/goal-03/summarize.py\n?? .github/scripts/test-goal03-benchmark-summary.py\n",
+  "finished_utc": "2026-11-11T19:46:47.130843+00:00",
+  "log_sha256": "be08697061a03568ef60caedd4485cf0ad18730abe5fefdb45a9b90fd86eb161",
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "architecture": "x86_64",
+  "later_documentation_parent": "32dd36da6dade8c3fc1e9b184f13ebec75969a49",
+  "rust_sources_fixtures_and_manifests_unchanged_from_tested_commit": true,
+  "worktree_note": "Initially clean isolated checkout. Audit reporting/CI/documentation edits occurred during checks; no Rust source, fixture, manifest, lockfile or toolchain changed. Later remote Goal 04 documentation was fast-forwarded after these checks.",
+  "live_oci_tooling_sha256": {
+    "runc-1.5.2": "599f6f94ff8c5057241eff0d54c3c74f95c34935b6457b33fe545defc61e9488",
+    "celetixo-exec-init": "41cd4284dfc010dca9c2a3f95bc6b82e2d01075c16d385e34b64dabf7b2bbfe9",
+    "toolchain/gofmt": "0802a3784f7b2a924ccde5b34f6727ffe74e0193a1c0eea4cd773863fce4528a",
+    "toolchain/lib/libc.so.6": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+    "toolchain/lib/ld-linux-x86-64.so.2": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+  }
+}

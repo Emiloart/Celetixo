@@ -16,6 +16,8 @@ python3 docs/benchmarks/goal-03/summarize.py docs/benchmarks/goal-03
 
 The recomputed summary was byte-identical. Rust was built in release mode with the recorded toolchain and `CARGO_INCREMENTAL=0 CRATE_CC_NO_DEFAULTS=1 CFLAGS="-target x86_64-linux-gnu -fPIC -O3"`. Compiler invocations and any reused artifacts are visible in the command log. Tool origin/signature records are retained in the [execution toolchain provenance](../implementation/goal-03-execution-validation/toolchain.json); the run records the actual file hashes again.
 
+The [Goals 01–03 audit](../implementation/goals-01-03-audit.md) hardened the summary's input checks so Python optimization cannot disable them. Run `python3 .github/scripts/test-goal03-benchmark-summary.py` to check byte-identical reproduction and rejection of invalid measurements in ordinary and optimized Python. This reporting check does not grant Engine evidence or execution authority.
+
 ## Environment and interpretation
 
 - CPU: model name	: Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz

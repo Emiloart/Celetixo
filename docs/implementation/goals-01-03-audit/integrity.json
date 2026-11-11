@@ -1,0 +1,24 @@
+{
+  "measured_source_commit": "fa888ed49cda2f151f64491986aa8ea9d7afbb36",
+  "verified_source_blobs": 111,
+  "verified_summary_input_hashes": 4,
+  "runtime_diff_from_measured_source": "",
+  "historical_validation_log_sha256": "0f5e0f3e73d9f71a21997cdabf781c89f039047f203101c1a0e5bfa84564dc47",
+  "goal01_history_mappings": [
+    {
+      "original_short_revision": "3a27fa6",
+      "published_revision": "da623358728937f7b43b8106f8385009d9d1aca7",
+      "identical_git_tree": "813b35bf7417cdde8447fd4e7dc11970381ad30f"
+    },
+    {
+      "original_short_revision": "24b32f8",
+      "published_revision": "7331071fad9810b86e616cf9a3382c558ced0f71",
+      "identical_git_tree": "db12306d078b8bb404e1be68530130d8e42b043e"
+    },
+    {
+      "original_short_revision": "2a55387",
+      "published_revision": "dac9ea59df74c00e6f988e91be24fe470455a6b9",
+      "identical_git_tree": "4d6401f51143113bb8c76239c72ea4f12e52e4dd"
+    }
+  ]
+}

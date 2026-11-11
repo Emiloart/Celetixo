@@ -1,0 +1,95 @@
+{
+  "source_parent_commit": "32dd36da6dade8c3fc1e9b184f13ebec75969a49",
+  "environment": {
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC -O3",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/mnt/c/dev/celetixo/target"
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        ".github/scripts/test-goal03-benchmark-summary.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 10.909,
+      "output": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-O",
+        "docs/benchmarks/goal-02-compare.py",
+        "docs/benchmarks"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.202,
+      "output": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-O",
+        "docs/benchmarks/goal-02-summary.py",
+        "--targets",
+        "docs/benchmarks/goal-02-copies-1.json",
+        "docs/benchmarks/goal-02-copies-5.json",
+        "docs/benchmarks/goal-02-copies-20.json",
+        "docs/benchmarks/goal-02-actual-celetixo.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.204,
+      "output": null
+    },
+    {
+      "argv": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "-p",
+        "celetixo-repository",
+        "--example",
+        "inspect_repository",
+        "--example",
+        "repository_bench"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 53.871,
+      "output": null
+    },
+    {
+      "argv": [
+        "/mnt/c/dev/celetixo/target/release/examples/inspect_repository",
+        "/home/emiloart/.local/share/celetixo-goals-audit-20261111/worktree",
+        "--git-tree",
+        "32dd36da6dade8c3fc1e9b184f13ebec75969a49",
+        "--changed",
+        "crates/engine/src/engine.rs"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 76.285,
+      "output": "inspection.json",
+      "output_sha256": "5fc5326e8fbdb94fc823b725e9e6d977f1cdaa5222aa6ba63c96864884064e55"
+    },
+    {
+      "argv": [
+        "/mnt/c/dev/celetixo/target/release/examples/repository_bench",
+        "--copies",
+        "1",
+        "--iterations",
+        "1",
+        "--queries",
+        "3"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.091,
+      "output": "benchmark-smoke.json",
+      "output_sha256": "f1b9e53971d21120dad6867e144ad498c420596038a747c77b8c48c82c6ad533"
+    }
+  ],
+  "log_sha256": "1f91edb2b584f7641114b607bef99fb4dfd25c41d307e2fefb78d223342481dd",
+  "inspection_output_note": "The 4.8 MB inspection.json is retained locally. Public inspection-summary.json records bindings and counts; its full_report_sha256 matches the command output hash."
+}
