@@ -1,0 +1,31 @@
+{
+  "schema": "celetixo/lifecycle-codec-frozen-fixtures/v1",
+  "method": "Independent Python length-delimited encoding from specified native record layouts; no Rust encoder or decoder was invoked. Keys and capabilities are absent.",
+  "snapshot": "3bf32c1cb28fb5a57e79d524cacc6b886a15fdc9007faf3cec4cd6d789b9c148",
+  "files": {
+    "native-intent-record-v1.hex": {
+      "domain": "celetixo/native-intent-record/v1",
+      "digest": "6ab35f422bf1843bc6f414b23e337358a1ca7244ad5e74de3b99a1aaf235709c",
+      "bytes": 710,
+      "file_sha256": "a952c8751abcdaaf3051b40d571dd62bc23e70a5374230dbb50040090f78115a"
+    },
+    "impact-analysis-record-v1.hex": {
+      "domain": "celetixo/impact-analysis-record/v1",
+      "digest": "9c6ab06d7a8aa5c2dc679dca3d4e896f060e2887d34da3d374ba51eb226567b0",
+      "bytes": 390,
+      "file_sha256": "986e2e2aa8bec4c20f83b018ec99fac0eac3dcb53e0ae5c0073e9db9c89ef438"
+    },
+    "verification-evidence-record-v1.hex": {
+      "domain": "celetixo/verification-evidence-record/v1",
+      "digest": "88dca12e249b9a53014c3ca5a409f13e5772bea28c71e9e8269b46dbb9086714",
+      "bytes": 729,
+      "file_sha256": "75021c8bfd1930a246beb1505b68e903aa0af99f52814a73b80c78a226541cdb"
+    },
+    "commit-request-v1.hex": {
+      "domain": "celetixo/commit-request/v1",
+      "digest": "1a07bd1be4a8851da58ca189809ac6485c653db3ef65352c031b8417981b2e86",
+      "bytes": 382,
+      "file_sha256": "90b7e788a895f762831a0650819d81962b294cc32a23eb9cbef2d268a548d5f4"
+    }
+  }
+}

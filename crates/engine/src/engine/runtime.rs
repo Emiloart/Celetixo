@@ -66,6 +66,40 @@ mod tests {
     }
 
     #[test]
+    fn scoped_grant_id_alias_cannot_rebind_an_existing_opaque_session() {
+        let (store, admin) = InMemoryStore::new();
+        let principal = PrincipalId::new("operator").unwrap();
+        let session = admin
+            .grant(principal, scope(), Permission::ALL.into())
+            .unwrap();
+        let mut other_scope = scope();
+        other_scope.repository = RepositoryId::new("other-repository").unwrap();
+        // Models loading a different scoped SQL row with the same numeric ID.
+        // There is no production API to mutate a grant's established scope.
+        store
+            .lock()
+            .unwrap()
+            .grants
+            .get_mut(&session.token)
+            .unwrap()
+            .scope = other_scope.clone();
+        let engine = Engine::new(store.clone());
+        for requested in [scope(), other_scope] {
+            assert_eq!(
+                engine.authorize(
+                    &store.lock().unwrap(),
+                    &session,
+                    &requested,
+                    Permission::Read
+                ),
+                Err(EngineError::Unauthorized)
+            );
+        }
+        assert_eq!(admin.revoke(&session), Err(EngineError::Unauthorized));
+        assert!(store.lock().unwrap().grants[&session.token].active);
+    }
+
+    #[test]
     fn copied_records_restore_neither_capabilities_nor_readers() {
         let (store, admin) = InMemoryStore::new();
         let principal = PrincipalId::new("operator").unwrap();

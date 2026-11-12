@@ -16,11 +16,13 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex, MutexGuard};
 use thiserror::Error;
 
+mod commit_request;
 mod runtime;
 mod source_attempts;
 mod source_cleanup;
 mod source_evidence_gate;
 mod state_access;
+pub use commit_request::{CommitRequest, ReservationView};
 pub use source_attempts::{
     SourceAdmission, SourceAttemptError, SourceAttemptEvent, SourceAttemptOptions,
     SourceAttemptState, SourceAttemptView, SourceAuthorizationProvenance, SourceExecutorCapability,
@@ -66,10 +68,14 @@ pub struct Session {
     store: Arc<StoreIdentity>,
     token: u64,
     principal: PrincipalId,
+    scope: Scope,
 }
 impl Session {
     pub fn principal(&self) -> &PrincipalId {
         &self.principal
+    }
+    pub fn scope(&self) -> &Scope {
+        &self.scope
     }
 }
 
@@ -156,6 +162,7 @@ pub enum LeaseEventKind {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LeaseEvent {
+    pub fence: u64,
     pub at: u64,
     pub owner: PrincipalId,
     /// Canonical acquisition order; an entire set is acquired atomically.
@@ -205,6 +212,10 @@ pub enum EngineError {
     InvalidTime,
     #[error("revision or attempt space exhausted")]
     CounterExhausted,
+    #[error(
+        "explicit commit request does not match its exact attempt, snapshot, patch, analysis or evidence"
+    )]
+    CommitRequestMismatch,
     #[error("versioned patch does not match attempt snapshot")]
     WrongPatchBase,
     #[error("patch writes an element outside the analyzed write set")]
@@ -253,6 +264,7 @@ struct Grant {
 
 #[derive(Clone)]
 struct Lease {
+    fence: u64,
     owner: u64,
     expires_at: u64,
     writes: BTreeSet<ElementId>,
@@ -274,6 +286,7 @@ struct Attempt {
 struct Transaction {
     id: TransactionId,
     owner: PrincipalId,
+    owner_capability: u64,
     scope: Scope,
     intent: TransactionIntent,
     state: TransactionState,
@@ -309,6 +322,7 @@ impl Transaction {
             id: self.id.clone(),
             scope: self.scope.clone(),
             owner: self.owner.clone(),
+            proposal_grant_id: self.owner_capability,
             state: self.state,
             attempt: self.attempt().number,
             original_snapshot: self.attempts[0].base.id(),
@@ -364,6 +378,7 @@ struct Repository {
 struct RecordedOperation {
     transaction: TransactionId,
     attempt: u64,
+    request: Option<CommitRequest>,
     outcome: Result<CommitReceipt, EngineError>,
 }
 
@@ -380,6 +395,7 @@ struct Database {
     evidence: BTreeMap<(Scope, EvidenceId), VerificationEvidence>,
     evidence_sources: BTreeMap<(Scope, EvidenceId), u64>,
     operations: BTreeMap<(Scope, IdempotencyKey), RecordedOperation>,
+    reservation_fences: BTreeMap<Scope, u64>,
     next_source_executor: u64,
     source_executors: BTreeMap<u64, source_attempts::SourceExecutorGrant>,
     source_policies: BTreeMap<Scope, crate::source_execution::SourceExecutionPolicy>,
@@ -428,7 +444,7 @@ impl Administrator {
                 token,
                 Grant {
                     principal: principal.clone(),
-                    scope,
+                    scope: scope.clone(),
                     permissions,
                     active: true,
                 },
@@ -437,6 +453,7 @@ impl Administrator {
                 store: self.store.identity.clone(),
                 token,
                 principal,
+                scope,
             })
         })
     }
@@ -445,16 +462,21 @@ impl Administrator {
             return Err(EngineError::Unauthorized);
         }
         self.store.update(|db| {
-            db.grants
+            let grant = db
+                .grants
                 .get_mut(&session.token)
-                .ok_or(EngineError::Unauthorized)?
-                .active = false;
+                .ok_or(EngineError::Unauthorized)?;
+            if grant.scope != session.scope || grant.principal != session.principal {
+                return Err(EngineError::Unauthorized);
+            }
+            grant.active = false;
             let now = db.now;
             for tx in db.transactions.values_mut() {
                 if let Some(lease) = &tx.lease
                     && lease.owner == session.token
                 {
                     tx.lease_history.push(LeaseEvent {
+                        fence: lease.fence,
                         at: now,
                         owner: session.principal.clone(),
                         scopes: lease.writes.clone(),
@@ -482,6 +504,7 @@ impl Administrator {
                     && lease.expires_at <= now
                 {
                     tx.lease_history.push(LeaseEvent {
+                        fence: lease.fence,
                         at: lease.expires_at,
                         owner: principals[&lease.owner].clone(),
                         scopes: lease.writes.clone(),
@@ -505,7 +528,7 @@ impl Engine {
         scope: &Scope,
         action: Permission,
     ) -> Result<(), EngineError> {
-        if !Arc::ptr_eq(&self.store.identity, &session.store) {
+        if !Arc::ptr_eq(&self.store.identity, &session.store) || session.scope != *scope {
             return Err(EngineError::Unauthorized);
         }
         let grant = db
@@ -786,6 +809,7 @@ impl Engine {
             let tx = Transaction {
                 id,
                 owner: session.principal.clone(),
+                owner_capability: session.token,
                 scope: scope.clone(),
                 intent,
                 state: TransactionState::Proposed,
@@ -878,17 +902,27 @@ impl Engine {
                     return Err(EngineError::ReservationConflict);
                 }
             }
+            let fence = db
+                .reservation_fences
+                .get(scope)
+                .copied()
+                .unwrap_or(0)
+                .checked_add(1)
+                .ok_or(EngineError::CounterExhausted)?;
             tx.lease_history.push(LeaseEvent {
+                fence,
                 at: db.now,
                 owner: session.principal.clone(),
                 scopes: writes.clone(),
                 kind: LeaseEventKind::Acquired { expires_at },
             });
             tx.lease = Some(Lease {
+                fence,
                 owner: session.token,
                 expires_at,
                 writes,
             });
+            db.reservation_fences.insert(scope.clone(), fence);
             db.transactions.insert(key, tx);
             Ok(expires_at)
         })
@@ -913,6 +947,7 @@ impl Engine {
             let previous_expiry = lease.expires_at;
             lease.expires_at = expires.max(lease.expires_at);
             tx.lease_history.push(LeaseEvent {
+                fence: lease.fence,
                 at: now,
                 owner: session.principal.clone(),
                 scopes: lease.writes.clone(),
@@ -1098,6 +1133,7 @@ impl Engine {
             tx.transition(TransactionState::Aborted)?;
             if let Some(lease) = &tx.lease {
                 tx.lease_history.push(LeaseEvent {
+                    fence: lease.fence,
                     at: now,
                     owner: tx.owner.clone(),
                     scopes: lease.writes.clone(),
@@ -1195,6 +1231,18 @@ impl Engine {
         key: IdempotencyKey,
         fault: CommitFault,
     ) -> Result<CommitReceipt, EngineError> {
+        self.commit_inner(session, scope, id, key, fault, None)
+    }
+
+    fn commit_inner(
+        &self,
+        session: &Session,
+        scope: &Scope,
+        id: &TransactionId,
+        key: IdempotencyKey,
+        fault: CommitFault,
+        request: Option<&CommitRequest>,
+    ) -> Result<CommitReceipt, EngineError> {
         self.store.update(|db| {
             self.authorize(db, session, scope, Permission::Commit)?;
             let tx_key = (scope.clone(), id.clone());
@@ -1204,11 +1252,28 @@ impl Engine {
                 .ok_or(EngineError::NotFound)?
                 .clone();
             let operation_key = (scope.clone(), key);
+            if let Some(request) = request
+                && (request.authorization_grant != session.token || tx.owner != session.principal)
+            {
+                return Err(EngineError::Unauthorized);
+            }
+            let request_digest = request.map(|request| request.digest(scope, session.principal()));
             if let Some(record) = db.operations.get(&operation_key) {
-                if record.transaction != *id || record.attempt != tx.attempt().number {
+                let attempt = request.map_or(tx.attempt().number, |request| request.attempt);
+                let recorded_digest = record
+                    .request
+                    .as_ref()
+                    .map(|recorded| recorded.digest(scope, session.principal()));
+                if record.transaction != *id
+                    || record.attempt != attempt
+                    || recorded_digest != request_digest
+                {
                     return Err(EngineError::IdempotencyConflict);
                 }
                 return record.outcome.clone();
+            }
+            if let Some(request) = request {
+                commit_request::validate_request(&tx, request)?;
             }
             if fault == CommitFault::BeforeValidation {
                 return Err(EngineError::InjectedFailure(fault));
@@ -1233,6 +1298,7 @@ impl Engine {
                         RecordedOperation {
                             transaction: id.clone(),
                             attempt: tx.attempt().number,
+                            request: request.cloned(),
                             outcome: Err(error.clone()),
                         },
                     );
@@ -1274,6 +1340,7 @@ impl Engine {
             stored.transition(TransactionState::Committed)?;
             if let Some(lease) = &stored.lease {
                 stored.lease_history.push(LeaseEvent {
+                    fence: lease.fence,
                     at: db.now,
                     owner: session.principal.clone(),
                     scopes: lease.writes.clone(),
@@ -1289,6 +1356,7 @@ impl Engine {
                 RecordedOperation {
                     transaction: id.clone(),
                     attempt: tx.attempt().number,
+                    request: request.cloned(),
                     outcome: Ok(receipt.clone()),
                 },
             );
@@ -1324,7 +1392,7 @@ fn validate_model(model: &EngineeringModel) -> Result<(), EngineError> {
         .map_err(|_| EngineError::IncompleteAnalysis)
 }
 
-fn validate_intent(intent: &TransactionIntent) -> Result<(), EngineError> {
+pub(crate) fn validate_intent(intent: &TransactionIntent) -> Result<(), EngineError> {
     if intent.objective.trim().is_empty() || intent.required_checks.is_empty() {
         return Err(EngineError::InvalidIntent(
             "objective and required checks must be nonempty".into(),

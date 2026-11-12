@@ -12,7 +12,13 @@ use crate::snapshot::{
 use std::collections::{BTreeMap, BTreeSet};
 use thiserror::Error;
 
+mod lifecycle;
 mod semantic;
+pub use lifecycle::{
+    ImpactAnalysisRecord, NativeIntentRecord, VerificationEvidenceRecord, restore_access_set,
+    restore_commit_request, restore_impact_record, restore_native_intent, restore_reference_patch,
+    restore_verification_record,
+};
 pub use semantic::{EngineeringModelRecord, restore_model_record, restore_repository_analysis};
 
 #[derive(Debug, Clone, Copy)]
@@ -49,6 +55,12 @@ pub enum RestoreError {
     Identity,
     #[error("durable domain record does not match its expected snapshot, scope or generation")]
     BindingMismatch,
+    #[error("durable domain record violates its validated value contract")]
+    InvalidDomainValue,
+    #[error(transparent)]
+    Patch(#[from] crate::patch::PatchError),
+    #[error(transparent)]
+    Evidence(#[from] crate::evidence::EvidenceError),
     #[error(transparent)]
     Model(#[from] crate::model::InvalidEngineeringModel),
     #[error(transparent)]
@@ -237,6 +249,13 @@ impl<'a> Reader<'a> {
     }
     fn number(&mut self) -> Result<u64, RestoreError> {
         Ok(u64::from_be_bytes(
+            self.field()?
+                .try_into()
+                .map_err(|_| RestoreError::Encoding)?,
+        ))
+    }
+    fn signed(&mut self) -> Result<i64, RestoreError> {
+        Ok(i64::from_be_bytes(
             self.field()?
                 .try_into()
                 .map_err(|_| RestoreError::Encoding)?,

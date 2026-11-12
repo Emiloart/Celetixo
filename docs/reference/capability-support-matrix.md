@@ -1,7 +1,7 @@
 # Capability and Support Matrix
 
 **Status date:** 2026-11-12
-**Repository scope reviewed:** Goal 03 acceptance plus the Goal 04.1a–04.1d source-bound foundation records linked below
+**Repository scope reviewed:** Goal 03 acceptance plus the Goal 04.1a–04.1e source-bound foundation records linked below
 **Evidence basis:** Goal 02 contract/validation/benchmarks and Goal 03 execution/acceptance/benchmarks and [Goal 04 foundation validation](../implementation/goal-04-progress.md). Recheck the linked records before relying on this matrix after a code change.
 
 This matrix separates four questions that must not be conflated:
@@ -69,6 +69,7 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 | Area | Current status | Limitation |
 |---|---|---|
 | Transaction admission/OCC reference semantics | **Validated in-memory** | Not a durable multi-instance database transaction service |
+| Native lifecycle/request persistence contracts | **Validated foundation** | [04.1e checks](../implementation/goal-04-lifecycle-validation/checks.json): checked immutable payloads, exact reference requests/fences and actual v1-to-v2 PostgreSQL upgrade/crash tests; no SQL lifecycle backend or durable lease/commit authority |
 | Explicit state evaluation/publication | **Validated in-memory** | [04.1d checks](../implementation/goal-04-state-access-validation/checks.json): staged publication, retained domain-error outcomes, panic/failure tests and actual T1 regressions; no SQL lifecycle or multi-process authority |
 | Repository analysis installation | **Validated in-memory** | Embedding supplies trusted authentication/administration authority |
 | Engine records / live capability boundary | **Validated in-memory** | Grant and storage registration records contain no live capability identity or artifact reader. [04.1b checks](../implementation/goal-04-runtime-boundary/checks.json) include copied-record rejection and actual T1 regression; no durable lifecycle or public restore API |

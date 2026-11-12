@@ -7,6 +7,7 @@ use celetixo_engine::ids::{
 };
 use celetixo_engine::model::EngineeringModel;
 use celetixo_engine::persistence::EngineeringModelRecord;
+use celetixo_engine::persistence::NativeIntentRecord;
 use celetixo_engine::repository::{AnalysisGap, RepositoryAnalysis, RepositoryAnalysisInput};
 use celetixo_engine::snapshot::{InclusionPolicy, Snapshot, SnapshotManifest};
 use celetixo_postgres::{
@@ -15,6 +16,7 @@ use celetixo_postgres::{
 };
 use postgres::Client;
 use serde::Deserialize;
+use sha2::{Digest as _, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::process::Command;
@@ -121,6 +123,259 @@ fn owner() -> Client {
     let mut c = connection("migration", None).connect().unwrap();
     migrate(&mut c).unwrap();
     c
+}
+
+/// Build the exact supported, published v1 schema in a fresh disposable database.
+/// This never rewrites the migration ledger of an existing fixture/database.
+fn fresh_v1_database(label: &str) -> (Client, Client, String, Snapshot) {
+    assert!(label.chars().all(|c| c.is_ascii_lowercase() || c == '_'));
+    let database = format!("celetixo_v1_{label}_{}", std::process::id());
+    let config = fixture();
+    let migration_owner = &config.roles["migration"].user;
+    assert!(
+        migration_owner
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_')
+    );
+    let mut admin = connection("admin", None).connect().unwrap();
+    admin
+        .batch_execute(&format!(
+            "CREATE DATABASE {database} OWNER {migration_owner}"
+        ))
+        .unwrap();
+    let mut client = connection("migration", Some(&database)).connect().unwrap();
+    let sql = include_str!("../migrations/0001_authority.sql");
+    let checksum: [u8; 32] = Sha256::digest(sql.as_bytes()).into();
+    let hex: String = checksum.iter().map(|byte| format!("{byte:02x}")).collect();
+    assert_eq!(
+        hex,
+        "aacc58cc8cf70224b8343074b68aafbebb57350cf5d963e4ddc0de296c091647"
+    );
+    {
+        let mut tx = client.transaction().unwrap();
+        tx.batch_execute("CREATE SCHEMA celetixo; REVOKE ALL ON SCHEMA celetixo FROM PUBLIC; CREATE TABLE celetixo.schema_migrations (version BIGINT PRIMARY KEY CHECK (version>0), migration_name TEXT NOT NULL, migration_sha256 BYTEA NOT NULL CHECK (octet_length(migration_sha256)=32), applied_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()); REVOKE ALL ON celetixo.schema_migrations FROM PUBLIC;").unwrap();
+        tx.batch_execute(sql).unwrap();
+        tx.execute("INSERT INTO celetixo.schema_migrations (version,migration_name,migration_sha256) VALUES (1,'0001_authority',$1::bytea)",&[&&checksum[..]]).unwrap();
+        tx.commit().unwrap();
+    }
+    let selected = scope(label);
+    authorize(&mut client, "runtime", &selected);
+    let snapshot = snapshot(selected.clone(), 7);
+    let a = [
+        selected.organization.as_str(),
+        selected.workspace.as_str(),
+        selected.repository.as_str(),
+    ];
+    client
+        .execute(
+            "INSERT INTO celetixo.organizations (organization_id) VALUES ($1::text)",
+            &[&a[0]],
+        )
+        .unwrap();
+    client.execute("INSERT INTO celetixo.workspaces (organization_id,workspace_id) VALUES ($1::text,$2::text)",&[&a[0],&a[1]]).unwrap();
+    client.execute("INSERT INTO celetixo.repositories (organization_id,workspace_id,repository_id) VALUES ($1::text,$2::text,$3::text)",&[&a[0],&a[1],&a[2]]).unwrap();
+    client.execute("INSERT INTO celetixo.domain_payloads (organization_id,workspace_id,repository_id,payload_digest,payload_format,payload_version,payload_bytes) VALUES ($1::text,$2::text,$3::text,$4::bytea,'celetixo/snapshot/v1',1,$5::bytea)",&[&a[0],&a[1],&a[2],&&snapshot.id().0.as_bytes()[..],&snapshot.canonical_bytes()]).unwrap();
+    client.execute("INSERT INTO celetixo.snapshots (organization_id,workspace_id,repository_id,snapshot_digest,revision,manifest_digest,payload_digest) VALUES ($1::text,$2::text,$3::text,$4::bytea,7,$5::bytea,$4::bytea)",&[&a[0],&a[1],&a[2],&&snapshot.id().0.as_bytes()[..],&&snapshot.manifest().digest().as_bytes()[..]]).unwrap();
+    client.execute("INSERT INTO celetixo.repository_heads (organization_id,workspace_id,repository_id,revision,snapshot_digest) VALUES ($1::text,$2::text,$3::text,7,$4::bytea)",&[&a[0],&a[1],&a[2],&&snapshot.id().0.as_bytes()[..]]).unwrap();
+    (admin, client, database, snapshot)
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn v1_upgrade_is_atomic_preserves_data_and_rejects_incomplete_or_future_history() {
+    let (mut admin, mut client, database, expected) = fresh_v1_database("upgrade");
+    assert_eq!(
+        validate_schema(&mut client),
+        Err(StoreError::SchemaMismatch)
+    );
+    assert!(matches!(
+        SnapshotCatalog::connect(&connection("runtime", Some(&database))),
+        Err(StoreError::SchemaMismatch)
+    ));
+    let mut checkpoints = 0;
+    assert_eq!(
+        migrate_with_checkpoint(&mut client, |stage| {
+            if stage == MigrationStage::AfterDdl {
+                checkpoints += 1;
+                return Err(StoreError::MigrationInterrupted);
+            }
+            Ok(())
+        }),
+        Err(StoreError::MigrationInterrupted)
+    );
+    assert_eq!(checkpoints, 1);
+    let present: Option<String> = client
+        .query_one(
+            "SELECT to_regclass('celetixo.engine_model_heads')::text",
+            &[],
+        )
+        .unwrap()
+        .get(0);
+    assert!(present.is_none());
+    let count: i64 = client
+        .query_one("SELECT count(*) FROM celetixo.schema_migrations", &[])
+        .unwrap()
+        .get(0);
+    assert_eq!(count, 1);
+    let receipt = migrate(&mut client).unwrap();
+    assert_eq!(receipt.schema_version, 2);
+    assert!(receipt.newly_applied);
+    assert!(!migrate(&mut client).unwrap().newly_applied);
+    validate_schema(&mut client).unwrap();
+    for mutation in [
+        "DELETE FROM celetixo.schema_migrations WHERE version=1",
+        "UPDATE celetixo.schema_migrations SET migration_name='wrong' WHERE version=1",
+        "INSERT INTO celetixo.schema_migrations (version,migration_name,migration_sha256) VALUES (3,'future',decode(repeat('00',32),'hex'))",
+    ] {
+        let mut tx = client.transaction().unwrap();
+        tx.batch_execute(mutation).unwrap();
+        assert_eq!(validate_schema(&mut tx), Err(StoreError::SchemaMismatch));
+        tx.rollback().unwrap();
+    }
+    {
+        let mut catalog =
+            SnapshotCatalog::connect(&connection("runtime", Some(&database))).unwrap();
+        assert_eq!(
+            catalog.read(expected.scope(), expected.id()).unwrap(),
+            expected
+        );
+    }
+    drop(client);
+    admin
+        .batch_execute(&format!("DROP DATABASE {database}"))
+        .unwrap();
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn process_death_during_v1_upgrade_retains_v1_until_recovered_publication() {
+    let (mut admin, mut client, database, expected) = fresh_v1_database("upgrade_crash");
+    let child = Command::new(std::env::current_exe().unwrap())
+        .args(["--ignored", "--exact", "migration_crash_child"])
+        .env("CELETIXO_PG_CRASH_DATABASE", &database)
+        .output()
+        .unwrap();
+    assert_eq!(child.status.code(), Some(75));
+    let present: Option<String> = client
+        .query_one("SELECT to_regclass('celetixo.engine_counters')::text", &[])
+        .unwrap()
+        .get(0);
+    assert!(present.is_none());
+    let versions: Vec<i64> = client
+        .query(
+            "SELECT version FROM celetixo.schema_migrations ORDER BY version",
+            &[],
+        )
+        .unwrap()
+        .iter()
+        .map(|row| row.get(0))
+        .collect();
+    assert_eq!(versions, vec![1]);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 2);
+    {
+        let mut catalog =
+            SnapshotCatalog::connect(&connection("runtime", Some(&database))).unwrap();
+        assert_eq!(
+            catalog.read(expected.scope(), expected.id()).unwrap(),
+            expected
+        );
+    }
+    drop(client);
+    admin
+        .batch_execute(&format!("DROP DATABASE {database}"))
+        .unwrap();
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn reconstruction_metadata_enforces_scope_current_head_and_zero_based_attempts() {
+    use celetixo_engine::access::AccessSet;
+    use celetixo_engine::evidence::CheckSpec;
+    use celetixo_engine::transaction::TransactionIntent;
+    let mut admin = owner();
+    let selected = scope("reconstruction");
+    let foreign = scope("reconstruction_foreign");
+    authorize(&mut admin, "runtime", &selected);
+    authorize(&mut admin, "runtime_other", &foreign);
+    let base = snapshot(selected.clone(), 0);
+    let candidate = snapshot(selected.clone(), 1);
+    let mut catalog = SnapshotCatalog::connect(&connection("runtime", None)).unwrap();
+    catalog.register_initial(&base).unwrap();
+    catalog.put_candidate(&candidate).unwrap();
+    let model = semantic_model(&base, 1);
+    SemanticCatalog::connect(&connection("runtime", None))
+        .unwrap()
+        .put_model(&model)
+        .unwrap();
+    let config = fixture();
+    let runtime = &config.roles["runtime"].user;
+    let other = &config.roles["runtime_other"].user;
+    for role in [runtime, other] {
+        assert!(role.chars().all(|c| c.is_ascii_alphanumeric() || c == '_'));
+        admin.batch_execute(&format!("GRANT SELECT,INSERT,UPDATE ON celetixo.engine_counters,celetixo.engine_model_heads TO {role}")).unwrap();
+    }
+    let a = [
+        selected.organization.as_str(),
+        selected.workspace.as_str(),
+        selected.repository.as_str(),
+    ];
+    let mut service = connection("runtime", None).connect().unwrap();
+    service.execute("INSERT INTO celetixo.engine_counters (organization_id,workspace_id,repository_id,next_session_grant) VALUES ($1::text,$2::text,$3::text,'18446744073709551615')",&[&a[0],&a[1],&a[2]]).unwrap();
+    service.execute("INSERT INTO celetixo.engine_model_heads (organization_id,workspace_id,repository_id,initial_snapshot_digest,snapshot_digest,model_generation,model_payload_digest,model_kind) VALUES ($1::text,$2::text,$3::text,$4::bytea,$4::bytea,1,$5::bytea,'Reference')",&[&a[0],&a[1],&a[2],&&base.id().0.as_bytes()[..],&&model.digest().as_bytes()[..]]).unwrap();
+    let mut foreign_service = connection("runtime_other", None).connect().unwrap();
+    for table in ["engine_counters", "engine_model_heads"] {
+        let count: i64 = foreign_service
+            .query_one(
+                &format!("SELECT count(*) FROM celetixo.{table} WHERE organization_id=$1::text"),
+                &[&a[0]],
+            )
+            .unwrap()
+            .get(0);
+        assert_eq!(count, 0);
+    }
+    assert!(foreign_service.execute("INSERT INTO celetixo.engine_counters (organization_id,workspace_id,repository_id) VALUES ($1::text,$2::text,$3::text)",&[&a[0],&a[1],&a[2]]).is_err());
+    assert!(service.execute("UPDATE celetixo.engine_counters SET next_session_grant=-1 WHERE organization_id=$1::text",&[&a[0]]).is_err());
+    assert!(service.execute("UPDATE celetixo.engine_model_heads SET model_kind='Source' WHERE organization_id=$1::text",&[&a[0]]).is_err());
+    {
+        let mut tx = service.transaction().unwrap();
+        tx.execute("UPDATE celetixo.engine_model_heads SET snapshot_digest=$4::bytea WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text",&[&a[0],&a[1],&a[2],&&candidate.id().0.as_bytes()[..]]).unwrap();
+        assert!(tx.commit().is_err());
+    }
+    // DDL/FK fixtures below create metadata directly under the trusted owner.
+    // They do not run an Engine transition or establish semantic admissibility.
+    let intent = NativeIntentRecord::new(
+        &base,
+        TransactionIntent {
+            objective: "zero-based metadata fixture".into(),
+            accesses: AccessSet::default(),
+            invariants: vec![],
+            required_checks: vec![
+                CheckSpec::new(
+                    CheckId::new("test").unwrap(),
+                    vec!["not-executed".into()],
+                    "fixture".into(),
+                    model.digest(),
+                    model.digest(),
+                )
+                .unwrap(),
+            ],
+            depends_on: BTreeSet::new(),
+        },
+    )
+    .unwrap();
+    let mut tx = admin.transaction().unwrap();
+    tx.execute(
+        "INSERT INTO celetixo.principals (organization_id,principal_id) VALUES ($1::text,'owner')",
+        &[&a[0]],
+    )
+    .unwrap();
+    tx.execute("INSERT INTO celetixo.grants (organization_id,workspace_id,repository_id,grant_kind,grant_id,principal_id,generation) VALUES ($1::text,$2::text,$3::text,'session',1,'owner',1)",&[&a[0],&a[1],&a[2]]).unwrap();
+    tx.execute("INSERT INTO celetixo.domain_payloads (organization_id,workspace_id,repository_id,payload_digest,payload_format,payload_version,payload_bytes) VALUES ($1::text,$2::text,$3::text,$4::bytea,'celetixo/native-intent-record/v1',1,$5::bytea)",&[&a[0],&a[1],&a[2],&&intent.digest().as_bytes()[..],&intent.canonical_bytes()]).unwrap();
+    tx.execute("INSERT INTO celetixo.transactions (organization_id,workspace_id,repository_id,transaction_id,owner_principal_id,owner_grant_id,state,current_attempt,original_snapshot_digest,intent_payload_digest) VALUES ($1::text,$2::text,$3::text,'zero','owner',1,'Proposed',0,$4::bytea,$5::bytea)",&[&a[0],&a[1],&a[2],&&base.id().0.as_bytes()[..],&&intent.digest().as_bytes()[..]]).unwrap();
+    tx.execute("INSERT INTO celetixo.attempts (organization_id,workspace_id,repository_id,transaction_id,attempt_number,base_snapshot_digest,model_payload_digest) VALUES ($1::text,$2::text,$3::text,'zero',0,$4::bytea,$5::bytea)",&[&a[0],&a[1],&a[2],&&base.id().0.as_bytes()[..],&&model.digest().as_bytes()[..]]).unwrap();
+    tx.commit().unwrap();
+    let ordinal:String=admin.query_one("SELECT current_attempt::text FROM celetixo.transactions WHERE organization_id=$1::text",&[&a[0]]).unwrap().get(0);
+    assert_eq!(ordinal, "0");
 }
 fn authorize(owner: &mut Client, role: &str, scope: &Scope) {
     let config = fixture();
@@ -242,7 +497,7 @@ fn migration_checksum_version_skew_and_concurrent_migrators_fail_closed() {
     }
     for sql in [
         "UPDATE celetixo.schema_migrations SET migration_sha256=decode(repeat('00',32),'hex')",
-        "UPDATE celetixo.schema_migrations SET version=2",
+        "UPDATE celetixo.schema_migrations SET version=3 WHERE version=2",
     ] {
         let mut tx = client.transaction().unwrap();
         tx.batch_execute(sql).unwrap();

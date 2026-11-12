@@ -260,12 +260,16 @@ pub struct SourceExecutorCapability {
     store: Arc<StoreIdentity>,
     token: u64,
     principal: PrincipalId,
+    scope: Scope,
     backend: BackendIdentity,
 }
 
 impl SourceExecutorCapability {
     pub fn principal(&self) -> &PrincipalId {
         &self.principal
+    }
+    pub fn scope(&self) -> &Scope {
+        &self.scope
     }
     pub fn backend(&self) -> &BackendIdentity {
         &self.backend
@@ -422,7 +426,7 @@ impl Administrator {
                 token,
                 SourceExecutorGrant {
                     principal: principal.clone(),
-                    scope,
+                    scope: scope.clone(),
                     backend: backend.clone(),
                     tiers,
                     resource_ceiling,
@@ -434,6 +438,7 @@ impl Administrator {
                 store: self.store.identity.clone(),
                 token,
                 principal,
+                scope,
                 backend,
             })
         })
@@ -447,10 +452,17 @@ impl Administrator {
             return Err(EngineError::Unauthorized);
         }
         self.store.update(|db| {
-            db.source_executors
+            let grant = db
+                .source_executors
                 .get_mut(&executor.token)
-                .ok_or(EngineError::Unauthorized)?
-                .active = false;
+                .ok_or(EngineError::Unauthorized)?;
+            if grant.scope != executor.scope
+                || grant.principal != executor.principal
+                || grant.backend != executor.backend
+            {
+                return Err(EngineError::Unauthorized);
+            }
+            grant.active = false;
             let now = db.now;
             for record in db.source_attempts.values_mut() {
                 if record.executor_capability == Some(executor.token) && !record.state.is_terminal()
@@ -1037,6 +1049,9 @@ pub(super) fn validate_executor_for_admission(
     admission: &SourceAdmission,
     require_claim: bool,
 ) -> Result<(), EngineError> {
+    if executor.scope != admission.binding.scope {
+        return Err(SourceAttemptError::UntrustedExecutor.into());
+    }
     let record = db
         .source_attempts
         .get(&attempt_key(admission))

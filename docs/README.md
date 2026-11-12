@@ -73,10 +73,11 @@ Implementation evidence can reveal that an accepted decision is flawed, but it d
 | [Goal 03 detailed contract comparison](implementation/goal-03-contract-review.md) | Validation | Full-objective cross-check, conditional capability boundaries and fresh focused/live evidence |
 | [Goals 01–03 regression audit](implementation/goals-01-03-audit.md) | Validation | Cross-goal requirement review, fresh checks, evidence integrity and reporting/history corrections |
 | [Goal 03 progress](implementation/goal-03-progress.md) | Historical / implementation | Chronological milestones; consult acceptance record for current status |
-| [Goal 04 foundation progress](implementation/goal-04-progress.md) | Implementation / validation | 04.1a schema/snapshot/protocol, 04.1b runtime/state separation, 04.1c semantic persistence and 04.1d explicit state publication; full durable Engine and later milestones remain pending |
+| [Goal 04 foundation progress](implementation/goal-04-progress.md) | Implementation / validation | 04.1a schema/snapshot/protocol, 04.1b runtime/state separation, 04.1c semantic persistence, 04.1d explicit state publication and 04.1e lifecycle/request/upgrade contracts; full durable Engine and later milestones remain pending |
 | [Goal 04 PostgreSQL schema](implementation/goal-04-postgres-schema.md) | Implementation | Scoped schema and required Rust authority integration |
 | [Goal 04 semantic persistence](implementation/goal-04-semantic-state.md) | Implementation | Checked immutable model/analysis records and scoped PostgreSQL candidate catalog; current-head installation and transaction authority remain pending |
 | [Goal 04 state evaluation/publication](implementation/goal-04-state-access.md) | Implementation | Explicit reference-state update boundary and retained domain-error outcomes; no durable transaction backend or distributed commit claim |
+| [Goal 04 lifecycle/request contracts](implementation/goal-04-lifecycle-records.md) | Implementation / validation | Checked native lifecycle payloads, exact reference commit requests/fences and supported v1-to-v2 schema upgrade; SQL lifecycle authority remains pending |
 | [Goal 04: Durable orchestration and distributed commit](implementation/goal-04.md) | Implementation | Accepted contract for durable authority, multi-instance commit, workflow/event coordination, evidence storage and recovery; implementation in progress |
 
 ## Security, operations and support references

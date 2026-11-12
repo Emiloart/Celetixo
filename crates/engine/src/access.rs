@@ -117,9 +117,14 @@ impl AccessSet {
     }
 
     pub fn digest(&self) -> Digest {
+        Digest::of("celetixo/access-set/v1", &self.canonical_bytes())
+    }
+
+    /// Existing v1 identity preimage, for checked domain-record persistence.
+    pub fn canonical_bytes(&self) -> Vec<u8> {
         let mut out = Canonical::default();
         self.encode(&mut out);
-        out.finish("celetixo/access-set/v1")
+        out.into_bytes()
     }
 }
 

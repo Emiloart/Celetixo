@@ -1,5 +1,5 @@
 //! Immutable, content-addressed patches with exact before-images.
-use crate::ids::{Canonical, ElementId, PatchId, SnapshotId};
+use crate::ids::{Canonical, Digest, ElementId, PatchId, SnapshotId};
 use crate::snapshot::State;
 use std::collections::BTreeMap;
 use thiserror::Error;
@@ -38,26 +38,16 @@ impl Patch {
         if changes.is_empty() {
             return Err(PatchError::Empty);
         }
-        let mut out = Canonical::default();
-        out.digest(base_snapshot.0);
-        out.u64(changes.len() as u64);
         for (element, change) in &changes {
             if change.expected == change.value {
                 return Err(PatchError::NoOp(element.clone()));
             }
-            out.str(element.as_str());
-            for value in [change.expected, change.value] {
-                match value {
-                    None => out.str("absent"),
-                    Some(value) => {
-                        out.str("present");
-                        out.i64(value);
-                    }
-                }
-            }
         }
         Ok(Self {
-            id: PatchId(out.finish("celetixo/patch/v1")),
+            id: PatchId(Digest::of(
+                "celetixo/patch/v1",
+                &patch_bytes(base_snapshot, &changes),
+            )),
             base_snapshot,
             changes,
         })
@@ -70,6 +60,10 @@ impl Patch {
     }
     pub fn changes(&self) -> &BTreeMap<ElementId, Change> {
         &self.changes
+    }
+    /// Existing v1 identity preimage, not a source mutation or authorization API.
+    pub fn canonical_bytes(&self) -> Vec<u8> {
+        patch_bytes(self.base_snapshot, &self.changes)
     }
     /// Applies atomically to a copy. A mismatch never partially mutates the caller's state.
     pub fn apply(&self, state: &State) -> Result<State, PatchError> {
@@ -96,6 +90,25 @@ impl Patch {
         }
         Ok(candidate)
     }
+}
+
+fn patch_bytes(base_snapshot: SnapshotId, changes: &BTreeMap<ElementId, Change>) -> Vec<u8> {
+    let mut out = Canonical::default();
+    out.digest(base_snapshot.0);
+    out.u64(changes.len() as u64);
+    for (element, change) in changes {
+        out.str(element.as_str());
+        for value in [change.expected, change.value] {
+            match value {
+                None => out.str("absent"),
+                Some(value) => {
+                    out.str("present");
+                    out.i64(value);
+                }
+            }
+        }
+    }
+    out.into_bytes()
 }
 
 #[cfg(test)]

@@ -47,6 +47,9 @@ pub struct TransactionView {
     pub id: TransactionId,
     pub scope: Scope,
     pub owner: PrincipalId,
+    /// Original proposal grant attribution; this ID cannot construct a capability
+    /// and does not replace the current caller/lease authorization checks.
+    pub proposal_grant_id: u64,
     pub state: TransactionState,
     pub attempt: u64,
     pub original_snapshot: SnapshotId,

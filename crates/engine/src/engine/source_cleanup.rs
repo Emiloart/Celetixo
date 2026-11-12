@@ -73,13 +73,20 @@ impl Administrator {
         if !Arc::ptr_eq(&self.store.identity, &capability.store) {
             return Err(EngineError::Unauthorized);
         }
-        self.store
-            .lock()?
-            .source_cleanup_grants
-            .get_mut(&capability.token)
-            .ok_or(EngineError::Unauthorized)?
-            .active = false;
-        Ok(())
+        self.store.update(|db| {
+            let grant = db
+                .source_cleanup_grants
+                .get_mut(&capability.token)
+                .ok_or(EngineError::Unauthorized)?;
+            if grant.scope != capability.scope
+                || grant.principal != capability.principal
+                || grant.backend != capability.backend
+            {
+                return Err(EngineError::Unauthorized);
+            }
+            grant.active = false;
+            Ok(())
+        })
     }
 }
 

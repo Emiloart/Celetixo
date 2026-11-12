@@ -109,10 +109,14 @@ impl Administrator {
         let reader = {
             let mut db = self.store.lock()?;
             let mut readers = self.store.artifact_readers()?;
-            db.source_artifact_stores
+            let registered = db
+                .source_artifact_stores
                 .get_mut(&store.token)
-                .ok_or(EngineError::Unauthorized)?
-                .active = false;
+                .ok_or(EngineError::Unauthorized)?;
+            if registered.scope != store.scope {
+                return Err(EngineError::Unauthorized);
+            }
+            registered.active = false;
             readers.remove(&store.token)
         };
         // A reader's destructor can perform I/O or reenter the embedding, too.

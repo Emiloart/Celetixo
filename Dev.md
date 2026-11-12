@@ -199,6 +199,14 @@ transactions, followed by fresh validation. The local staged Database is neither
 a durable serialization format nor a substitute for scoped SQL state loading,
 authorization, fencing, atomic commit and ambiguous-outcome reconciliation.
 
+The [04.1e lifecycle/request contracts](docs/implementation/goal-04-lifecycle-records.md)
+add bounded native payload decoders, explicit reference commit requests/fences and
+schema v2 upgrade tests. Preserve published migration bytes/checksums; never repair
+history by editing a ledger. Native intent is not the complete cross-service
+TaskIntent. Durable integration must require the exact request and retain its
+original body/outcome rather than deriving past requests from current evidence.
+The reference clock/fences still do not supply distributed authority.
+
 ### Phase 7 — Real worker integration and evaluation
 
 Connect real coding workers through provider-neutral adapters. Run tasks against immutable repository snapshots and pass every patch through the same transaction and verification path.

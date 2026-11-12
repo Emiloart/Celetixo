@@ -1,7 +1,7 @@
 # Goal 04 PostgreSQL authority schema
 
 **Status:** implementation foundation for milestone 04.1; not a completed durable Engine or a distributed-commit claim
-**Canonical SQL:** [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql)
+**Canonical SQL:** immutable [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql), additive [0002_lifecycle_reconstruction.sql](../../crates/postgres/migrations/0002_lifecycle_reconstruction.sql)
 **Authority:** [Goal 04](goal-04.md), ADR-0003 and ADR-0004
 
 This schema separates mutable operational authority, immutable engineering values and
@@ -12,8 +12,9 @@ a transaction admissible, and this migration does not route the existing in-memo
 Engine through PostgreSQL.
 
 The migration runner owns `celetixo.schema_migrations`, its migration checksum and
-the migration advisory lock. It applies this file and records its version in the same
-explicit database transaction. The SQL creates no cluster-global login, group or
+the migration advisory lock. It verifies an exact supported history prefix, then applies all missing files
+and records their versions in the same explicit database transaction. See the
+[v1-to-v2 upgrade and rollback contract](goal-04-lifecycle-records.md#schema-v2-and-supported-upgrade). The SQL creates no cluster-global login, group or
 deployment owner. Application migration/reopen/race evidence belongs in the milestone
 validation record; the existence of tables is not that evidence.
 
@@ -40,11 +41,12 @@ unsigned decimal values; SQL numeric coercion is not an integer request parser.
 | `grants`, `grant_permissions` | Current grant metadata, generation, revocation, optional expiry and typed permissions. Kinds are `session`, `executor`, `cleanup`; numeric IDs are attribution, not credentials. |
 | `policies`, `policy_heads` | Immutable versioned policy values and separately mutable current-generation pointers. Policy kinds are model, source execution, authorization and retention. |
 | `artifact_store_registrations` | Stable adapter identity, current registration generation, retention/provenance digests and active status. No reader object, object-store secret or raw credential is serialized. |
-| `transactions`, `attempts` | Scoped lifecycle/current attempt and preserved attempt records, snapshot/model/analysis/patch bindings. The initial transaction/attempt are inserted in one SQL transaction; the current-attempt foreign key is deferred until commit. |
+| `engine_counters`, `engine_model_heads` | Scoped clock/grant counters and snapshot-bound current model metadata; source heads require both analysis and index-generation references. This metadata does not itself install Engine authority. |
+| `transactions`, `attempts` | Scoped lifecycle/current attempt and preserved zero-based attempt records, snapshot/model/analysis/patch bindings. The initial transaction/attempt are inserted in one SQL transaction; the current-attempt foreign key is deferred until commit. |
 | `access_provenance` | Separate explicit, derived, effective, invariant, predicate and analysis payloads per attempt. |
 | `transaction_outcomes`, `committed_changes` | One immutable terminal outcome per transaction, unique committed transaction and repository revision, with provenance and receipt references. |
 | `reservation_fences`, `reservations`, `reservation_claims`, `reservation_events` | Durable fencing counter, owner/attempt/expiry, current semantic-element claims and append-only lease history. The Engine allocates/increments fences and evaluates conflicts/expiry. |
-| `operations` | Immutable resolved operation outcome, keyed by scope, operation kind and idempotency key; canonical request digest and exact transaction/attempt are retained. |
+| `operations` | Immutable resolved operation outcome, keyed by scope, operation kind and idempotency key; canonical request digest, original request-payload reference and exact transaction/attempt are retained. |
 | `source_attempts`, `source_attempt_events`, `source_attempt_outcomes`, `source_rejections` | Source admission, exact patch/application, single active attempt per transaction, executor claim, history, terminal result and pre-admission rejection records. |
 | `artifact_objects`, `evidence`, `evidence_receipts`, `attempt_checks` | Immutable object metadata and evidence, unique source-attempt admission receipt and mutable reference-check selection. Evidence bytes are not made trustworthy by inserting metadata. |
 | `outbox`, `outbox_delivery`, `inbox` | Immutable event facts, separately mutable publication progress, immutable idempotent consumer results. Event delivery is not transaction authority. |

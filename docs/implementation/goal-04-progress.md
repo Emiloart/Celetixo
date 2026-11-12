@@ -1,6 +1,6 @@
 # Goal 04 progress and foundation validation
 
-**Status:** active; 04.1a–04.1d foundations verified; Goal 04 and milestone 04.1 remain incomplete.
+**Status:** active; 04.1a–04.1e foundations verified; Goal 04 and milestone 04.1 remain incomplete.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -12,13 +12,41 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 
 | Milestone | Current evidence / remaining work |
 |---|---|
-| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a supplies schema/snapshot/protocol prerequisites; 04.1b separates runtime resources; 04.1c retains checked semantic candidates; 04.1d separates state evaluation/publication. Routing the complete lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
+| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a supplies schema/snapshot/protocol prerequisites; 04.1b separates runtime resources; 04.1c retains checked semantic candidates; 04.1d separates state evaluation/publication; 04.1e adds checked lifecycle/request contracts, reference fences and a supported schema upgrade. Routing the complete lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
 | 04.2 — Multi-instance atomic commit | Pending: independent Engine processes, authoritative SQL commit/CAS, complete request-bound idempotency, races and crash-ambiguity reconciliation. |
 | 04.3 — Transactional events | Schema placeholders exist. No outbox publisher, inbox consumer or real NATS integration yet. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. Existing local Goal 03 storage is unchanged. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
 | 04.7 — End-to-end operational proof | Pending: complete real-service path, multi-instance/fault/security/load tests, backup/restore drills and measured operational baselines. |
+
+## 04.1e — Lifecycle payloads, exact requests and supported schema upgrade
+
+The [lifecycle contract](goal-04-lifecycle-records.md) defines checked native
+intent/access/patch/impact/evidence/request records and frozen format fixtures.
+Explicit native commit requests reuse the existing Rust gate, retain the original
+body/outcome across revalidation and evidence changes, and reject key reuse with
+changed semantic content. Current opaque authorization is still required.
+Reference reservations now retain scoped monotonic fences; conflict/overflow
+cannot consume a fence or partially acquire authority. Proposal and lease grants
+retain separate attribution, and opaque sessions/executors bind scope explicitly.
+
+Migration v2 preserves published v1 and admits zero-based attempts, bounded
+reasons, exact original request references and scoped counter/model-head metadata.
+The migration registry upgrades only exact supported history in one transaction.
+Real database tests cover preserved v1 data, injected rollback, actual child
+process death, history skew, RLS and deferred current-head binding. An earlier
+unpublished development-schema database was retained; final tests used a separate
+fresh database instead of rewriting its applied checksum ledger.
+
+[Source-bound validation](goal-04-lifecycle-validation/checks.json) and the
+[raw log](goal-04-lifecycle-validation/checks.log) record 392 ordinary workspace
+tests passed (24 opt-in tests ignored), all 11 real PostgreSQL groups, ten actual Linux T1 tests, strict workspace Clippy,
+formatting, example builds, protocol integrity/four mutation groups and 25
+attribution fixtures. The dedicated database fixture was stopped with all data
+retained. These records and reference APIs do not reconstruct mutable
+Engine authority, install a SQL lifecycle backend, persist leases/fences or prove
+multi-process commit. The complete 04.1–04.7 gates remain required.
 
 ## 04.1d — Explicit state evaluation and publication
 
