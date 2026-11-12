@@ -1,0 +1,25 @@
+   Compiling celetixo-postgres v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/postgres)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.38s
+     Running tests/foundation.rs (/mnt/c/dev/celetixo/target/debug/deps/foundation-6bb3255d7381f1e0)
+
+running 2 tests
+test source_authority::isolation::source_revocation_during_artifact_io_prevents_receipt_publication ... ok
+test source_authority::isolation::source_same_embedding_reused_grant_and_store_numbers_remain_scoped ... FAILED
+
+failures:
+
+---- source_authority::isolation::source_same_embedding_reused_grant_and_store_numbers_remain_scoped stdout ----
+
+thread 'source_authority::isolation::source_same_embedding_reused_grant_and_store_numbers_remain_scoped' (7904) panicked at crates/postgres/tests/foundation/source_authority/isolation.rs:48:5:
+assertion `left == right` failed
+  left: Err(SourceAttempt(UntrustedExecutor))
+ right: Err(Unauthorized)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    source_authority::isolation::source_same_embedding_reused_grant_and_store_numbers_remain_scoped
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 41 filtered out; finished in 44.51s
+
+error: test failed, to rerun pass `-p celetixo-postgres --test foundation`

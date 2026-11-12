@@ -18,6 +18,7 @@ fn executor_record(g: &SourceExecutorGrant) -> SourceExecutorRecord {
 }
 fn store_record(g: &RegisteredSourceArtifactStore) -> SourceArtifactStoreRecord {
     SourceArtifactStoreRecord {
+        adapter: g.adapter.clone(),
         retention: g.retention,
         provenance: g.provenance,
         active: g.active,

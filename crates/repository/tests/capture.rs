@@ -1242,9 +1242,9 @@ fn public_source_literals_and_reviewed_grant_assignments_require_exact_admission
     ));
     let mut approved = request(dir.path());
     for argument in [
-        "engine.rs=2c3985b8772bba136a04df1201c2c811e50a6d861f09094d363c79dd5117fc2a",
+        "engine.rs=bc88a2840f300adc46a76b961395e525643f357eb877b3023455f6c006ed3e94",
         "authority_records.rs=ab6382a281a84da5968c7f1a2e6e5415349340d137b00290a42377a3c3ccaf62",
-        "source_recovery.rs=c3dab277a55cf144fbaed0c5b26aab95a5e1273cf7b70ad157a7edcb914c3395",
+        "source_recovery.rs=1552093e377c74023caa1aaf702a116758b81d203735c074e62b4d26a98f658d",
     ] {
         celetixo_repository::reviewed_inputs::add_exact_review(
             &mut approved.policy.credentials,

@@ -33,6 +33,7 @@ opaque_id!(
     PrincipalId,
     TransactionId,
     SourceAttemptId,
+    SourceArtifactAdapterId,
     ElementId,
     InvariantId,
     CheckId,

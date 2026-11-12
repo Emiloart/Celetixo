@@ -1,6 +1,6 @@
 # Goal 04 progress and foundation validation
 
-**Status:** resumed at the user's request on 2026-11-12 from 04.1f (`f1f2b83`). 04.1a–04.1g prerequisites and registration integration are verified. 04.1h bounded native SQL lifecycle integration is verified. 04.1i checked source metadata codecs are verified. Goal 04 and milestone 04.1 remain incomplete.
+**Status:** resumed at the user's request on 2026-11-12 from 04.1f (`f1f2b83`). Native SQL authority and source reconstruction are verified. [Source SQL lifecycle through evidence receipts](goal-04-source-sql-authority.md) is verified in the bounded local profile. [Checks](goal-04-source-sql-validation/checks.json) record 452 workspace tests, 10 actual Linux T1 tests and 45 PostgreSQL groups, with unchanged source throughout the final run. Goal 04 and milestone 04.1 remain incomplete.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -12,7 +12,7 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 
 | Milestone | Current evidence / remaining work |
 |---|---|
-| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a–04.1f establish checked records, backend routing and schema v3. 04.1g routes scoped grants and native repository/model registration through PostgreSQL, with checked reopen and bounded failure tests. [04.1h](goal-04-native-sql-authority.md) adds native transactions/attempts, leases/fencing and exact outcomes. [Complete source metadata reconstruction and fresh runtime resolution](goal-04-source-recovery.md) are implemented. Source SQL recovery and broader oracle equivalence remain pending. |
+| 04.1 — PostgreSQL state and recovery | **Partial.** [Native SQL authority](goal-04-native-sql-authority.md), [source reconstruction](goal-04-source-recovery.md) and [source SQL lifecycle through receipts](goal-04-source-sql-authority.md). Source revision commit/revalidation, complete mutation reconciliation and broader oracle equivalence remain pending. |
 | 04.2 — Multi-instance atomic commit | Partial native implementation in 04.1h: SQL CAS, exact prepared results, process races and local commit-response/crash recovery. Complete source path, broad distributed failure proof and service transport remain pending. |
 | 04.3 — Transactional events | Native commits now insert a stable outbox fact atomically. No cross-service publisher, inbox consumer or real NATS integration yet. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
@@ -34,9 +34,10 @@ resources. Source operations now use scoped authority callbacks throughout.
 [Checks](goal-04-source-recovery-validation/checks.json) and
 [log](goal-04-source-recovery-validation/checks.log) record final source-bound
 workspace, native PostgreSQL and local Linux T1 regression validation. The source
-recovery adapter in these tests holds normalized records in memory. Source SQL
-load/publish/restart, complete request reconciliation and source prepared commit/
-revalidation still require implementation and real distributed validation.
+recovery adapter in these original tests holds normalized records in memory.
+The subsequent [source SQL lifecycle](goal-04-source-sql-authority.md) supplies
+SQL load/publication/restart integration through receipts. Complete request
+reconciliation and source prepared commit/revalidation remain required.
 No complete 04.1/04.2 or later-service acceptance claim is made.
 
 ## 04.1i — Checked source metadata recovery prerequisites
@@ -522,13 +523,12 @@ readiness, whole-goal completion or service-level performance claim is made.
 
 ## Next implementation boundary
 
-Extend the [native SQL profile](goal-04-native-sql-authority.md) through complete
-normalized source state, using the [checked source codecs](goal-04-source-codecs.md)
-without restoring transient reader/capability authority. Preserve historical
-definitions, original request bodies, rejected outcomes and independent admission
-facts. Keep artifact I/O outside long transactions; recheck scoped registrations,
-policy/generation and authorization afterward, and acknowledge only confirmed
-durable publication.
+The [source SQL lifecycle](goal-04-source-sql-authority.md) integrates normalized
+source state through receipts. Continue with source prepared commit/revalidation,
+exact durable request identities for every externally retriable mutation, and
+broader generated-history equivalence. Preserve historical definitions, original
+requests and independently checked evidence, and keep artifact I/O outside SQL
+transactions with current authority rechecked afterward.
 
 The subsequent gate is equivalence with the independently structured reference
 oracle plus process restart, grant/policy revocation, lease expiry/fencing and

@@ -6,19 +6,68 @@ pub(in crate::authority) fn load(
     limits: NativeRecordLimits,
 ) -> SqlResult<NativeRecords> {
     let mut loader = Loader::new(scope, limits);
+    load_base(tx, &mut loader, LoadProfile::Native)
+}
+
+/// Structural shared rows enter only the complete source reconstruction path;
+/// they are never passed through the native-only AuthorityState constructor.
+pub(in crate::authority) fn load_source_base(
+    tx: &mut Transaction<'_>,
+    loader: &mut Loader<'_>,
+) -> SqlResult<NativeRecords> {
+    load_base(tx, loader, LoadProfile::Source)
+}
+fn load_base(
+    tx: &mut Transaction<'_>,
+    loader: &mut Loader<'_>,
+    profile: LoadProfile,
+) -> SqlResult<NativeRecords> {
+    let scope = loader.scope;
     let a = snapshots::scope_parameters(scope);
-    for table in [
-        "policies",
-        "policy_heads",
-        "artifact_store_registrations",
-        "source_attempts",
-        "source_attempt_events",
-        "source_attempt_outcomes",
-        "source_rejections",
-        "artifact_objects",
-        "evidence_receipts",
-        "inbox",
-    ] {
+    let unsupported = if profile == LoadProfile::Native {
+        &[
+            "policies",
+            "policy_heads",
+            "artifact_store_registrations",
+            "source_attempts",
+            "source_attempt_events",
+            "source_attempt_outcomes",
+            "source_rejections",
+            "artifact_objects",
+            "evidence_receipts",
+            "inbox",
+            "source_analyses",
+            "source_policy_catalog",
+            "source_check_definitions",
+            "source_policy_dependencies",
+            "source_attempt_contexts",
+            "source_attempt_policies",
+            "source_admission_contexts",
+            "source_operation_contexts",
+            "source_rejection_contexts",
+            "source_rejection_events",
+            "source_unprepared_commits",
+            "source_executor_definitions",
+            "source_executor_tiers",
+            "source_cleanup_definitions",
+            "artifact_contents",
+            "artifact_locations",
+            "artifact_references",
+            "source_evidence_objects",
+        ][..]
+    } else {
+        &[
+            "artifact_objects",
+            "inbox",
+            "committed_changes",
+            "outbox",
+            "outbox_delivery",
+            "reference_evidence_admissions",
+            "reference_evidence_signers",
+            "attempt_checks",
+        ][..]
+    };
+    for table in unsupported {
         let row = tx
             .query_one(
                 &format!("SELECT EXISTS(SELECT 1 FROM celetixo.{table} WHERE {FILTER})"),
@@ -41,11 +90,12 @@ pub(in crate::authority) fn load(
     if let Some(row) = counters.first() {
         records.clock_ms = number(row, 0)?;
         records.session_counter = number(row, 1)?;
-        if (2..5).any(|i| row.get::<_, String>(i) != "0") {
+        if profile == LoadProfile::Native && (2..5).any(|i| row.get::<_, String>(i) != "0") {
             return Err(AuthorityFailure::UnsupportedProfile);
         }
     }
     for row in loader.rows(tx,"grants","grant_id::text,principal_id::text,active,grant_kind,expires_at_ms::text,payload_digest::bytea,generation::text","grant_kind,grant_id")? {
+        if profile == LoadProfile::Source && row.get::<_,String>(3)!="session" { continue; }
         if row.get::<_,String>(3)!="session" || optional_number(&row,4)?.is_some() || optional_digest(&row,5)?.is_some() {return Err(AuthorityFailure::UnsupportedProfile);}
         valid_generation(number(&row,6)?,generation)?;
         records.grants.insert(number(&row,0)?,SessionGrantRecord { principal:PrincipalId::new(row.get::<_,String>(1)).map_err(|_|AuthorityFailure::Integrity)?,permissions:BTreeSet::new(),active:row.get(2) });
@@ -93,12 +143,22 @@ pub(in crate::authority) fn load(
 
             let initial = SnapshotId(digest(model, 0)?);
             let current = SnapshotId(digest(head, 0)?);
-            if digest(model, 1)? != current.0
-                || model.get::<_, String>(4) != "Reference"
-                || model.get::<_, Option<String>>(5).as_deref() != Some(PROFILE)
-                || optional_digest(model, 6)?.is_some()
-                || optional_digest(model, 7)?.is_some()
-            {
+            let shape_matches = match profile {
+                LoadProfile::Native => {
+                    model.get::<_, String>(4) == "Reference"
+                        && model.get::<_, Option<String>>(5).as_deref() == Some(PROFILE)
+                        && optional_digest(model, 6)?.is_none()
+                        && optional_digest(model, 7)?.is_none()
+                }
+                LoadProfile::Source => {
+                    model.get::<_, String>(4) == "Source"
+                        && model.get::<_, Option<String>>(5).as_deref()
+                            == Some("source-execution-v1")
+                        && optional_digest(model, 6)?.is_some()
+                        && optional_digest(model, 7)?.is_some()
+                }
+            };
+            if digest(model, 1)? != current.0 || !shape_matches {
                 return Err(AuthorityFailure::UnsupportedProfile);
             }
             let current_snapshot = loader.snapshot(tx, current)?;
@@ -217,11 +277,15 @@ pub(in crate::authority) fn load(
     if !accesses.is_empty() {
         return Err(AuthorityFailure::Integrity);
     }
-    load_evidence(tx, &mut loader, &mut records)?;
-    load_leases(tx, &mut loader, &mut records, &current_fences)?;
-    load_commits(tx, &mut loader, &mut records)?;
-    load_operations(tx, &mut loader, &mut records)?;
-    load_terminal_and_outbox(tx, &mut loader, &records)?;
+    if profile == LoadProfile::Native {
+        load_evidence(tx, loader, &mut records)?;
+    }
+    load_leases(tx, loader, &mut records, &current_fences)?;
+    if profile == LoadProfile::Native {
+        load_commits(tx, loader, &mut records)?;
+        load_operations(tx, loader, &mut records)?;
+    }
+    load_terminal_and_outbox(tx, loader, &records)?;
     if counters.is_empty()
         && (!records.grants.is_empty()
             || records.repository.is_some()
@@ -229,7 +293,7 @@ pub(in crate::authority) fn load(
     {
         return Err(AuthorityFailure::Integrity);
     }
-    load_publication(tx, &mut loader, generation, &records)?;
+    load_publication(tx, loader, generation, &records, profile)?;
     Ok(records)
 }
 
@@ -581,6 +645,7 @@ fn load_publication(
     loader: &mut Loader<'_>,
     generation: u64,
     records: &NativeRecords,
+    profile: LoadProfile,
 ) -> SqlResult<()> {
     let a = snapshots::scope_parameters(loader.scope);
     let row=tx.query_opt(&format!("SELECT state_generation::text,observed_clock_ms::text,actor_kind,requested_principal_id::text,requested_grant_id::text,requested_permission,snapshot_digest::bytea FROM celetixo.authority_publications AS fact WHERE {FILTER} ORDER BY fact.state_generation DESC LIMIT 1"), &[&a[0],&a[1],&a[2]]).map_err(database)?;
@@ -622,6 +687,18 @@ fn load_publication(
                 &row.get::<_, Option<String>>(5)
                     .ok_or(AuthorityFailure::Integrity)?,
             )?;
+        }
+        "SourceExecutor" | "SourceCleanup" if profile == LoadProfile::Source => {
+            PrincipalId::new(
+                row.get::<_, Option<String>>(3)
+                    .ok_or(AuthorityFailure::Integrity)?,
+            )
+            .map_err(|_| AuthorityFailure::Integrity)?;
+            if optional_number(&row, 4)?.is_none_or(|id| id == 0)
+                || row.get::<_, Option<String>>(5).is_some()
+            {
+                return Err(AuthorityFailure::Integrity);
+            }
         }
         _ => return Err(AuthorityFailure::Integrity),
     }

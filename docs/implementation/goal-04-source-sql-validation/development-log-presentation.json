@@ -1,0 +1,29 @@
+{
+  "kind": "Retained development failures and corrections; these are not the final validation run",
+  "logs": [
+    {
+      "private_raw": "development-checks.raw.log",
+      "public": "development-checks.log",
+      "raw_sha256": "d7ba61da0b1162b7884adc607f52fc04a61bb51ba5b47c065fdd8320a4bf01b2",
+      "public_sha256": "d7ba61da0b1162b7884adc607f52fc04a61bb51ba5b47c065fdd8320a4bf01b2"
+    },
+    {
+      "private_raw": "final-clock-correction.raw.log",
+      "public": "final-clock-correction.log",
+      "raw_sha256": "7178f4bd11fafccc9b24099909df14e6544614a56101d57f25e5e00c9eb83134",
+      "public_sha256": "6eeececa2068918c553f077728ea022e6172c4cb898cc7004cf2c35c55770903"
+    },
+    {
+      "private_raw": "isolation.raw.log",
+      "public": "isolation.log",
+      "raw_sha256": "69b4ec9c7cd265c931b968f39de0b1d778be673dce73e08dfec2d3faffb1039a",
+      "public_sha256": "69b4ec9c7cd265c931b968f39de0b1d778be673dce73e08dfec2d3faffb1039a"
+    },
+    {
+      "private_raw": "recovery-development.raw.log",
+      "public": "recovery-development.log",
+      "raw_sha256": "781b93c3f300bee7635122f542c0d16b35763a517b707a1412129be3686a151e",
+      "public_sha256": "f27fd688140cfce175494787b907cba38fd8ed8c56ab60fcf9da1a8a6fc90fab"
+    }
+  ]
+}

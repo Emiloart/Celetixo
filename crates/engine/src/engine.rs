@@ -32,7 +32,8 @@ pub use source_attempts::{
 };
 pub use source_cleanup::SourceCleanupCapability;
 pub use source_evidence_gate::{
-    SourceArtifactStoreCapability, SourceEvidenceFault, SourceEvidenceReceipt,
+    SourceArtifactAdapter, SourceArtifactStoreCapability, SourceEvidenceFault,
+    SourceEvidenceReceipt,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

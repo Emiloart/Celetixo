@@ -113,6 +113,7 @@ name = "celetixo-postgres"
 version = "0.1.0"
 dependencies = [
  "celetixo-engine",
+ "celetixo-execution",
  "celetixo-repository",
  "postgres",
  "serde",

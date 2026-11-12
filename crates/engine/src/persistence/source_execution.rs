@@ -156,6 +156,13 @@ impl SourceCheckDefinitionRecord {
     pub fn canonical_bytes(&self) -> Vec<u8> {
         self.definition.canonical_bytes()
     }
+    pub fn recovery_size(definition: &SourceCheckDefinition) -> Result<RecoverySize, RestoreError> {
+        let cost = definition_cost(definition)?;
+        Ok(RecoverySize {
+            entries: cost.entries,
+            bytes: cost.bytes,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1831,6 +1831,54 @@ mod source_authority_recovery {
         records
     }
     #[test]
+    fn configured_artifact_adapter_survives_recovery_and_is_bound_to_provenance() {
+        let h = Harness::new();
+        let adapter = celetixo_engine::engine::SourceArtifactAdapter {
+            identity: SourceArtifactAdapterId::new("test-artifact-service").unwrap(),
+            configuration: d("reviewed-adapter-configuration-v1"),
+        };
+        h.admin
+            .register_configured_source_artifact_store(scope(), adapter.clone(), h.reader.clone())
+            .unwrap();
+        let records = check(&h);
+        let (&registration, configured) = records
+            .artifact_stores
+            .iter()
+            .find(|(_, record)| record.adapter.is_some())
+            .unwrap();
+        assert_eq!(configured.adapter.as_ref(), Some(&adapter));
+        assert!(records.artifact_stores[&1].adapter.is_none());
+        h.admin
+            .resolve_existing_source_artifact_store(&scope(), registration, |actual, record| {
+                assert_eq!(actual, &scope());
+                assert_eq!(record.adapter.as_ref(), Some(&adapter));
+                Ok(h.reader.clone())
+            })
+            .unwrap();
+        let mut substituted = records.clone();
+        substituted
+            .artifact_stores
+            .get_mut(&registration)
+            .unwrap()
+            .adapter
+            .as_mut()
+            .unwrap()
+            .configuration = d("different-configuration");
+        assert!(
+            AuthorityState::from_source_records(substituted, NativeRecordLimits::default())
+                .is_err()
+        );
+        let mut removed = records;
+        removed
+            .artifact_stores
+            .get_mut(&registration)
+            .unwrap()
+            .adapter = None;
+        assert!(
+            AuthorityState::from_source_records(removed, NativeRecordLimits::default()).is_err()
+        );
+    }
+    #[test]
     fn passed_failed_and_incomplete_receipts_recover_with_missing_readers_and_revoked_grants() {
         for case in 0..3 {
             let h = Harness::new();

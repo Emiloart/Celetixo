@@ -1,26 +1,30 @@
 # Goal 04 PostgreSQL authority schema
 
 **Status:** implementation foundation for milestone 04.1; not a completed durable Engine or a distributed-commit claim
-**Canonical SQL:** immutable [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql), additive [0002_lifecycle_reconstruction.sql](../../crates/postgres/migrations/0002_lifecycle_reconstruction.sql) and [0003_native_lifecycle.sql](../../crates/postgres/migrations/0003_native_lifecycle.sql)
+**Canonical SQL:** immutable [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql), additive [0002_lifecycle_reconstruction.sql](../../crates/postgres/migrations/0002_lifecycle_reconstruction.sql), [0003_native_lifecycle.sql](../../crates/postgres/migrations/0003_native_lifecycle.sql) and [0004_source_lifecycle.sql](../../crates/postgres/migrations/0004_source_lifecycle.sql)
 **Authority:** [Goal 04](goal-04.md), ADR-0003 and ADR-0004
 
 Subsequent integration: [04.1g](goal-04-registration-authority.md) now routes scoped
 native grants and repository/model registration through this schema.
 [04.1h](goal-04-native-sql-authority.md) extends that adapter to checked native
 lifecycle/lease/evidence/request recovery and atomic native commit/outbox facts.
-The complete captured-source writer and full-goal services remain pending.
+[Source SQL lifecycle](goal-04-source-sql-authority.md) adds normalized source
+publication through evidence receipts. Source revision commit and full-goal
+services remain pending.
 
 This schema separates mutable operational authority, immutable engineering values and
 append-only outcomes. It provides database constraints and row isolation. Rust still
 owns admission, semantic conflict analysis, state transitions, invariant evaluation,
 evidence applicability and commit decisions. There is no SQL procedure that declares
-a transaction admissible, and this migration does not route the existing in-memory
-Engine through PostgreSQL.
+a transaction admissible. The separate native/source adapters route Engine callbacks
+through checked SQL load, publication and readback.
 
 The migration runner owns `celetixo.schema_migrations`, its migration checksum and
 the migration advisory lock. It verifies an exact supported history prefix, then applies all missing files
 and records their versions in the same explicit database transaction. See the
-[v1-to-v2 contract](goal-04-lifecycle-records.md#schema-v2-and-supported-upgrade) and [current v3 upgrade contract](goal-04-authority-boundary.md#schema-v3-and-upgrade). The SQL creates no cluster-global login, group or
+[v1-to-v2 contract](goal-04-lifecycle-records.md#schema-v2-and-supported-upgrade),
+[v3 upgrade contract](goal-04-authority-boundary.md#schema-v3-and-upgrade) and
+[v4 source integration](goal-04-source-sql-authority.md#immutable-graph-and-additive-migration). The SQL creates no cluster-global login, group or
 deployment owner. Application migration/reopen/race evidence belongs in the milestone
 validation record; the existence of tables is not that evidence.
 
@@ -56,8 +60,20 @@ unsigned decimal values; SQL numeric coercion is not an integer request parser.
 | `source_attempts`, `source_attempt_events`, `source_attempt_outcomes`, `source_rejections` | Source admission, exact patch/application, single active attempt per transaction, executor claim, history, terminal result and pre-admission rejection records. |
 | `artifact_objects`, `evidence`, `evidence_receipts`, `attempt_checks` | Immutable object metadata and evidence, unique source-attempt admission receipt and mutable reference-check selection. Evidence bytes are not made trustworthy by inserting metadata. |
 | `reference_evidence_admissions`, `reference_evidence_signers` | Immutable fresh native admissions and mutable current verifier selection, preserving an evidence value’s original issuer. |
-| `authority_publications` | Scoped immutable publication facts, separating authenticated database service identity from requested actor attribution; no implemented lifecycle writer yet. |
+| `authority_publications` | Scoped immutable publication facts, separating authenticated database service identity from requested session, executor, cleanup or embedding-administrator attribution. |
 | `outbox`, `outbox_delivery`, `inbox` | Immutable event facts, separately mutable publication progress, immutable idempotent consumer results. Event delivery is not transaction authority. |
+
+Schema v4 also adds the complete source analysis/policy/check catalogs, separate
+proposal-analysis and selected-policy associations, original admission/operation
+contexts, resolved rejected-attempt associations and rejection events, explicit
+unsupported unprepared commit outcomes, and immutable executor/cleanup definitions.
+Configured artifact registrations bind an exact nonsecret selector/configuration
+payload. `artifact_contents`, `artifact_locations` and `artifact_references`
+separate physical bytes, per-store locations and logical names/media;
+`source_evidence_objects` retains ordered envelope/provenance/check associations.
+Legacy artifact/rejection rows remain preserved without inventing missing trust
+or current runtime resources. Repository authority profiles bind before model
+registration and cannot be reinterpreted later.
 
 `domain_payloads` caps each value at 64 MiB and records its format and version.
 The database enforces length/foreign-key structure, not the domain-separated content
@@ -198,8 +214,8 @@ capability allocation identity and artifact-reader registry (04.1b). Copying tho
 records does not authenticate an old session, executor, cleanup grant or storage
 capability, and does not restore a reader. This is a prerequisite for checked
 reconstruction. The subsequent [04.1f trusted boundary](goal-04-authority-boundary.md)
-exposes checked native facts, never restored live capabilities; there is still no
-implemented PostgreSQL lifecycle.
+exposes checked native facts, never restored live capabilities. Later native and
+source SQL adapters supply the bounded lifecycle integration described above.
 Runtime identity is not durable authorization. The database-backed path must still
 authenticate each request, load current scoped grants and policy, and bind trusted
 adapters to their current registration before using them.

@@ -1,7 +1,7 @@
 # Capability and Support Matrix
 
 **Status date:** 2026-11-12
-**Repository scope reviewed:** Goal 03 acceptance plus Goal 04.1a–04.1i foundation/native SQL/source-codec records linked below
+**Repository scope reviewed:** Goal 03 acceptance plus Goal 04 native/source recovery and SQL lifecycle records linked below
 **Evidence basis:** Goal 02 contract/validation/benchmarks and Goal 03 execution/acceptance/benchmarks and [Goal 04 foundation validation](../implementation/goal-04-progress.md). Recheck the linked records before relying on this matrix after a code change.
 
 This matrix separates four questions that must not be conflated:
@@ -61,7 +61,7 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 | Linux x86_64 T1 | **Validated for the exact profile** | Requires rootless runc 1.5.2, delegated cgroup v2 and live systemd user manager; different profiles require new validation |
 | macOS | **Not validated** | No supported host claim |
 | Other Linux architectures | **Not validated** | No portability claim beyond recorded profile |
-| Distributed/multi-instance Engine | **Bounded native SQL profile** | [04.1h](../implementation/goal-04-native-sql-authority.md) adds native SQL commit, exact outcome recovery and process races. Complete source recovery and production service deployment remain pending |
+| Distributed/multi-instance Engine | **Bounded native SQL commit profile** | [Native SQL authority](../implementation/goal-04-native-sql-authority.md) supplies native commit and process races; [source SQL lifecycle](../implementation/goal-04-source-sql-authority.md) adds durable source recovery through receipts. Source revision commit and production service deployment remain pending |
 | Public multi-tenant deployment | **Target only** | ADR-0004 requirements are accepted, but production end-to-end isolation is not demonstrated |
 
 ## 5. Evidence and operational support
@@ -71,8 +71,9 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 | Transaction admission/OCC reference semantics | **Validated in-memory** | Not a durable multi-instance database transaction service |
 | PostgreSQL native registration/grants | **Validated bounded integration** | [04.1g checks](../implementation/goal-04-registration-validation/checks.json): existing Rust transitions publish scoped grants and native repository/model registration/updates, with checked reopen, restricted roles, schema/clock fencing and registration failure tests. Historical registration evidence; subsequent native lifecycle/commit scope is recorded below. Complete source recovery and exact administrative requests remain pending |
 | PostgreSQL native lifecycle/commit | **Validated bounded native profile** | [04.1h checks](../implementation/goal-04-native-sql-validation/checks.json): normalized attempts, evidence, fenced leases, exact prepared outcomes and atomic history/head/outbox. No complete source, network-service or full 04.1/04.2 acceptance claim |
-| Source authority reconstruction/runtime recovery | **Implemented; memory-adapter validation** | [Source recovery](../implementation/goal-04-source-recovery.md): complete historical source graph, exact original admission requests/results, scoped callbacks and fresh executor/cleanup/reader resolution. Source PostgreSQL recovery and source commit remain unsupported |
-| Checked source metadata recovery | **Pure prerequisite; source SQL pending** | [04.1i](../implementation/goal-04-source-codecs.md): existing policy/plan/admission/evidence formats with explicit checked dependencies and bounded reconstruction. Restored metadata confers no runtime capability, object durability or source-commit authority |
+| Source authority reconstruction/runtime recovery | **Implemented; memory-adapter validation** | [Source recovery](../implementation/goal-04-source-recovery.md): complete historical source graph, exact original admission requests/results, scoped callbacks and fresh executor/cleanup/reader resolution. Subsequent SQL integration is recorded below |
+| PostgreSQL source lifecycle through receipts | **Validated bounded source SQL profile** | [Source SQL authority](../implementation/goal-04-source-sql-authority.md): normalized source load/publication, exact original admission results, source grants, configured readers and complete artifact/receipt associations. Source revision commit/revalidation and full 04.1/04.2 remain pending |
+| Checked source metadata recovery | **Validated pure prerequisite** | [04.1i](../implementation/goal-04-source-codecs.md): existing policy/plan/admission/evidence formats with explicit checked dependencies and bounded reconstruction; later SQL integration is recorded above. Restored metadata confers no runtime capability, object durability or source-commit authority |
 | Scoped native reconstruction/backend boundary | **Validated prerequisite** | [04.1f checks](../implementation/goal-04-reconstruction-validation/checks.json): checked native facts, fresh session authentication, typed outcomes and schema v3 upgrade; test backend only, no PostgreSQL lifecycle implementation or complete source recovery |
 | Native lifecycle/request persistence contracts | **Validated foundation** | [04.1e checks](../implementation/goal-04-lifecycle-validation/checks.json): checked immutable payloads, exact reference requests/fences and actual v1-to-v2 PostgreSQL upgrade/crash tests; no SQL lifecycle backend or durable lease/commit authority |
 | Explicit state evaluation/publication | **Validated in-memory** | [04.1d checks](../implementation/goal-04-state-access-validation/checks.json): staged publication, retained domain-error outcomes, panic/failure tests and actual T1 regressions; no SQL lifecycle or multi-process authority |

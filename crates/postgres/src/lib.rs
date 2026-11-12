@@ -7,7 +7,7 @@ mod migrations;
 mod semantic;
 mod snapshots;
 
-pub use authority::{AuthorityStage, PostgresAuthority, RegistrationView};
+pub use authority::{AuthorityStage, PostgresAuthority, RegistrationView, SourceRegistrationView};
 pub use migrations::{
     MigrationReceipt, MigrationStage, migrate, migrate_with_checkpoint, validate_schema,
 };

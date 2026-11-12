@@ -1,0 +1,46 @@
+{
+  "container_name": "celetixo-goal04-pg17-2b936b485d76",
+  "running": true,
+  "version": "PostgreSQL 17.9 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "scram_rejects_invalid_password": true,
+  "host_socket_requires_scram": true,
+  "application_roles_are_nonprivileged": true,
+  "network_mode": "none",
+  "published_ports": [],
+  "data_bytes": 261611336,
+  "data_files": 9309,
+  "data_budget_bytes": 1073741824,
+  "backing_free_bytes": 1717952512,
+  "guard_is_hard_quota": false,
+  "settings": {
+    "fsync": "on",
+    "full_page_writes": "on",
+    "synchronous_commit": "on",
+    "data_checksums": "on"
+  },
+  "kind": "Selected observed dedicated fixture settings, authentication outcomes and schema ledger; full operator output retained privately",
+  "raw_operator_output_sha256": "4c9653153473df414651a55d92becdc2cff212826fda250b97dffbf135865fa3",
+  "selected_database": "celetixo_source_sql_27f8a7f8824c",
+  "schema_migrations": [
+    [
+      "1",
+      "0001_authority",
+      "aacc58cc8cf70224b8343074b68aafbebb57350cf5d963e4ddc0de296c091647"
+    ],
+    [
+      "2",
+      "0002_lifecycle_reconstruction",
+      "99789c46e55a38cd2f54e7433f58c7c5d12351a6a724e0dd9482b38d646a5d8e"
+    ],
+    [
+      "3",
+      "0003_native_lifecycle",
+      "607423e4399f40bcc95161983e64e1ca7922880e49277216eebde62033d99640"
+    ],
+    [
+      "4",
+      "0004_source_lifecycle",
+      "27f8a7f8824ca3b87e978810dcf1af9dd6bdda3a0a5029491644e72789a1ed27"
+    ]
+  ]
+}

@@ -118,6 +118,34 @@ pub(in crate::authority) fn publish(
     before: &NativeRecords,
     after: &NativeRecords,
 ) -> SqlResult<()> {
+    publish_base(tx, generation, before, after, LoadProfile::Native)
+}
+pub(in crate::authority) fn publish_source_base(
+    tx: &mut Transaction<'_>,
+    generation: u64,
+    before: &NativeRecords,
+    after: &NativeRecords,
+) -> SqlResult<()> {
+    if !before.evidence.is_empty()
+        || !after.evidence.is_empty()
+        || !before.operations.is_empty()
+        || !after.operations.is_empty()
+        || after
+            .repository
+            .as_ref()
+            .is_some_and(|repo| !repo.history.is_empty())
+    {
+        return Err(AuthorityFailure::Protocol);
+    }
+    publish_base(tx, generation, before, after, LoadProfile::Source)
+}
+fn publish_base(
+    tx: &mut Transaction<'_>,
+    generation: u64,
+    before: &NativeRecords,
+    after: &NativeRecords,
+    profile: LoadProfile,
+) -> SqlResult<()> {
     preserve(before, after)?;
     let scope = &after.scope;
     let Some(repo) = &after.repository else {
@@ -304,12 +332,18 @@ pub(in crate::authority) fn publish(
             }
         }
     }
-    publish_evidence(tx, before, after)?;
+    if profile == LoadProfile::Native {
+        publish_evidence(tx, before, after)?;
+    }
     publish_leases(tx, before, after)?;
-    publish_history(tx, before, after)?;
-    publish_operations(tx, before, after)?;
+    if profile == LoadProfile::Native {
+        publish_history(tx, before, after)?;
+        publish_operations(tx, before, after)?;
+    }
     publish_terminal(tx, before, after)?;
-    publish_heads(tx, generation, before, after)?;
+    if profile == LoadProfile::Native {
+        publish_heads(tx, generation, before, after)?;
+    }
     Ok(())
 }
 

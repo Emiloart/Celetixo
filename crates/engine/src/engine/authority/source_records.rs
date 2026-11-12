@@ -91,6 +91,8 @@ pub struct SourceCleanupRecord {
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceArtifactStoreRecord {
+    /// None is the existing local profile, without a durable adapter selector.
+    pub adapter: Option<SourceArtifactAdapter>,
     pub retention: Digest,
     pub provenance: Digest,
     pub active: bool,
@@ -253,6 +255,7 @@ pub(super) fn export(db: &Database, scope: &Scope) -> Result<SourceRecords, Rest
             result.artifact_stores.insert(
                 *id,
                 SourceArtifactStoreRecord {
+                    adapter: g.adapter.clone(),
                     retention: g.retention,
                     provenance: g.provenance,
                     active: g.active,
@@ -561,15 +564,14 @@ fn install_source_graph(db: &mut Database, r: &SourceRecords) -> Result<(), Rest
         );
     }
     for (id, g) in &r.artifact_stores {
-        let mut c = Canonical::default();
-        c.u64(*id);
-        c.str(scope.organization.as_str());
-        c.str(scope.workspace.as_str());
-        c.str(scope.repository.as_str());
-        c.digest(g.retention);
         if *id == 0
             || *id > r.artifact_counter
-            || c.finish("celetixo/source-artifact-store/v1") != g.provenance
+            || source_evidence_gate::artifact_store_provenance(
+                scope,
+                *id,
+                g.retention,
+                g.adapter.as_ref(),
+            ) != g.provenance
         {
             return invalid();
         }
@@ -577,6 +579,7 @@ fn install_source_graph(db: &mut Database, r: &SourceRecords) -> Result<(), Rest
             *id,
             RegisteredSourceArtifactStore {
                 scope: scope.clone(),
+                adapter: g.adapter.clone(),
                 retention: g.retention,
                 provenance: g.provenance,
                 active: g.active,
@@ -672,6 +675,152 @@ fn lease_at(
         .filter(|expiry| *expiry > at)
         .ok_or(RestoreError::BindingMismatch)
 }
+
+/// Pure historical metadata input, never runtime authorization. SQL loaders must
+/// validate the complete assembled SourceRecords graph after restoring children.
+pub struct SourceAdmissionRecordInput<'a> {
+    pub request: &'a SourceRequestRecord,
+    pub owner_grant: u64,
+    pub policy: Digest,
+    pub expected: SourceAdmissionId,
+    pub bytes: &'a [u8],
+    pub decode_limits: crate::persistence::DomainDecodeLimits,
+}
+impl SourceRecords {
+    /// Nonallocating aggregate preflight for adapters before owning another copy
+    /// or assembling derived reference projections. This does not validate trust.
+    pub fn check_recovery_limits(&self, limits: NativeRecordLimits) -> Result<(), RestoreError> {
+        check_source_budget(self, limits)
+    }
+    pub fn restore_admission(
+        &self,
+        input: SourceAdmissionRecordInput<'_>,
+        limits: NativeRecordLimits,
+    ) -> Result<SourceAdmission, RestoreError> {
+        let mut cost = patch_cost(input.request.patch())?;
+        cost.count(input.request.options().optional_checks.len())?;
+        for check in &input.request.options().optional_checks {
+            cost.text(check.as_str())?;
+        }
+        cost.bytes(input.bytes.len())?;
+        let base = self
+            .base
+            .repository
+            .as_ref()
+            .and_then(|repo| {
+                repo.registered
+                    .get(&input.request.patch().binding().base_snapshot)
+            })
+            .ok_or(RestoreError::BindingMismatch)?;
+        for _ in 0..4 {
+            crate::persistence::source_snapshot_cost(&mut cost, base)?;
+            cost.merge(patch_cost(input.request.patch())?)?;
+        }
+        check_source_budget_with_extra(self, limits, Some(cost))?;
+        validate_catalogs(self)?;
+        let db = records::restore_base(self.base.clone(), Some(self))?;
+        reconstruct_admission(&db, self, input).map(|(admission, _)| admission)
+    }
+}
+fn reconstruct_admission(
+    db: &Database,
+    r: &SourceRecords,
+    input: SourceAdmissionRecordInput<'_>,
+) -> Result<(SourceAdmission, crate::source_patch::AppliedSourcePatch), RestoreError> {
+    let scope = &r.base.scope;
+    let b = input.request.patch().binding();
+    if b.scope != *scope {
+        return invalid();
+    }
+    let tx = db
+        .transactions
+        .get(&(scope.clone(), b.transaction.clone()))
+        .ok_or(RestoreError::BindingMismatch)?;
+    let attempt = tx
+        .attempts
+        .get(b.transaction_attempt as usize)
+        .ok_or(RestoreError::BindingMismatch)?;
+    let source = r
+        .analyses
+        .get(&b.analysis_artifact)
+        .ok_or(RestoreError::BindingMismatch)?;
+    let policy = r
+        .policies
+        .get(&input.policy)
+        .ok_or(RestoreError::BindingMismatch)?;
+    let grant = db
+        .grants
+        .get(&input.owner_grant)
+        .ok_or(RestoreError::BindingMismatch)?;
+    if grant.principal != tx.owner
+        || b.principal != tx.owner
+        || !grant.permissions.contains(&Permission::Execute)
+        || attempt.source_analysis != Some(source.digest())
+        || attempt.source_policy != Some(policy.digest())
+        || !tx.intent.invariants.is_empty()
+    {
+        return invalid();
+    }
+    let (_, impact, invariants) = source_attempts::derive_source_impact(
+        source,
+        attempt.model.generation,
+        &tx.intent.accesses,
+        Some(policy),
+    )
+    .map_err(|_| RestoreError::BindingMismatch)?;
+    let request = source_attempts::intent_digest(&tx.intent);
+    if b.impact_request != request
+        || b.impact_result != source_attempts::impact_digest(request, &impact)
+    {
+        return invalid();
+    }
+    let application = input.request.patch().apply(&attempt.base)?;
+    let plan = VerificationPlan::resolve(
+        policy,
+        SourcePlanBinding {
+            scope: scope.clone(),
+            base_snapshot: b.base_snapshot,
+            analysis_artifact: b.analysis_artifact,
+            index_generation: b.index_generation,
+            impact_request: b.impact_request,
+            impact_result: b.impact_result,
+            patch: input.request.patch().id(),
+            operation_digest: input.request.patch().operation_digest(),
+            resulting_snapshot: application.snapshot().id(),
+            resulting_manifest: application.snapshot().manifest().digest(),
+        },
+        PlanRequirements {
+            declared_checks: tx.intent.required_checks.clone(),
+            impact_checks: impact.justified_checks,
+            invariants,
+            optional_checks: input.request.options().optional_checks.clone(),
+        },
+    )?;
+    let authorization = SourceAuthorizationProvenance {
+        principal: grant.principal.clone(),
+        capability_reference: source_attempts::authorization_digest(db, input.owner_grant)
+            .map_err(|_| RestoreError::BindingMismatch)?,
+    };
+    let writes = &attempt
+        .effective
+        .as_ref()
+        .ok_or(RestoreError::BindingMismatch)?
+        .writes;
+    let admission = restore_source_admission(
+        SourceAdmissionDependencies {
+            base: &attempt.base,
+            patch: input.request.patch(),
+            policy,
+            plan: &plan,
+            effective_writes: writes,
+            authorization: &authorization,
+        },
+        input.expected,
+        input.bytes,
+        input.decode_limits,
+    )?;
+    Ok((admission, application))
+}
 fn restore_attempt(
     db: &mut Database,
     r: &SourceRecords,
@@ -688,35 +837,26 @@ fn restore_attempt(
         return invalid();
     }
     a.options.validate()?;
+    let request = SourceRequestRecord::new(a.patch.clone(), a.options.clone())?;
+    let (admission, application) = reconstruct_admission(
+        db,
+        r,
+        SourceAdmissionRecordInput {
+            request: &request,
+            owner_grant: a.owner_grant,
+            policy: a.admission.policy(),
+            expected: a.admission.id(),
+            bytes: &a.admission.canonical_bytes(),
+            decode_limits: Default::default(),
+        },
+    )?;
+    if admission != a.admission {
+        return invalid();
+    }
     let tx = db
         .transactions
         .get(&(scope.clone(), b.transaction.clone()))
         .ok_or(RestoreError::BindingMismatch)?;
-    let attempt = tx
-        .attempts
-        .get(b.transaction_attempt as usize)
-        .ok_or(RestoreError::BindingMismatch)?;
-    let source = r
-        .analyses
-        .get(&b.analysis_artifact)
-        .ok_or(RestoreError::BindingMismatch)?;
-    let policy = r
-        .policies
-        .get(&a.admission.policy())
-        .ok_or(RestoreError::BindingMismatch)?;
-    let grant = db
-        .grants
-        .get(&a.owner_grant)
-        .ok_or(RestoreError::BindingMismatch)?;
-    if grant.principal != tx.owner
-        || b.principal != tx.owner
-        || !grant.permissions.contains(&Permission::Execute)
-        || attempt.source_analysis != Some(source.digest())
-        || attempt.source_policy != Some(policy.digest())
-        || !tx.intent.invariants.is_empty()
-    {
-        return invalid();
-    }
     let expiry = lease_at(
         tx,
         a.admission_fence,
@@ -727,67 +867,6 @@ fn restore_attempt(
     if b.expires_at_ms > expiry {
         return invalid();
     }
-    let (_, impact, invariants) = source_attempts::derive_source_impact(
-        source,
-        attempt.model.generation,
-        &tx.intent.accesses,
-        Some(policy),
-    )
-    .map_err(|_| RestoreError::BindingMismatch)?;
-    let request = source_attempts::intent_digest(&tx.intent);
-    if b.impact_request != request
-        || b.impact_result != source_attempts::impact_digest(request, &impact)
-    {
-        return invalid();
-    }
-    let application = a.patch.apply(&attempt.base)?;
-    let plan = VerificationPlan::resolve(
-        policy,
-        SourcePlanBinding {
-            scope: scope.clone(),
-            base_snapshot: b.base_snapshot,
-            analysis_artifact: b.analysis_artifact,
-            index_generation: b.index_generation,
-            impact_request: b.impact_request,
-            impact_result: b.impact_result,
-            patch: a.patch.id(),
-            operation_digest: a.patch.operation_digest(),
-            resulting_snapshot: application.snapshot().id(),
-            resulting_manifest: application.snapshot().manifest().digest(),
-        },
-        PlanRequirements {
-            declared_checks: tx.intent.required_checks.clone(),
-            impact_checks: impact.justified_checks,
-            invariants,
-            optional_checks: a.options.optional_checks.clone(),
-        },
-    )?;
-    if &plan != a.admission.plan() {
-        return invalid();
-    }
-    let authorization = SourceAuthorizationProvenance {
-        principal: grant.principal.clone(),
-        capability_reference: source_attempts::authorization_digest(db, a.owner_grant)
-            .map_err(|_| RestoreError::BindingMismatch)?,
-    };
-    let writes = &attempt
-        .effective
-        .as_ref()
-        .ok_or(RestoreError::BindingMismatch)?
-        .writes;
-    restore_source_admission(
-        SourceAdmissionDependencies {
-            base: &attempt.base,
-            patch: &a.patch,
-            policy,
-            plan: &plan,
-            effective_writes: writes,
-            authorization: &authorization,
-        },
-        a.admission.id(),
-        &a.admission.canonical_bytes(),
-        Default::default(),
-    )?;
     validate_events(
         &a.events,
         a.state,
@@ -1115,6 +1194,13 @@ fn check_source_budget(
     records: &SourceRecords,
     limits: NativeRecordLimits,
 ) -> Result<(), RestoreError> {
+    check_source_budget_with_extra(records, limits, None)
+}
+fn check_source_budget_with_extra(
+    records: &SourceRecords,
+    limits: NativeRecordLimits,
+    extra: Option<Cost>,
+) -> Result<(), RestoreError> {
     if !records.base.evidence.is_empty() || !records.base.operations.is_empty() {
         return Err(RestoreError::UnsupportedDomainValue);
     }
@@ -1133,6 +1219,9 @@ fn check_source_budget(
     }
     let mut b = SourceBudget::new(limits)?;
     b.base(&records.base)?;
+    if let Some(extra) = extra {
+        b.value(extra)?;
+    }
     for analysis in records.analyses.values() {
         b.value(analysis_cost(analysis)?)?;
     }
@@ -1153,7 +1242,15 @@ fn check_source_budget(
         c.text(g.principal.as_str())?;
         b.value(c)?;
     }
-    b.entries(records.artifact_stores.len())?;
+    for store in records.artifact_stores.values() {
+        let mut c = Cost::default();
+        c.bytes(128)?;
+        if let Some(adapter) = &store.adapter {
+            c.text(adapter.identity.as_str())?;
+            c.digest()?;
+        }
+        b.value(c)?;
+    }
     for a in records.attempts.values() {
         let mut c = patch_cost(&a.patch)?;
         c.count(a.events.len())?;
@@ -1771,12 +1868,19 @@ fn check_database_budget(
         c.text(g.principal.as_str())?;
         b.value(c)?;
     }
-    b.entries(
-        db.source_artifact_stores
-            .values()
-            .filter(|g| g.scope == *scope)
-            .count(),
-    )?;
+    for store in db
+        .source_artifact_stores
+        .values()
+        .filter(|g| g.scope == *scope)
+    {
+        let mut c = Cost::default();
+        c.bytes(128)?;
+        if let Some(adapter) = &store.adapter {
+            c.text(adapter.identity.as_str())?;
+            c.digest()?;
+        }
+        b.value(c)?;
+    }
     for ((s, _), a) in &db.source_attempts {
         if s != scope {
             continue;

@@ -2,7 +2,9 @@
 
 **Status:** checked source reconstruction and fresh runtime recovery validated
 through a normalized memory adapter; regression checks are recorded below.
-Source PostgreSQL publication and source commit remain unsupported.
+Its original validation covers the memory adapter. The subsequent
+[source SQL lifecycle](goal-04-source-sql-authority.md) integrates this graph
+through evidence receipts. Source revision commit remains unsupported.
 
 **Authority:** [Goal 04](goal-04.md), ADR-0001/0003, the
 [transaction](../spec/transaction-semantics.md),
@@ -179,7 +181,8 @@ it does not prove PostgreSQL source durability. Actual native PostgreSQL regress
 and existing local Linux T1 checks are separately reported by the validation
 record. No hosted CI, failover, backup/restore or production-service claim follows.
 
-Next integrate these complete source records with an additive SQL source profile,
-full load/publish/readback and real restart/race/fault tests. Exact identities for
+The subsequent [SQL source profile](goal-04-source-sql-authority.md) integrates
+these complete records with additive schema, load/publication/readback and real
+restart/race/fault tests. Exact identities for
 all other retriable mutations, source prepared commit/revalidation, NATS, Temporal,
 S3, ClickHouse and the complete operational programme remain required by Goal 04.

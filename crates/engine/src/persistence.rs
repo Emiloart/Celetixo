@@ -17,7 +17,10 @@ mod metadata;
 mod outcome;
 mod semantic;
 mod source_admission;
+mod source_artifacts;
+mod source_authority;
 mod source_errors;
+mod source_event;
 mod source_evidence;
 mod source_execution;
 mod source_operation;
@@ -36,6 +39,22 @@ pub use semantic::{EngineeringModelRecord, restore_model_record, restore_reposit
 pub use source_admission::{
     SourceAdmissionDependencies, SourceAdmissionRecord, restore_source_admission,
 };
+pub use source_artifacts::{
+    SourceArtifactReferenceRecord, SourceEvidenceReceiptRecord, restore_source_artifact_reference,
+    restore_source_evidence_receipt,
+};
+pub use source_authority::{
+    SourceArtifactRegistrationRecord, restore_source_artifact_registration,
+};
+pub use source_event::{SourceEventKind, SourceEventRecord, restore_source_event};
+
+/// Conservative canonical-data accounting for referenced owned domain values.
+/// This is not an allocator RSS measurement or a runtime authorization claim.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RecoverySize {
+    pub entries: usize,
+    pub bytes: usize,
+}
 pub use source_evidence::{
     SourceCheckRecordBinding, restore_source_check_record, restore_source_evidence,
 };

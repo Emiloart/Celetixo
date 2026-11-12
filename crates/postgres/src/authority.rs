@@ -17,6 +17,7 @@ const FILTER: &str =
 const PROFILE: &str = "native-reference-v1";
 
 mod native;
+mod source;
 
 /// Trusted fault-injection/observation points. Hooks cannot approve a transition,
 /// replace state, bypass validation or turn a missing commit reply into success.
@@ -34,6 +35,11 @@ type Checkpoint = dyn Fn(AuthorityStage) -> Result<(), AuthorityFailure> + Send 
 pub struct RegistrationView {
     pub state_generation: u64,
     pub records: NativeRecords,
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceRegistrationView {
+    pub state_generation: u64,
+    pub records: celetixo_engine::engine::authority::SourceRecords,
 }
 
 struct Login {
@@ -53,9 +59,53 @@ pub struct PostgresAuthority {
     administration: Login,
     limits: NativeRecordLimits,
     checkpoint: Option<Arc<Checkpoint>>,
+    source_profile: bool,
 }
 
 impl PostgresAuthority {
+    /// Explicit trusted profile selection, including pre-registration grants.
+    /// An already bound native scope cannot be reinterpreted as source state.
+    pub fn connect_source(
+        runtime: UnixConnection,
+        administration: UnixConnection,
+    ) -> Result<Self, AuthorityFailure> {
+        let mut authority = Self::connect(runtime, administration)?;
+        authority.source_profile = true;
+        Ok(authority)
+    }
+    /// Trusted coherent metadata inspection. Source readers and capabilities
+    /// still require independent runtime authentication and resolution.
+    pub fn inspect_source(
+        &self,
+        scope: &Scope,
+    ) -> Result<SourceRegistrationView, AuthorityFailure> {
+        let mut client = self.administration.connect()?;
+        schema_lock(&mut client)?;
+        let mut tx = client
+            .build_transaction()
+            .isolation_level(IsolationLevel::RepeatableRead)
+            .start()
+            .map_err(database)?;
+        validate_schema(&mut tx).map_err(storage)?;
+        self.administration.check(&mut tx, Some(scope))?;
+        let generation = lock_repository(&mut tx, scope, false)?;
+        let a = snapshots::scope_parameters(scope);
+        let profile = tx
+            .query_one(
+                &format!("SELECT authority_profile FROM celetixo.repositories WHERE {FILTER}"),
+                &[&a[0], &a[1], &a[2]],
+            )
+            .map_err(database)?;
+        if profile.get::<_, Option<String>>(0).as_deref() != Some(source::PROFILE) {
+            return Err(AuthorityFailure::UnsupportedProfile);
+        }
+        let records = source::load(&mut tx, scope, self.limits)?;
+        tx.commit().map_err(database)?;
+        Ok(SourceRegistrationView {
+            state_generation: generation,
+            records,
+        })
+    }
     pub fn connect(
         runtime: UnixConnection,
         administration: UnixConnection,
@@ -89,6 +139,7 @@ impl PostgresAuthority {
             administration,
             limits: NativeRecordLimits::default(),
             checkpoint: None,
+            source_profile: false,
         })
     }
 
@@ -144,6 +195,7 @@ impl PostgresAuthority {
         validate_schema(&mut tx).map_err(storage)?;
         self.administration.check(&mut tx, Some(scope))?;
         let generation = lock_repository(&mut tx, scope, false)?;
+        profile_gate(&mut tx, scope, PROFILE, false)?;
         let records = load_native(&mut tx, scope, self.limits)?;
         checked(records.clone(), self.limits)?;
         tx.commit().map_err(database)?;
@@ -160,6 +212,9 @@ impl AuthorityBackend for PostgresAuthority {
         context: &AuthorityAccess,
         evaluate: &mut dyn FnMut(&mut AuthorityState) -> Result<(), AuthorityFailure>,
     ) -> Result<(), AuthorityFailure> {
+        if self.source_profile {
+            return source::access(self, context, evaluate);
+        }
         if matches!(
             context.actor(),
             AuthorityActor::SourceExecutor { .. } | AuthorityActor::SourceCleanup { .. }
@@ -206,6 +261,7 @@ impl AuthorityBackend for PostgresAuthority {
         // FOR SHARE on reads intentionally uses a read/write SQL transaction;
         // it never writes. The immutable callback result is checked below.
         let generation = lock_repository(&mut tx, context.scope(), update)?;
+        profile_gate(&mut tx, context.scope(), PROFILE, update)?;
         let before = load_native(&mut tx, context.scope(), self.limits)?;
         let mut state = checked(before.clone(), self.limits)?;
         let now = database_clock(&mut tx)?;
@@ -391,6 +447,33 @@ fn database_clock(tx: &mut Transaction<'_>) -> Result<u64, AuthorityFailure> {
         .map_err(database)?;
     number(&row, 0)
 }
+fn profile_gate(
+    tx: &mut Transaction<'_>,
+    scope: &Scope,
+    expected: &str,
+    bind: bool,
+) -> Result<(), AuthorityFailure> {
+    let a = snapshots::scope_parameters(scope);
+    let row = tx
+        .query_one(
+            &format!("SELECT authority_profile FROM celetixo.repositories WHERE {FILTER}"),
+            &[&a[0], &a[1], &a[2]],
+        )
+        .map_err(database)?;
+    match row.get::<_, Option<String>>(0) {
+        Some(actual) if actual == expected => Ok(()),
+        Some(_) => Err(AuthorityFailure::UnsupportedProfile),
+        None if !bind => Ok(()),
+        None => {
+            let count=tx.execute(&format!("UPDATE celetixo.repositories SET authority_profile=$4 WHERE {FILTER} AND authority_profile IS NULL"),&[&a[0],&a[1],&a[2],&expected]).map_err(database)?;
+            if count == 1 {
+                Ok(())
+            } else {
+                Err(AuthorityFailure::Contention)
+            }
+        }
+    }
+}
 
 fn checked(
     records: NativeRecords,
@@ -418,6 +501,17 @@ fn publish_native(
     let next = generation
         .checked_add(1)
         .ok_or(AuthorityFailure::CounterExhausted)?;
+    publish_session_grants(tx, context, next, before, after)?;
+    native::publish(tx, next, before, after)?;
+    publish_envelope(tx, context, login, generation, next, after, false)
+}
+fn publish_session_grants(
+    tx: &mut Transaction<'_>,
+    context: &AuthorityAccess,
+    next: u64,
+    before: &NativeRecords,
+    after: &NativeRecords,
+) -> Result<(), AuthorityFailure> {
     let scope = context.scope();
     let a = snapshots::scope_parameters(scope);
     if before.grants != after.grants
@@ -457,13 +551,38 @@ fn publish_native(
     {
         return Err(AuthorityFailure::Protocol);
     }
-    native::publish(tx, next, before, after)?;
+    Ok(())
+}
+#[allow(clippy::too_many_arguments)]
+fn publish_envelope(
+    tx: &mut Transaction<'_>,
+    context: &AuthorityAccess,
+    login: &Login,
+    generation: u64,
+    next: u64,
+    after: &NativeRecords,
+    source: bool,
+) -> Result<(), AuthorityFailure> {
+    let scope = context.scope();
+    let a = snapshots::scope_parameters(scope);
     tx.execute("INSERT INTO celetixo.engine_counters (organization_id,workspace_id,repository_id,last_clock_ms,next_session_grant) VALUES ($1::text,$2::text,$3::text,$4::text::numeric,$5::text::numeric) ON CONFLICT (organization_id,workspace_id,repository_id) DO UPDATE SET last_clock_ms=EXCLUDED.last_clock_ms,next_session_grant=EXCLUDED.next_session_grant", &[&a[0],&a[1],&a[2],&after.clock_ms.to_string(),&after.session_counter.to_string()]).map_err(database)?;
     let changed=tx.execute(&format!("UPDATE celetixo.repositories SET state_generation=$5::text::numeric WHERE {FILTER} AND state_generation=$4::text::numeric"), &[&a[0],&a[1],&a[2],&generation.to_string(),&next.to_string()]).map_err(database)?;
     if changed != 1 {
         return Err(AuthorityFailure::Contention);
     }
     let (kind, principal, grant, permission) = match context.actor() {
+        AuthorityActor::SourceExecutor { principal, grant } if source => (
+            "SourceExecutor",
+            Some(principal.as_str()),
+            Some(grant.to_string()),
+            None,
+        ),
+        AuthorityActor::SourceCleanup { principal, grant } if source => (
+            "SourceCleanup",
+            Some(principal.as_str()),
+            Some(grant.to_string()),
+            None,
+        ),
         AuthorityActor::SourceExecutor { .. } | AuthorityActor::SourceCleanup { .. } => {
             return Err(AuthorityFailure::UnsupportedProfile);
         }

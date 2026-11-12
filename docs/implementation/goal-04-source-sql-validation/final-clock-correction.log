@@ -1,0 +1,8 @@
+   Compiling celetixo-postgres v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/postgres)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 11.63s
+     Running tests/foundation.rs (/mnt/c/dev/celetixo/target/debug/deps/foundation-6bb3255d7381f1e0)
+
+running 1 test
+test source_authority::lifecycle::source_final_database_clock_rejects_an_execution_transition_after_lease_expiry ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 40 filtered out; finished in 15.79s

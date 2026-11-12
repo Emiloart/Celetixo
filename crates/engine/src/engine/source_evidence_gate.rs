@@ -7,6 +7,24 @@ use crate::source_evidence::{
 };
 use source_attempts::{attempt_key, validate_executor_store, validate_source_admission};
 
+/// A trusted runtime configuration selector, not credentials or object durability.
+/// The embedding resolves this exact scoped identity and configuration version.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceArtifactAdapter {
+    pub identity: crate::ids::SourceArtifactAdapterId,
+    pub configuration: Digest,
+}
+impl SourceArtifactAdapter {
+    pub(crate) fn registration_provenance(
+        &self,
+        scope: &Scope,
+        registration: u64,
+        retention: Digest,
+    ) -> Digest {
+        artifact_store_provenance(scope, registration, retention, Some(self))
+    }
+}
+
 #[derive(Clone)]
 pub struct SourceArtifactStoreCapability {
     pub(super) store: Arc<StoreIdentity>,
@@ -18,6 +36,7 @@ pub struct SourceArtifactStoreCapability {
 // Registration metadata only; the reader is a process-local runtime resource.
 pub(super) struct RegisteredSourceArtifactStore {
     pub(super) scope: Scope,
+    pub(super) adapter: Option<SourceArtifactAdapter>,
     pub(super) retention: Digest,
     pub(super) provenance: Digest,
     pub(super) active: bool,
@@ -66,6 +85,26 @@ impl Administrator {
         scope: Scope,
         reader: Arc<dyn SourceArtifactReader>,
     ) -> Result<SourceArtifactStoreCapability, EngineError> {
+        self.register_source_artifact_store_inner(scope, None, reader)
+    }
+
+    /// Register an explicitly configured adapter. The selector is retained and
+    /// bound to provenance; resolving it after restart remains a trusted action.
+    pub fn register_configured_source_artifact_store(
+        &self,
+        scope: Scope,
+        adapter: SourceArtifactAdapter,
+        reader: Arc<dyn SourceArtifactReader>,
+    ) -> Result<SourceArtifactStoreCapability, EngineError> {
+        self.register_source_artifact_store_inner(scope, Some(adapter), reader)
+    }
+
+    fn register_source_artifact_store_inner(
+        &self,
+        scope: Scope,
+        adapter: Option<SourceArtifactAdapter>,
+        reader: Arc<dyn SourceArtifactReader>,
+    ) -> Result<SourceArtifactStoreCapability, EngineError> {
         let retention = reader.retention_policy();
         // Preflight runtime availability before the independently durable
         // metadata boundary; no runtime lock is held across SQL publication.
@@ -75,18 +114,14 @@ impl Administrator {
                 .next_source_artifact_store
                 .checked_add(1)
                 .ok_or(EngineError::CounterExhausted)?;
-            let mut c = Canonical::default();
-            c.u64(token);
-            c.str(scope.organization.as_str());
-            c.str(scope.workspace.as_str());
-            c.str(scope.repository.as_str());
-            c.digest(retention);
+            let provenance = artifact_store_provenance(&scope, token, retention, adapter.as_ref());
             db.source_artifact_stores.insert(
                 token,
                 RegisteredSourceArtifactStore {
                     scope: scope.clone(),
+                    adapter,
                     retention,
-                    provenance: c.finish("celetixo/source-artifact-store/v1"),
+                    provenance,
                     active: true,
                 },
             );
@@ -123,6 +158,28 @@ impl Administrator {
         // A reader's destructor can perform I/O or reenter the embedding, too.
         drop(reader);
         Ok(())
+    }
+}
+
+pub(super) fn artifact_store_provenance(
+    scope: &Scope,
+    registration: u64,
+    retention: Digest,
+    adapter: Option<&SourceArtifactAdapter>,
+) -> Digest {
+    let mut c = Canonical::default();
+    c.u64(registration);
+    c.str(scope.organization.as_str());
+    c.str(scope.workspace.as_str());
+    c.str(scope.repository.as_str());
+    c.digest(retention);
+    if let Some(adapter) = adapter {
+        c.str(adapter.identity.as_str());
+        c.digest(adapter.configuration);
+        c.finish("celetixo/source-artifact-store/v2")
+    } else {
+        // Preserve the published legacy local-registration identity exactly.
+        c.finish("celetixo/source-artifact-store/v1")
     }
 }
 

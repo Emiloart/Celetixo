@@ -17,8 +17,8 @@ use postgres::types::ToSql;
 
 mod load;
 mod publish;
-pub(super) use load::load;
-pub(super) use publish::publish;
+pub(super) use load::{load, load_source_base};
+pub(super) use publish::{publish, publish_source_base};
 
 /// Recheck time and the original acquisition after publication/readback while
 /// retaining the repository lock. Committed state has already released its
@@ -64,14 +64,19 @@ pub(super) fn final_commit_gate(
     Ok(())
 }
 
-type SqlResult<T> = Result<T, AuthorityFailure>;
+pub(super) type SqlResult<T> = Result<T, AuthorityFailure>;
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum LoadProfile {
+    Native,
+    Source,
+}
 const ACCESS_FORMAT: &str = "celetixo/access-set/v1";
 const PATCH_FORMAT: &str = "celetixo/patch/v1";
 const SNAPSHOT_FORMAT: &str = "celetixo/snapshot/v1";
 const EVENT_TYPE: &str = "NativeCommitRecorded";
 
-struct Budget {
-    limits: NativeRecordLimits,
+pub(super) struct Budget {
+    pub(super) limits: NativeRecordLimits,
     remaining_entries: usize,
     remaining_bytes: usize,
 }
@@ -83,14 +88,14 @@ impl Budget {
             remaining_bytes: limits.total_value_bytes,
         }
     }
-    fn entries(&mut self, count: usize) -> SqlResult<()> {
+    pub(super) fn entries(&mut self, count: usize) -> SqlResult<()> {
         self.remaining_entries = self
             .remaining_entries
             .checked_sub(count)
             .ok_or(AuthorityFailure::Integrity)?;
         Ok(())
     }
-    fn value(&mut self, count: usize) -> SqlResult<()> {
+    pub(super) fn value(&mut self, count: usize) -> SqlResult<()> {
         if count > self.limits.value_bytes {
             return Err(AuthorityFailure::Integrity);
         }
@@ -100,7 +105,18 @@ impl Budget {
             .ok_or(AuthorityFailure::Integrity)?;
         Ok(())
     }
-    fn decode_limits(&self) -> DomainDecodeLimits {
+    fn metadata(&mut self, entries: usize, bytes: usize, largest_row: usize) -> SqlResult<()> {
+        self.entries(entries)?;
+        if largest_row > self.limits.value_bytes {
+            return Err(AuthorityFailure::Integrity);
+        }
+        self.remaining_bytes = self
+            .remaining_bytes
+            .checked_sub(bytes)
+            .ok_or(AuthorityFailure::Integrity)?;
+        Ok(())
+    }
+    pub(super) fn decode_limits(&self) -> DomainDecodeLimits {
         DomainDecodeLimits {
             encoded_bytes: self.limits.value_bytes,
             field_bytes: self.limits.value_bytes,
@@ -117,13 +133,13 @@ impl Budget {
     }
 }
 
-struct Loader<'a> {
-    scope: &'a Scope,
-    budget: Budget,
+pub(super) struct Loader<'a> {
+    pub(super) scope: &'a Scope,
+    pub(super) budget: Budget,
     snapshots: BTreeMap<SnapshotId, Arc<Snapshot>>,
 }
 impl<'a> Loader<'a> {
-    fn new(scope: &'a Scope, limits: NativeRecordLimits) -> Self {
+    pub(super) fn new(scope: &'a Scope, limits: NativeRecordLimits) -> Self {
         Self {
             scope,
             budget: Budget::new(limits),
@@ -132,7 +148,7 @@ impl<'a> Loader<'a> {
     }
     /// The SQL LIMIT is applied before materializing metadata. Every result set
     /// consumes one common budget, including auxiliary rows absent from records.
-    fn rows(
+    pub(super) fn rows(
         &mut self,
         tx: &mut Transaction<'_>,
         table: &str,
@@ -149,11 +165,34 @@ impl<'a> Loader<'a> {
             .map(|column| format!("fact.{column}"))
             .collect::<Vec<_>>()
             .join(",");
+        // Projections are trusted simple SQL expressions without embedded
+        // commas. Measure uncompressed projected values on the server before
+        // fetching a Vec<Row>, for both inline and TOASTed values.
+        let row_cost = columns
+            .split(',')
+            .map(|column| format!("COALESCE(octet_length(({column})::text),0)::bigint+16"))
+            .collect::<Vec<_>>()
+            .join("+");
+        let measured = tx.query_one(&format!(
+            "SELECT count(*)::text,COALESCE(sum(row_cost),0)::text,COALESCE(max(row_cost),0)::text FROM \
+             (SELECT ({row_cost}) AS row_cost FROM celetixo.{table} AS fact WHERE {FILTER} ORDER BY {order} LIMIT $4::bigint+1) AS bounded"
+        ), &[&a[0],&a[1],&a[2],&bound]).map_err(database)?;
+        let count =
+            usize::try_from(number(&measured, 0)?).map_err(|_| AuthorityFailure::Integrity)?;
+        self.budget.metadata(
+            count,
+            usize::try_from(number(&measured, 1)?).map_err(|_| AuthorityFailure::Integrity)?,
+            usize::try_from(number(&measured, 2)?).map_err(|_| AuthorityFailure::Integrity)?,
+        )?;
         let rows=tx.query(&format!("SELECT {columns} FROM celetixo.{table} AS fact WHERE {FILTER} ORDER BY {order} LIMIT $4::bigint+1"), &[&a[0],&a[1],&a[2],&bound]).map_err(database)?;
-        self.budget.entries(rows.len())?;
+        // All authoritative writers retain the repository lock across both
+        // queries. A differing row set is never silently accepted.
+        if rows.len() != count {
+            return Err(AuthorityFailure::Integrity);
+        }
         Ok(rows)
     }
-    fn payload(
+    pub(super) fn payload(
         &mut self,
         tx: &mut Transaction<'_>,
         id: Digest,
@@ -174,7 +213,11 @@ impl<'a> Loader<'a> {
         }
         Ok(bytes)
     }
-    fn snapshot(&mut self, tx: &mut Transaction<'_>, id: SnapshotId) -> SqlResult<Arc<Snapshot>> {
+    pub(super) fn snapshot(
+        &mut self,
+        tx: &mut Transaction<'_>,
+        id: SnapshotId,
+    ) -> SqlResult<Arc<Snapshot>> {
         if let Some(snapshot) = self.snapshots.get(&id) {
             return Ok(snapshot.clone());
         }
@@ -203,7 +246,11 @@ impl<'a> Loader<'a> {
         self.snapshots.insert(id, snapshot.clone());
         Ok(snapshot)
     }
-    fn owned_snapshot(&mut self, tx: &mut Transaction<'_>, id: SnapshotId) -> SqlResult<Snapshot> {
+    pub(super) fn owned_snapshot(
+        &mut self,
+        tx: &mut Transaction<'_>,
+        id: SnapshotId,
+    ) -> SqlResult<Snapshot> {
         let snapshot = self.snapshot(tx, id)?;
         // Charge an owned copy before cloning cached content into normalized
         // records. A repeated candidate cannot amplify allocations unboundedly.
@@ -243,7 +290,7 @@ impl<'a> Loader<'a> {
     }
 }
 
-fn optional_digest(row: &Row, column: usize) -> SqlResult<Option<Digest>> {
+pub(super) fn optional_digest(row: &Row, column: usize) -> SqlResult<Option<Digest>> {
     row.get::<_, Option<Vec<u8>>>(column)
         .map(|bytes| {
             bytes
@@ -253,7 +300,7 @@ fn optional_digest(row: &Row, column: usize) -> SqlResult<Option<Digest>> {
         })
         .transpose()
 }
-fn optional_number(row: &Row, column: usize) -> SqlResult<Option<u64>> {
+pub(super) fn optional_number(row: &Row, column: usize) -> SqlResult<Option<u64>> {
     row.get::<_, Option<String>>(column)
         .map(|text| {
             let value = text

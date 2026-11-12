@@ -18,5 +18,8 @@ serde.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true
 
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+celetixo-execution = { path = "../execution" }
+
 [lints]
 workspace = true

@@ -1,0 +1,19 @@
+   Compiling celetixo-postgres v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/postgres)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.35s
+     Running tests/foundation.rs (/mnt/c/dev/celetixo/target/debug/deps/foundation-6bb3255d7381f1e0)
+
+running 12 tests
+test source_authority::isolation::source_revocation_during_artifact_io_prevents_receipt_publication ... ok
+test source_authority::isolation::source_same_embedding_reused_grant_and_store_numbers_remain_scoped ... ok
+test source_authority::lifecycle::source_admission_publication_faults_withhold_results_and_recover_original_rejection ... ok
+test source_authority::lifecycle::source_evidence_receipts_and_logical_object_associations_reopen_all_assessments ... ok
+test source_authority::lifecycle::source_final_database_clock_rejects_an_execution_transition_after_lease_expiry ... ok
+test source_authority::lifecycle::source_lifecycle_admission_claim_and_failure_reopen_each_phase_without_native_patches ... ok
+test source_authority::lifecycle::source_original_rejections_collisions_and_historical_policy_survive_head_replacement ... ok
+test source_authority::migration::v3_source_upgrade_preserves_legacy_artifact_associations_and_rolls_back_faults ... ok
+test source_authority::recovery::source_independent_process_claim_race_has_one_durable_winner ... ok
+test source_authority::recovery::source_process_child ... ok
+test source_authority::recovery::source_process_death_before_and_after_commit_reconciles_original_admission ... ok
+test source_authority::source_profile_pre_registration_grants_and_configured_store_reopen_without_runtime_resources ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 34 filtered out; finished in 292.75s

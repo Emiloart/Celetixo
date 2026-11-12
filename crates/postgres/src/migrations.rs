@@ -19,6 +19,10 @@ const MIGRATIONS: &[Migration] = &[
         name: "0003_native_lifecycle",
         sql: include_str!("../migrations/0003_native_lifecycle.sql"),
     },
+    Migration {
+        name: "0004_source_lifecycle",
+        sql: include_str!("../migrations/0004_source_lifecycle.sql"),
+    },
 ];
 pub(crate) const LOCK: i64 = 0x43454c455449584f;
 

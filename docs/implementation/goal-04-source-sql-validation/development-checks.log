@@ -1,0 +1,31 @@
+COMMAND ["cargo", "test", "--locked", "--offline", "-p", "celetixo-postgres", "--test", "foundation", "source_authority::", "--", "--ignored", "--test-threads=1"]
+   Compiling celetixo-postgres v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/postgres)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 20.12s
+     Running tests/foundation.rs (/mnt/c/dev/celetixo/target/debug/deps/foundation-6bb3255d7381f1e0)
+
+running 7 tests
+test source_authority::lifecycle::source_admission_publication_faults_withhold_results_and_recover_original_rejection ... ok
+test source_authority::lifecycle::source_evidence_receipts_and_logical_object_associations_reopen_all_assessments ... ok
+test source_authority::lifecycle::source_final_database_clock_rejects_an_execution_transition_after_lease_expiry ... FAILED
+test source_authority::lifecycle::source_lifecycle_admission_claim_and_failure_reopen_each_phase_without_native_patches ... ok
+test source_authority::lifecycle::source_original_rejections_collisions_and_historical_policy_survive_head_replacement ... ok
+test source_authority::migration::v3_source_upgrade_preserves_legacy_artifact_associations_and_rolls_back_faults ... ok
+test source_authority::source_profile_pre_registration_grants_and_configured_store_reopen_without_runtime_resources ... ok
+
+failures:
+
+---- source_authority::lifecycle::source_final_database_clock_rejects_an_execution_transition_after_lease_expiry stdout ----
+
+thread 'source_authority::lifecycle::source_final_database_clock_rejects_an_execution_transition_after_lease_expiry' (6842) panicked at crates/postgres/tests/foundation/source_authority/lifecycle.rs:740:5:
+assertion `left == right` failed
+  left: Err(Authority(Unavailable))
+ right: Err(Authority(Contention))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    source_authority::lifecycle::source_final_database_clock_rejects_an_execution_transition_after_lease_expiry
+
+test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 34 filtered out; finished in 482.26s
+
+error: test failed, to rerun pass `-p celetixo-postgres --test foundation`

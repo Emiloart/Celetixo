@@ -1,0 +1,16 @@
+{
+  "kind": "Changed documentation local file-target link check; fragments and remote URLs not tested",
+  "checked_file_targets": 190,
+  "missing": [],
+  "source_sha256": {
+    "docs/README.md": "1d2a911579a3a918ec7fbbb7083a70b2c3864e96a97eb8433ab3a3fc6ac49041",
+    "docs/implementation/goal-04-postgres-schema.md": "3d03e0f89497c40d179e481dfbeaaf2411baa2b8b449ef399f1f6486b2cb9e14",
+    "docs/implementation/goal-04-progress.md": "b4e21b1164072518e1acd47d098ce9e14b3af5bb4fa673e0148ca2a707e4ee41",
+    "docs/implementation/goal-04-session-handoff.md": "bb5535e067f2f5a4452c8ad14a0b924282648c57e0a5f40b5fa6b9160ea87cd0",
+    "docs/implementation/goal-04-source-recovery.md": "96c43c27367ca7d83c4417a984c06b0b49ef5fcb2753ea9e59831615549a4822",
+    "docs/implementation/goal-04-source-sql-authority.md": "4cf057f3574aa7da1f0c919efad49949027f1fe24cab4b1f3dc2502255a9152b",
+    "docs/implementation/goal-04-source-sql-validation/README.md": "1328115df6906c8c7bb68e8d1bdc4fa027a3f2de12e9327a020f758c6e1b839f",
+    "docs/reference/capability-support-matrix.md": "417aa1259e735fe32b3e0f659e55e749a6251b1e836c676673cf06299791a41d",
+    "docs/spec/threat-model.md": "730320e4f45c754fe77df6fc73640858205192a40de6c4ae2f5f8ffbef972fcd"
+  }
+}
