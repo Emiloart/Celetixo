@@ -37,31 +37,32 @@ impl Administrator {
         backend: Digest,
         expires_at_ms: u64,
     ) -> Result<SourceCleanupCapability, EngineError> {
-        let mut db = self.store.lock()?;
-        if expires_at_ms <= db.now {
-            return Err(EngineError::InvalidTime);
-        }
-        let token = db
-            .next_source_cleanup
-            .checked_add(1)
-            .ok_or(EngineError::CounterExhausted)?;
-        db.next_source_cleanup = token;
-        db.source_cleanup_grants.insert(
-            token,
-            SourceCleanupGrant {
-                principal: principal.clone(),
-                scope: scope.clone(),
+        self.store.update(|db| {
+            if expires_at_ms <= db.now {
+                return Err(EngineError::InvalidTime);
+            }
+            let token = db
+                .next_source_cleanup
+                .checked_add(1)
+                .ok_or(EngineError::CounterExhausted)?;
+            db.next_source_cleanup = token;
+            db.source_cleanup_grants.insert(
+                token,
+                SourceCleanupGrant {
+                    principal: principal.clone(),
+                    scope: scope.clone(),
+                    backend,
+                    expires_at_ms,
+                    active: true,
+                },
+            );
+            Ok(SourceCleanupCapability {
+                store: self.store.identity.clone(),
+                token,
+                principal,
+                scope,
                 backend,
-                expires_at_ms,
-                active: true,
-            },
-        );
-        Ok(SourceCleanupCapability {
-            store: self.store.identity.clone(),
-            token,
-            principal,
-            scope,
-            backend,
+            })
         })
     }
 
@@ -95,22 +96,23 @@ impl Engine {
         if !Arc::ptr_eq(&self.store.identity, &capability.store) {
             return Err(EngineError::Unauthorized);
         }
-        let db = self.store.lock()?;
-        let grant = db
-            .source_cleanup_grants
-            .get(&capability.token)
-            .ok_or(EngineError::Unauthorized)?;
-        if !grant.active
-            || grant.expires_at_ms <= db.now
-            || grant.principal != capability.principal
-            || grant.scope != *scope
-            || capability.scope != *scope
-            || grant.backend != backend
-            || capability.backend != backend
-        {
-            return Err(EngineError::Unauthorized);
-        }
-        Ok(())
+        self.store.read(|db| {
+            let grant = db
+                .source_cleanup_grants
+                .get(&capability.token)
+                .ok_or(EngineError::Unauthorized)?;
+            if !grant.active
+                || grant.expires_at_ms <= db.now
+                || grant.principal != capability.principal
+                || grant.scope != *scope
+                || capability.scope != *scope
+                || grant.backend != backend
+                || capability.backend != backend
+            {
+                return Err(EngineError::Unauthorized);
+            }
+            Ok(())
+        })
     }
 }
 

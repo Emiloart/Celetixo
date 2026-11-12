@@ -1,0 +1,22 @@
+{
+  "schema": "celetixo/state-access-mechanical-audit/v1",
+  "baseline": "8fae23346a35fe83164f12b24d84bc4500e84c3d",
+  "scope": "Callback wrapping, mutex acquisition removal, db reborrows, rustfmt trailing commas and module declaration only. Does not prove runtime/semantic equivalence; paired with real tests. Evidence gate is separately reviewed/tested.",
+  "files": {
+    "crates/engine/src/engine.rs": {
+      "baseline_sha256": "87980a4243cf9a3b342be0e8a099d3bbcd8691813309dc91aaed71d18136ead9",
+      "current_sha256": "c69ec7813c9e1bd4c9adf5d9c9a7b5ec48a2ff7546c1823abaf1672dc8135d21",
+      "wrapped_operations": 24
+    },
+    "crates/engine/src/engine/source_attempts.rs": {
+      "baseline_sha256": "08029e4a9521613b41b1f3293692e963ad2ab9d08ace419f9ece8459be584a90",
+      "current_sha256": "a1fb4507659654612d4c954c7b419b551de14f5d2ee54a9287fb64531f32b916",
+      "wrapped_operations": 12
+    },
+    "crates/engine/src/engine/source_cleanup.rs": {
+      "baseline_sha256": "b8f1a368f2c7b24a930afddd44f55f78223fa1d11c22e19044664c49d7c39a8c",
+      "current_sha256": "f3177242fd7ab72f68cdea80a45c3f57a39c49774cba05c968a2a0aa942ae228",
+      "wrapped_operations": 2
+    }
+  }
+}

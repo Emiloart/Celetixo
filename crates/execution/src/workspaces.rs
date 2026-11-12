@@ -723,6 +723,11 @@ mod linux {
         Ok(())
     }
     impl WorkspaceLease {
+        #[cfg(test)]
+        pub(crate) fn duplicate_owner_for_test(&self) -> io::Result<File> {
+            self.owner.try_clone()
+        }
+
         pub(crate) fn validate(&self) -> Result<(), WorkspaceError> {
             self.registry.validate()?;
             private_dir(&self.path, &self.root)?;

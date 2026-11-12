@@ -304,6 +304,14 @@ mod linux {
         pub fn source_path(&self) -> &Path {
             &self.source_path
         }
+
+        #[cfg(test)]
+        pub(crate) fn duplicate_owner_for_test(&self) -> std::io::Result<File> {
+            self.registered
+                .as_ref()
+                .expect("registered workspace fixture")
+                .duplicate_owner_for_test()
+        }
         pub fn applied(&self) -> &AppliedSourcePatch {
             &self.applied
         }

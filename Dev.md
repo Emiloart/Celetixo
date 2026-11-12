@@ -191,6 +191,14 @@ The [Goal 04 progress record](docs/implementation/goal-04-progress.md) tracks ve
 
 **Exit gate:** the complete Goal 04 definition of done passes, including multi-instance concurrency, crash ambiguity, idempotent recovery, durable evidence retrieval, isolation, backup/restore and operational proof.
 
+The [04.1d state-access boundary](docs/implementation/goal-04-state-access.md)
+separates state evaluation from publication in the reference Engine. Preserve
+intentional state changes returned alongside a domain rejection; do not use
+`Result::Err` alone to decide SQL rollback. Artifact I/O stays outside authority
+transactions, followed by fresh validation. The local staged Database is neither
+a durable serialization format nor a substitute for scoped SQL state loading,
+authorization, fencing, atomic commit and ambiguous-outcome reconciliation.
+
 ### Phase 7 — Real worker integration and evaluation
 
 Connect real coding workers through provider-neutral adapters. Run tasks against immutable repository snapshots and pass every patch through the same transaction and verification path.

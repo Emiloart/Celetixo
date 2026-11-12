@@ -1,0 +1,76 @@
+{
+  "schema": "celetixo/goal04-state-access-development-validation/v1",
+  "source_parent": "8fae23346a35fe83164f12b24d84bc4500e84c3d",
+  "started_utc": "2026-11-12T02:31:17.442225+00:00",
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/mnt/c/dev/celetixo/target",
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC",
+    "CELETIXO_OCI_HOME": "/home/emiloart/.local/share/celetixo-goal03",
+    "CELETIXO_PG_TEST_CONFIG": "/home/emiloart/.local/share/celetixo-goal04/pg17-ci/connection.json"
+  },
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "architecture": "x86_64",
+  "source_sha256": {
+    "crates/engine/src/engine.rs": "c69ec7813c9e1bd4c9adf5d9c9a7b5ec48a2ff7546c1823abaf1672dc8135d21",
+    "crates/engine/src/engine/state_access.rs": "b2daa25c89b80cb96e40658d19b0660c47ed27b91a5331c1e99b68f50e9d4854",
+    "crates/engine/src/engine/source_attempts.rs": "a1fb4507659654612d4c954c7b419b551de14f5d2ee54a9287fb64531f32b916",
+    "crates/engine/src/engine/source_cleanup.rs": "f3177242fd7ab72f68cdea80a45c3f57a39c49774cba05c968a2a0aa942ae228",
+    "crates/engine/src/engine/source_evidence_gate.rs": "9a9a8e099df8f8c0eb38e3c718a731cc4b208742938fc6c5f72c353ac86b4dd7",
+    "crates/engine/src/engine/runtime.rs": "10a2b4937a1a4c69d5c7388a72689c4e2ba09b98e6e22f70cb5deddc56116a60",
+    "crates/engine/tests/engine_transactions.rs": "b01071ad450bf38af46c6d315d1f36dd8158136133ae9413a04245e9233511de",
+    "crates/engine/tests/model_histories.rs": "e1b74060bd4c19f53589ebc69c4d319d1ae494594d636f87f8439b34e31002cb",
+    "crates/engine/tests/source_attempts.rs": "e1b51d98379f9650e0436e6076affaddeea01c208a8d4f87618072f9df561c2c",
+    "crates/engine/tests/source_evidence.rs": "b0919cf86b54367cd6ae9b93962458eb786a07d6150130acfc58ad559c9f3bc6",
+    "crates/postgres/tests/foundation.rs": "7c8ef56564db73be90ecadb794a9469a57deb98602ac9fb24d63c56763bd3057",
+    "Cargo.lock": "ddb8002df8d344a993b19bde5e53b2060bf7183624f88efddee9d2de36ac0933"
+  },
+  "tooling_sha256": {
+    "runc-1.5.2": "599f6f94ff8c5057241eff0d54c3c74f95c34935b6457b33fe545defc61e9488",
+    "celetixo-exec-init": "41cd4284dfc010dca9c2a3f95bc6b82e2d01075c16d385e34b64dabf7b2bbfe9",
+    "toolchain/gofmt": "0802a3784f7b2a924ccde5b34f6727ffe74e0193a1c0eea4cd773863fce4528a",
+    "toolchain/lib/libc.so.6": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+    "toolchain/lib/ld-linux-x86-64.so.2": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+  },
+  "checks": [
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.723
+    },
+    {
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 17.51
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 101,
+      "elapsed_seconds": 98.082
+    }
+  ]
+}

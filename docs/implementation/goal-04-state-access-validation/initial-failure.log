@@ -1,0 +1,325 @@
+
+COMMAND cargo fmt --all -- --check
+
+EXIT 0
+
+COMMAND cargo clippy --workspace --all-targets --locked --offline -- -D warnings
+    Checking celetixo-engine v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/engine)
+    Checking celetixo-repository v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/repository)
+    Checking celetixo-execution v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/execution)
+    Checking celetixo-postgres v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/postgres)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 17.00s
+
+EXIT 0
+
+COMMAND cargo test --workspace --locked --offline
+   Compiling celetixo-engine v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/engine)
+   Compiling celetixo-repository v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/repository)
+   Compiling celetixo-execution v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/execution)
+   Compiling celetixo-postgres v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/postgres)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 31s
+     Running unittests src/lib.rs (/mnt/c/dev/celetixo/target/debug/deps/celetixo_engine-74f61bf883a16cfb)
+
+running 31 tests
+test access::tests::analysis_binding_includes_version_configuration_completeness_and_dependencies ... ok
+test access::tests::union_retains_explicit_and_derived_dependencies ... ok
+test access::tests::compatibility_matrix_is_directional_and_deterministic ... ok
+test access::tests::invariant_checks_values_missing_inputs_and_overflow ... ok
+test access::tests::predicates_detect_phantom_members_and_invariants_detect_scoped_writes ... ok
+test engine::runtime::tests::revocation_releases_the_reader_and_keeps_the_registration_record ... ok
+test engine::runtime::tests::revocation_drops_adapter_resources_outside_state_and_runtime_locks ... ok
+test engine::source_cleanup::tests::cleanup_is_scoped_store_bound_revocable_and_expiring ... ok
+test engine::state_access::tests::publication_failure_withholds_success_and_rejection_without_exposing_staged_state ... ok
+test engine::state_access::tests::rejected_outcomes_can_retain_state_and_publication_precedes_acknowledgement ... ok
+test engine::runtime::tests::copied_records_restore_neither_capabilities_nor_readers ... ok
+test engine::state_access::tests::unwinding_never_publishes_or_implicitly_commits_on_drop ... ok
+test engine::state_access::tests::panicking_update_leaves_original_state_and_poisoned_store_fails_closed ... ok
+test engine::runtime::tests::unavailable_runtime_cannot_partially_publish_a_registration ... ok
+test evidence::tests::check_digest_includes_command_configuration_environment_and_toolchain ... ok
+test evidence::tests::evidence_digest_includes_diagnostics_artifacts_provenance_and_outcome ... ok
+test evidence::tests::inconsistent_status_missing_capture_and_invalid_provenance_fail_closed ... ok
+test evidence::tests::exact_bindings_reject_each_stale_or_mismatched_input ... ok
+test ids::tests::identifiers_reject_empty_or_ambiguous_values ... ok
+test ids::tests::digests_bind_domain_and_unambiguous_bytes ... ok
+test patch::tests::empty_and_noop_patches_are_rejected ... ok
+test patch::tests::digest_binds_base_before_images_keys_and_values ... ok
+test patch::tests::add_delete_update_and_wrong_before_images ... ok
+test source_evidence::tests::execution_object_has_no_recursive_address_and_still_binds_every_other_object ... ok
+test source_evidence::tests::invalid_status_times_duplicates_and_artifact_labels_reject ... ok
+test source_evidence::tests::seal_order_is_deterministic_and_context_outcome_and_object_changes_are_bound ... ok
+test source_patch::report_integrity_tests::replay_rejects_a_self_consistent_but_wrong_resulting_snapshot ... ok
+test transaction::tests::terminals_cannot_be_revived_and_paths_are_explicit ... ok
+test source_patch::report_integrity_tests::replay_rejects_tampered_report_fields_and_digest_binds_actual_retained_payloads ... ok
+test source_evidence::tests::aggregate_metadata_is_bounded_before_sealing ... ok
+test source_evidence::tests::a_large_plan_can_seal_all_check_definition_references ... ok
+
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/adversarial.rs (/mnt/c/dev/celetixo/target/debug/deps/adversarial-5f8ee2d85a229dc7)
+
+running 9 tests
+test ordinary_analysis_permission_cannot_replace_authoritative_model_facts ... ok
+test aborted_work_rejects_late_verification_and_cannot_commit ... ok
+test reverse_impact_reaches_transitive_consumers ... ok
+test a_stale_before_image_is_atomic_and_cannot_install_a_candidate ... ok
+test same_principal_with_a_different_capability_cannot_use_the_lease ... ok
+test caller_declared_invariant_scopes_expand_dependencies_and_reject_invalidated_inputs ... ok
+test verifier_attribution_cannot_substitute_for_verifier_authorization ... ok
+test prefix_reads_expand_declared_dependencies_and_bind_the_full_analysis ... ok
+test stale_evidence_cannot_follow_a_transaction_into_a_new_revalidation_attempt ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/engine_transactions.rs (/mnt/c/dev/celetixo/target/debug/deps/engine_transactions-16dbacf2dcf29e05)
+
+running 23 tests
+test actual_invariants_reject_bad_patches_and_derive_undeclared_dependencies ... ok
+test all_required_checks_must_be_present_and_transaction_dependencies_must_have_committed ... ok
+test abort_is_terminal_and_releases_coordination_scopes_with_an_auditable_reason ... ok
+test compatible_same_snapshot_transactions_require_fresh_attempt_evidence_and_preserve_both_writes ... ok
+test cancellation_and_revocation_schedules_have_one_authoritative_outcome ... ok
+test illegal_order_wrong_snapshot_and_undeclared_write_are_rejected_atomically ... ok
+test idempotent_success_and_rejection_have_stable_outcomes_and_keys_cannot_be_reassigned ... ok
+test incomplete_or_changed_analysis_never_becomes_safe_empty_impact ... ok
+test concurrent_write_skew_is_rejected_even_when_write_reservations_are_disjoint ... ok
+test invalidated_read_is_explained_with_both_transactions_revision_and_analysis_provenance ... ok
+test independent_engine_handles_race_at_one_gate_without_losing_compatible_writes ... ok
+test exact_evidence_gate_rejects_each_mismatch_before_it_can_authorize_a_commit ... ok
+test missing_failed_and_incomplete_evidence_cannot_pass_the_gate ... ok
+test leases_use_one_monotonic_clock_and_expired_work_cannot_renew_or_commit ... ok
+test predicate_phantoms_and_invariant_scope_overlap_are_conflicts ... ok
+test reservation_requires_proposal_ownership_even_with_other_scoped_permissions ... ok
+test revoked_verifier_cannot_authorize_a_new_commit_with_previously_recorded_evidence ... ok
+test scoped_capabilities_fail_closed_for_foreign_stores_scopes_and_revocation ... ok
+test workers_cannot_change_model_or_sign_their_own_evidence ... ok
+test zero_and_overflowing_lease_times_fail_without_state_changes ... ok
+test multiple_revision_advances_preserve_prior_attempts_and_require_fresh_evidence_each_time ... ok
+test write_write_reservation_prevents_partial_acquisition_and_stale_writer_cannot_rebase_over_committed_value ... ok
+test named_commit_failures_leave_no_partial_publication_and_lost_response_recovers_one_outcome ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/input_admission.rs (/mnt/c/dev/celetixo/target/debug/deps/input_admission-16d67637daeff8df)
+
+running 5 tests
+test existing_program_variables_and_public_placeholders_remain_accepted ... ok
+test malformed_policy_cannot_authorize_an_input ... ok
+test reviewed_public_exceptions_require_exact_path_and_exact_content ... ok
+test finite_patterns_cover_binary_provider_material_keys_and_credential_urls ... ok
+test policy_identity_binds_reviewed_inputs_and_is_delivery_order_independent ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/model_histories.rs (/mnt/c/dev/celetixo/target/debug/deps/model_histories-7b52e6d2f318a912)
+
+running 4 tests
+test shrinking_preserves_and_minimizes_an_injected_faulty_oracle_mismatch ... ok
+test declared_invariant_scopes_depend_on_their_graph_inputs ... ok
+test phantom_insertions_and_shared_read_dependencies_have_distinct_outcomes ... ok
+test deterministic_generated_histories_match_independent_oracle ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.57s
+
+     Running tests/persistence.rs (/mnt/c/dev/celetixo/target/debug/deps/persistence-0c8653cfc905a150)
+
+running 4 tests
+test layered_binary_snapshot_restores_exact_identity_and_full_integer_range ... ok
+test resource_limits_prevent_oversized_and_collection_amplification_decoding ... ok
+test decoded_values_still_require_constructor_invariants_and_canonical_order ... ok
+test corrupted_truncated_appended_and_invalid_identity_bytes_reject_even_when_rehashed ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests/repository.rs (/mnt/c/dev/celetixo/target/debug/deps/repository-2ab9b96a3f62a6cf)
+
+running 13 tests
+test constructor_rejects_dangling_dependencies_checks_and_missing_provenance ... ok
+test changed_analyzer_coverage_invalidates_old_transactions_and_new_admission ... ok
+test concurrent_analysis_replacements_have_one_atomic_compare_and_swap_winner ... ok
+test analysis_operations_enforce_organization_workspace_repository_store_and_revocation_scope ... ok
+test contracts_bind_exact_snapshot_scope_index_configuration_facts_and_coverage ... ok
+test engine_queries_transitive_impact_checks_and_exact_registered_artifact ... ok
+test incomplete_source_analysis_is_queryable_but_cannot_admit_or_commit ... ok
+test index_install_uses_artifact_compare_and_swap_and_preserves_revision ... ok
+test integer_model_patch_and_revalidation_paths_cannot_mutate_source_repositories ... ok
+test predicate_membership_covers_isolated_entities_during_query_and_admission ... ok
+test source_registration_requires_both_scoped_registration_and_model_authority ... ok
+test source_analysis_rejects_unknown_explicit_and_invariant_identities ... ok
+test legacy_registration_cannot_disguise_any_captured_input_layer_as_integer_state ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/semantic_persistence.rs (/mnt/c/dev/celetixo/target/debug/deps/semantic_persistence-b10a5be3c166c66a)
+
+running 8 tests
+test cycles_transitive_impact_and_every_completeness_form_survive_model_reconstruction ... ok
+test complete_and_incomplete_analysis_reconstruction_preserves_all_facts ... ok
+test decoding_budgets_cover_nested_collections_fields_and_length_amplification ... ok
+test analysis_rejects_unknown_elements_invalid_gaps_and_duplicate_or_reordered_sets ... ok
+test snapshot_scope_and_generation_are_external_requirements_not_payload_choices ... ok
+test frozen_formats_preserve_previous_analysis_identity_and_new_model_context ... ok
+test model_rejects_invalid_provenance_tags_identities_and_noncanonical_dependency_sets ... ok
+test truncation_digest_substitution_and_trailing_data_reject_for_both_domains ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests/snapshots.rs (/mnt/c/dev/celetixo/target/debug/deps/snapshots-60d0265c42b7377d)
+
+running 13 tests
+test duplicate_or_structurally_impossible_inputs_reject_in_either_order ... ok
+test canonical_paths_reject_traversal_absolute_and_ambiguous_representations ... ok
+test effective_view_keeps_layer_precedence_and_rejects_external_aliases ... ok
+test every_valid_manifest_metadata_and_state_input_affects_identity ... ok
+test binary_modes_symlinks_submodules_generated_and_mounted_inputs_are_bound ... ok
+test invalid_modes_references_base_deletions_and_environment_reject ... ok
+test git_base_does_not_hide_dirty_layers_and_absence_is_not_empty_content ... ok
+test length_delimited_encoding_distinguishes_field_boundaries ... ok
+test manifest_address_preserves_capture_provenance_without_reference_state ... ok
+test order_independent_capture_preserves_staged_unstaged_and_editor_views ... ok
+test successor_is_a_new_immutable_identity_and_requires_one_revision_step ... ok
+test unsupported_or_incomplete_capture_cannot_construct_a_snapshot ... ok
+test tombstones_allow_file_directory_replacement_without_ambiguous_live_inputs ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/source_attempts.rs (/mnt/c/dev/celetixo/target/debug/deps/source_attempts-40a705cb517aae40)
+
+running 20 tests
+test a_mandatory_dependency_promotes_an_optional_check_without_losing_provenance ... ok
+test candidate_credential_admission_covers_changed_and_unchanged_effective_files ... ok
+test admission_and_legal_execution_flow_preserve_authoritative_source_and_revision ... ok
+test idempotency_preserves_one_attempt_and_rejects_conflicting_or_parallel_work ... ok
+test incomplete_analysis_never_becomes_execution_safe_through_a_small_patch ... ok
+test invariant_scopes_reach_sibling_dependencies_and_cannot_be_omitted_from_plan ... ok
+test new_complete_analysis_requires_matching_policy_before_fresh_analysis ... ok
+test numeric_reference_invariant_is_not_relabelled_as_a_source_property ... ok
+test cancellation_expiry_and_revocation_prevent_continuation ... ok
+test optional_checks_are_bound_to_idempotency_and_cannot_remove_mandatory_checks ... ok
+test only_installed_exact_public_review_can_admit_a_new_sensitive_path ... ok
+test oversized_optional_selection_reserves_neither_an_attempt_nor_an_idempotency_key ... ok
+test policy_cas_invalidates_prepolicy_analysis_without_advancing_source ... ok
+test rejected_admission_identity_and_error_survive_policy_fixes_and_lost_responses ... ok
+test terminal_attempts_cannot_be_revived_and_single_claim_survives_competing_handles ... ok
+test unauthorized_principal_cannot_poison_an_owners_attempt_or_idempotency_identity ... ok
+test stale_or_forged_patch_binding_and_undeclared_paths_are_rejected_before_attempt ... ok
+test retry_uses_new_identity_and_cannot_rewrite_failed_attempt_history ... ok
+test unknown_and_explicitly_required_optional_checks_reject_without_runnable_work ... ok
+test worker_verifier_session_cannot_replace_separate_scoped_executor_capability ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/source_evidence.rs (/mnt/c/dev/celetixo/target/debug/deps/source_evidence-d02aa104e6023b6a)
+
+running 25 tests
+test an_exact_replay_only_acknowledges_history_after_owner_and_lease_invalidation ... ok
+test canonical_comparison_uses_the_same_bytes_that_were_digest_verified ... ok
+test competing_delivery_rechecks_state_and_retains_one_immutable_outcome ... ok
+test authority_expiry_revocation_policy_and_cancellation_during_storage_io_are_rechecked ... ok
+test diagnostics_cannot_be_waived_by_registry_configuration ... ok
+test artifact_contract_substitution_and_unplanned_objects_reject_instead_of_becoming_success ... ok
+test complete_bound_records_derive_pass_without_advancing_source_revision_or_granting_publication ... ok
+test duplicate_acknowledgement_requires_the_original_claim_and_storage_registration ... ok
+test empty_check_sets_and_forged_executor_bindings_cannot_enter_the_admission_gate ... ok
+test every_required_check_object_must_exist_under_its_verified_address ... ok
+test aggregate_persisted_payload_budget_is_checked_before_storage_io ... ok
+test failed_attempt_evidence_remains_immutable_and_cannot_satisfy_a_fresh_retry ... ok
+test executor_and_artifact_store_scope_or_origin_cannot_be_substituted ... ok
+test immutable_duplicate_delivery_and_lost_retention_response_return_the_original_outcome ... ok
+test legacy_envelope_media_is_not_relabelled_as_current_attested_evidence ... ok
+test nonzero_and_signal_are_retained_as_failed_execution_not_verified_source ... ok
+test missing_required_artifact_persistence_and_injected_io_failures_retain_no_green_state ... ok
+test pre_admission_future_and_expired_record_times_are_rejected ... ok
+test every_canonical_provenance_object_is_required_and_must_be_retrievable ... ok
+test required_global_provenance_and_execution_record_bytes_are_independently_verified ... ok
+test substituted_check_plan_candidate_backend_toolchain_environment_and_limits_are_rejected ... ok
+test terminal_failed_attempts_cannot_accept_late_success_even_after_a_retry_starts ... ok
+test v2_attestation_is_identity_bound_and_an_unattested_claim_cannot_authorize_evidence ... ok
+test the_sealed_envelope_scope_retention_media_label_and_bytes_are_not_producer_assertions ... ok
+test missing_results_truncation_resource_overruns_timeout_and_unknown_termination_stay_incomplete ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.71s
+
+     Running tests/source_execution_plans.rs (/mnt/c/dev/celetixo/target/debug/deps/source_execution_plans-31b067bf7e2e5978)
+
+running 17 tests
+test command_t0_host_lookup_escaping_paths_and_missing_execution_logs_fail ... ok
+test credential_environment_keys_require_scoped_references_even_without_a_known_value_pattern ... ok
+test backend_network_and_credential_grants_cannot_be_widened ... ok
+test definition_delivery_order_is_irrelevant_and_requirement_provenance_is_bound ... ok
+test every_resource_dimension_must_fit_and_zero_limits_are_invalid ... ok
+test candidate_input_digests_and_working_directory_are_independently_checked ... ok
+test full_check_identity_binds_all_execution_relevant_dimensions ... ok
+test literal_environment_material_is_screened_even_under_an_ordinary_key ... ok
+test live_incomplete_and_relabelled_capture_cannot_become_complete_by_policy ... ok
+test missing_substituted_duplicate_and_unsupported_requirements_fail_explicitly ... ok
+test optional_dependency_is_promoted_when_also_required_transitively ... ok
+test patch_policy_cannot_widen_symlinks_or_payload_limits ... ok
+test path_rules_bind_exact_preimages_operations_guards_and_new_paths ... ok
+test plan_and_cache_identity_bind_result_patch_analysis_policy_and_platform ... ok
+test planner_unions_mandatory_sources_and_orders_dependency_closure ... ok
+test stale_scope_snapshot_and_analysis_cannot_build_a_plan ... ok
+test policy_rejects_dormant_missing_dependencies_cycles_and_duplicate_definitions ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/source_patches.rs (/mnt/c/dev/celetixo/target/debug/deps/source_patches-375060c64baef366)
+
+running 16 tests
+test arbitrary_reserved_base_content_cannot_be_silently_omitted_as_metadata ... ok
+test all_layer_provenance_uncertainty_environment_and_exclusions_are_retained ... ok
+test binary_operations_preserve_source_and_revision_and_replay_exactly ... ok
+test conflicting_operations_and_occupied_destinations_reject_without_any_source_mutation ... ok
+test malformed_canonical_bytes_and_decoder_resource_amplification_fail_closed ... ok
+test final_graph_checks_case_fold_inferred_directories_and_file_ancestors ... ok
+test exact_base_and_all_preimages_are_required_including_kind_and_mode ... ok
+test noncanonical_operation_order_is_rejected_instead_of_silently_normalized_on_decode ... ok
+test relative_parent_components_require_actual_directories_before_normalization ... ok
+test noops_empty_patches_invalid_bindings_and_result_limits_are_explicit ... ok
+test canonical_operation_order_roundtrips_and_exact_envelope_bindings_change_identity ... ok
+test simultaneous_rename_swaps_and_longer_cycles_have_no_order_dependence ... ok
+test replay_validation_rejects_an_application_from_a_different_patch ... ok
+test portable_path_profile_rejects_traversal_control_unicode_and_windows_ambiguity ... ok
+test unknown_reserved_application_environment_rejects_and_prior_uncertainty_survives_reapplication ... ok
+test symlink_operations_need_explicit_policy_and_targets_are_checked_against_final_graph ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/lib.rs (/mnt/c/dev/celetixo/target/debug/deps/celetixo_execution-4c9fb11f40ec2fca)
+
+running 16 tests
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... FAILED
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+
+failures:
+
+---- coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed stdout ----
+
+thread 'coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed' (17415) panicked at crates/execution/src/coordinator_tests.rs:1043:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed
+
+test result: FAILED. 14 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.57s
+
+error: test failed, to rerun pass `-p celetixo-execution --lib`
+
+EXIT 101

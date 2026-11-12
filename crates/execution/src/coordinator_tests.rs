@@ -1040,9 +1040,30 @@ fn registry_retention_corruption_symlinks_and_limits_fail_closed() {
     assert!(root.exists());
     std::fs::remove_file(root.join("execution-retention.json")).unwrap();
     std::fs::write(root.join("workspace.json"), b"corrupt ownership").unwrap();
+    // Concurrent subprocess creation can briefly inherit an open owner file
+    // description until exec closes CLOEXEC descriptors. Recovery must retain a
+    // held owner as live; wait boundedly for that ownership to end before testing
+    // corrupted-record classification. Never delete or ignore a live result.
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
+    let corrupt_recovery = loop {
+        let report = registry.recover(&h.engine, &cap).unwrap();
+        if report.live.is_empty() {
+            break report;
+        }
+        assert_eq!(report.live, vec![root.clone()]);
+        assert!(report.removed.is_empty());
+        assert!(report.quarantined.is_empty());
+        assert!(root.exists());
+        assert!(
+            std::time::Instant::now() < deadline,
+            "owner remained live: {report:?}"
+        );
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    };
     assert_eq!(
-        registry.recover(&h.engine, &cap).unwrap().quarantined.len(),
-        1
+        corrupt_recovery.quarantined.len(),
+        1,
+        "{corrupt_recovery:?}"
     );
     // A symlink occupying a workspace name never authorizes outside deletion.
     let moved = h._workspace_parent.path().join("outside");
@@ -1085,6 +1106,32 @@ fn registry_retention_corruption_symlinks_and_limits_fail_closed() {
         Err(WorkspaceError::Limit)
     ));
     assert_eq!(std::fs::read_dir(small.path()).unwrap().count(), 2);
+}
+
+#[test]
+fn aliased_owner_descriptor_retains_source_until_release_then_corruption_quarantines() {
+    let h = Fixture::new(false);
+    claim(&h);
+    let cap = workspace_cleanup(&h, &h.workspaces);
+    let workspace = registered_workspace(&h, &h.workspaces);
+    let root = workspace.source_path().parent().unwrap().to_path_buf();
+    // dup and pre-exec inherited descriptors share the same open description
+    // and flock lifetime. A second path-based open would not model that lifetime.
+    let inherited_owner = workspace.duplicate_owner_for_test().unwrap();
+    workspace.quarantine("controller relinquished this copy");
+    std::fs::write(root.join("workspace.json"), b"corrupt ownership").unwrap();
+    let held = h.workspaces.recover(&h.engine, &cap).unwrap();
+    assert_eq!(held.live, vec![root.clone()]);
+    assert!(held.removed.is_empty());
+    assert!(held.quarantined.is_empty());
+    assert!(root.join("source/main.txt").exists());
+    drop(inherited_owner);
+    let released = h.workspaces.recover(&h.engine, &cap).unwrap();
+    assert!(released.live.is_empty());
+    assert!(released.removed.is_empty());
+    assert_eq!(released.quarantined.len(), 1);
+    assert_eq!(released.quarantined[0].0, root);
+    assert!(root.join("source/main.txt").exists());
 }
 
 #[test]

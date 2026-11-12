@@ -1,6 +1,6 @@
 # Goal 04 progress and foundation validation
 
-**Status:** active; 04.1a–04.1c foundations verified; Goal 04 and milestone 04.1 remain incomplete.
+**Status:** active; 04.1a–04.1d foundations verified; Goal 04 and milestone 04.1 remain incomplete.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -12,13 +12,57 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 
 | Milestone | Current evidence / remaining work |
 |---|---|
-| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a supplies migrations, checked immutable snapshots and protocol prerequisites. 04.1b separates live capabilities/readers from records. 04.1c adds checked model/analysis reconstruction and immutable candidate storage. Routing the complete Engine lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
+| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a supplies schema/snapshot/protocol prerequisites; 04.1b separates runtime resources; 04.1c retains checked semantic candidates; 04.1d separates state evaluation/publication. Routing the complete lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
 | 04.2 — Multi-instance atomic commit | Pending: independent Engine processes, authoritative SQL commit/CAS, complete request-bound idempotency, races and crash-ambiguity reconciliation. |
 | 04.3 — Transactional events | Schema placeholders exist. No outbox publisher, inbox consumer or real NATS integration yet. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. Existing local Goal 03 storage is unchanged. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
 | 04.7 — End-to-end operational proof | Pending: complete real-service path, multi-instance/fault/security/load tests, backup/restore drills and measured operational baselines. |
+
+## 04.1d — Explicit state evaluation and publication
+
+The [state-access contract](goal-04-state-access.md) defines private read/update
+callbacks, staged reference-state publication and separate domain/publication
+outcomes. Domain rejection can retain intended idempotency/reconciliation state;
+publication failure cannot acknowledge it. Panics discard the private stage and
+leave the reference store unavailable. Evidence I/O remains outside callbacks,
+followed by fresh authority validation. Coupled adapter registration/revocation
+retains its separate explicit state/runtime lock boundary.
+
+[Source-bound checks](goal-04-state-access-validation/checks.json) and the
+[raw log](goal-04-state-access-validation/checks.log) record 374 workspace tests
+passed (21 opt-in tests ignored), eight real PostgreSQL groups, ten actual Linux
+T1 OCI/source-flow tests, strict Clippy, formatting, example builds and the
+compatible/conflicting concurrent-transaction example. Four new publication/panic
+tests accompany the existing generated-history oracle, idempotent rejection,
+lost-response, authorization, lease and evidence-race tests.
+
+The first workspace run failed a corrupted-ownership recovery-fixture assertion.
+Its [original output](goal-04-state-access-validation/initial-failure.log) is
+preserved. The exact initial scheduling cause was not captured. An isolated run
+and [20 parallel diagnostic runs](goal-04-state-access-validation/recovery-reproduction.log)
+passed before correction. A new deterministic descriptor-alias test demonstrates
+that recovery must retain a still-held owner as live before classifying corrupted
+ownership. The original fixture now waits boundedly for that owner to end and
+retains its quarantine assertion and all security checks. Production recovery is
+unchanged; see the contract and record for the precise evidence limits.
+
+The [mechanical audit](goal-04-state-access-validation/mechanical-audit.json)
+compares 38 wrapped operations to `8fae233` after accounting for callback wrapping,
+reborrows and formatting. Its [script](goal-04-state-access-validation/mechanical-audit.py)
+is a limited lexical aid, not a proof of Rust equivalence. The separately refactored
+evidence preparation/retention path is covered by its existing adversarial/race
+suite and actual T1 tests.
+
+The reference adapter copies retained state on updates; this is an explicit
+harness cost, not a whole-Database persistence design. One direct debug-history
+test observation was 2.14 seconds and 5,468 KiB maximum resident memory; the
+[raw measurement](goal-04-state-access-validation/histories-memory.txt) binds its
+exact executable. It is not a capacity benchmark, performance target or SLO.
+No SQL lifecycle, durable authorization/fencing, multi-process commit or later
+service completion is claimed. The fixture was stopped with data preserved;
+unrun checks are listed in the source-bound record.
 
 ## 04.1c — Checked semantic records and PostgreSQL candidate catalog
 

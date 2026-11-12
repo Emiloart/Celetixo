@@ -1,0 +1,460 @@
+RUN 1
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.25s
+
+EXIT 0
+RUN 2
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+EXIT 0
+RUN 3
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.11s
+
+EXIT 0
+RUN 4
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+EXIT 0
+RUN 5
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+EXIT 0
+RUN 6
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.25s
+
+EXIT 0
+RUN 7
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.24s
+
+EXIT 0
+RUN 8
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.32s
+
+EXIT 0
+RUN 9
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.21s
+
+EXIT 0
+RUN 10
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.20s
+
+EXIT 0
+RUN 11
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.17s
+
+EXIT 0
+RUN 12
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+EXIT 0
+RUN 13
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.27s
+
+EXIT 0
+RUN 14
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.41s
+
+EXIT 0
+RUN 15
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.27s
+
+EXIT 0
+RUN 16
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.28s
+
+EXIT 0
+RUN 17
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.35s
+
+EXIT 0
+RUN 18
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.41s
+
+EXIT 0
+RUN 19
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.27s
+
+EXIT 0
+RUN 20
+
+running 16 tests
+test coordinator::tests::registry_hard_kill_child ... ignored, internal hard-kill helper; invoked by registry_survives_hard_kills_before_and_during_copy
+test oci::linux::publication_tests::missing_pid_marker_waits_but_invalid_and_aliased_markers_fail ... ok
+test coordinator::tests::interrupted_removal_that_loses_ownership_quarantines_instead_of_inventing_authority ... ok
+test coordinator::tests::registry_cleanup_rechecks_scope_store_profile_revocation_expiry_and_path_identity ... ok
+test coordinator::tests::a_neutral_backend_cannot_replace_missing_observations_with_a_passing_status ... ok
+test coordinator::tests::registry_recovers_only_dead_unretained_owned_copies_without_restoring_execution ... ok
+test coordinator::tests::registry_retention_corruption_symlinks_and_limits_fail_closed ... ok
+test coordinator::tests::registry_rechecks_engine_authority_during_copy_without_trusting_the_caller_hook ... ok
+test coordinator::tests::cancellation_and_executor_revocation_stop_materialization_or_partial_persistence ... ok
+test coordinator::tests::a_neutral_backend_missing_required_observations_retains_incomplete_failure_evidence ... ok
+test coordinator::tests::registry_survives_hard_kills_before_and_during_copy ... ok
+test coordinator::tests::a_mismatched_request_grants_no_claim_and_does_not_poison_the_valid_request ... ok
+test coordinator::tests::duplicate_claim_and_repeat_execution_never_launch_a_second_check ... ok
+test coordinator::tests::failed_prerequisite_records_the_dependent_as_skipped_and_cannot_turn_green ... ok
+test coordinator::tests::forged_backend_bindings_are_rejected_before_artifact_publication ... ok
+test coordinator::tests::finite_bridge_persists_exact_evidence_and_independently_admits_pass_or_failure ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.64s
+
+EXIT 0
