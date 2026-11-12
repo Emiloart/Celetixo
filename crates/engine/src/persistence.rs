@@ -16,6 +16,9 @@ mod lifecycle;
 mod metadata;
 mod outcome;
 mod semantic;
+mod source_admission;
+mod source_evidence;
+mod source_execution;
 pub use lifecycle::{
     ImpactAnalysisRecord, NativeIntentRecord, VerificationEvidenceRecord, restore_access_set,
     restore_commit_request, restore_impact_record, restore_native_intent, restore_reference_patch,
@@ -28,6 +31,17 @@ pub use outcome::{
     AccessProvenanceRecord, CommitOutcomeRecord, restore_access_provenance, restore_commit_outcome,
 };
 pub use semantic::{EngineeringModelRecord, restore_model_record, restore_repository_analysis};
+pub use source_admission::{
+    SourceAdmissionDependencies, SourceAdmissionRecord, restore_source_admission,
+};
+pub use source_evidence::{
+    SourceCheckRecordBinding, restore_source_check_record, restore_source_evidence,
+};
+pub use source_execution::{
+    CheckSpecRecord, PatchPolicyRecord, SourceCheckDefinitionRecord, SourceExecutionPolicyRecord,
+    VerificationPlanRecord, restore_check_spec, restore_patch_policy,
+    restore_source_check_definition, restore_source_execution_policy, restore_verification_plan,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub struct SnapshotDecodeLimits {
@@ -77,6 +91,14 @@ pub enum RestoreError {
     RepositoryAnalysis(#[from] crate::repository::RepositoryAnalysisError),
     #[error(transparent)]
     Snapshot(#[from] SnapshotError),
+    #[error(transparent)]
+    SourceAttempt(#[from] crate::engine::SourceAttemptError),
+    #[error(transparent)]
+    SourceEvidence(#[from] crate::source_evidence::SourceEvidenceError),
+    #[error(transparent)]
+    SourcePlan(#[from] crate::source_execution::SourcePlanError),
+    #[error(transparent)]
+    SourcePatch(#[from] crate::source_patch::SourcePatchError),
 }
 
 /// Restore the existing Goal 01 canonical snapshot format without changing its

@@ -1,0 +1,23 @@
+{
+  "kind": "pre-publication review findings; all resolved before final source-bound checks",
+  "findings": [
+    {
+      "finding": "Referenced definitions could be hashed/cloned without caller aggregate field/data bounds.",
+      "resolution": "Nonallocating dependency preflight precedes hashing/cloning and shares byte/entry/field limits."
+    },
+    {
+      "finding": "Malformed plans could omit mandatory/dependency branches or large invariant rationale fanout, then trigger resolver allocations before rejection.",
+      "resolution": "Conservatively charge full registry, requirements, dependency and invariant rationale context before resolution; add adversarial omitted-branch/fanout tests."
+    },
+    {
+      "finding": "Admission replay could allocate a large checked base/patch/plan after parsing a small record.",
+      "resolution": "Preflight plan plus layered base/patch/candidate upper bound, generated provenance and key growth before clone/replay."
+    },
+    {
+      "finding": "Some truncation tests stopped at original-digest mismatch; one budget fixture referenced a different policy.",
+      "resolution": "Rehash prefixes and use correct expected policy so tests reach parsing and intended allocation checks."
+    }
+  ],
+  "independent_review": "Source execution, evidence and admission code/tests reviewed; no remaining actionable defect reported. Review is not proof of complete source authority or semantics.",
+  "original_worktree_preserved": "README.md and .env metadata unchanged; .env contents never read."
+}

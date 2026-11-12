@@ -224,6 +224,12 @@ unsupported source state rather than omitting it. Use the
 [session handoff](docs/implementation/goal-04-session-handoff.md) for remaining
 full-goal work and preserved operating context.
 
+The [04.1i source codecs](docs/implementation/goal-04-source-codecs.md) preserve
+existing policy/plan/admission/evidence identities with explicit checked
+dependencies and aggregate decoding budgets. Use them when implementing complete
+historical source records. Reconstructed metadata cannot restore runtime grants,
+authorize a plan, establish object durability or enable source publication.
+
 ### Phase 7 — Real worker integration and evaluation
 
 Connect real coding workers through provider-neutral adapters. Run tasks against immutable repository snapshots and pass every patch through the same transaction and verification path.

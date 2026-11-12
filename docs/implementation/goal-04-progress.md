@@ -1,6 +1,6 @@
 # Goal 04 progress and foundation validation
 
-**Status:** resumed at the user's request on 2026-11-12 from 04.1f (`f1f2b83`). 04.1a–04.1g prerequisites and registration integration are verified. 04.1h bounded native SQL lifecycle integration is verified. Goal 04 and milestone 04.1 remain incomplete.
+**Status:** resumed at the user's request on 2026-11-12 from 04.1f (`f1f2b83`). 04.1a–04.1g prerequisites and registration integration are verified. 04.1h bounded native SQL lifecycle integration is verified. 04.1i checked source metadata codecs are verified. Goal 04 and milestone 04.1 remain incomplete.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -19,6 +19,27 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. Existing local Goal 03 storage is unchanged. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
 | 04.7 — End-to-end operational proof | Pending: complete real-service path, multi-instance/fault/security/load tests, backup/restore drills and measured operational baselines. |
+
+## 04.1i — Checked source metadata recovery prerequisites
+
+The [source codec contract](goal-04-source-codecs.md) adds bounded reconstruction
+of existing full CheckSpec/PatchPolicy definitions, source checks/policies/plans,
+historical admissions and execution/evidence metadata. Dependency definitions,
+semantic requirements and original authorization provenance are checked
+independently; canonical formats and default credential admission are unchanged.
+Dependency budgets precede hashing/cloning/resolution/replay. No runtime
+capability or durable-object availability follows from restored metadata.
+
+[Checks](goal-04-source-codecs-validation/checks.json) and
+[log](goal-04-source-codecs-validation/checks.log) record 427 passing workspace
+tests (45 opt-in tests ignored), strict Clippy, formatting, examples, workflow/
+protocol checks and 25 attribution fixtures. The 18 new tests cover independent
+layouts, substitution/canonical attacks, dependency-budget amplification and
+historical authority separation. Real PostgreSQL/T1/LSP probes are not rerun for
+these pure codecs; earlier evidence remains separately scoped, hosted CI unconfirmed.
+Complete normalized source state, scoped runtime resolution, SQL reopen and
+atomic source publication are the next integration gates. Exact non-commit
+mutation reconciliation and every remaining 04.2–04.7 requirement remain active.
 
 ## 04.1h — Native PostgreSQL lifecycle/commit integration
 
@@ -482,12 +503,13 @@ readiness, whole-goal completion or service-level performance claim is made.
 
 ## Next implementation boundary
 
-Extend the [bounded PostgreSQL registration adapter](goal-04-registration-authority.md)
-through the complete normalized native lifecycle, preserving transient
-reader/capability separation. Use its shared repository lock/version, live schema
-fence and database clock protocol. Preserve mutations that intentionally persist
-a rejection/revalidation outcome, keep artifact reads outside long transactions,
-retain exact request bodies and require confirmed SQL commit before acknowledgement.
+Extend the [native SQL profile](goal-04-native-sql-authority.md) through complete
+normalized source state, using the [checked source codecs](goal-04-source-codecs.md)
+without restoring transient reader/capability authority. Preserve historical
+definitions, original request bodies, rejected outcomes and independent admission
+facts. Keep artifact I/O outside long transactions; recheck scoped registrations,
+policy/generation and authorization afterward, and acknowledge only confirmed
+durable publication.
 
 The subsequent gate is equivalence with the independently structured reference
 oracle plus process restart, grant/policy revocation, lease expiry/fencing and

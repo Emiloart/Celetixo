@@ -4,7 +4,8 @@
 (`f1f2b83a4193f483c79216ed6e8140a75d9ecea6`). The following preserves the original
 pause context; consult current [progress](goal-04-progress.md) and the
 [04.1g PostgreSQL registration adapter](goal-04-registration-authority.md) for
-subsequent work, followed by the [04.1h native SQL profile](goal-04-native-sql-authority.md). Goal 04 is not complete; preserve the entire accepted
+subsequent work, followed by the [04.1h native SQL profile](goal-04-native-sql-authority.md)
+and [04.1i checked source codecs](goal-04-source-codecs.md). Goal 04 is not complete; preserve the entire accepted
 [seven-milestone objective](goal-04.md). Its contract SHA-256 remains
 `339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743`.
 
@@ -61,6 +62,9 @@ Continue the entire accepted goal from these remaining gates:
    using checked normalized records and fresh adapter resolution. Preserve every
    source attempt, receipt, cleanup grant, artifact registration and governed
    provenance relation. Do not reinterpret native reference proof as source proof.
+   The 04.1i pure codecs supply checked immutable dependencies; complete source
+   AuthorityState records, fresh runtime resolution and SQL enablement still
+   require implementation and cold-process recovery proof.
 2. Add exact durable administrative request identities/digests/results for grants,
    revocation, registration and model/policy mutation, plus every externally
    retriable lifecycle mutation (including reservation, renewal and cancellation).

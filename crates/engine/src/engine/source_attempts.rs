@@ -229,6 +229,72 @@ impl SourceAdmission {
             &self.canonical_bytes(),
         ))
     }
+
+    /// Reconstruct immutable historical metadata, never a live capability.
+    /// The caller must independently restore the historical semantic writes
+    /// and resolve the plan from Engine-derived requirements. Current grants,
+    /// leases, policy heads and external objects still require fresh checks.
+    pub(crate) fn restore_checked(
+        base: &Snapshot,
+        patch: &SourcePatch,
+        policy: &SourceExecutionPolicy,
+        plan: VerificationPlan,
+        authorization: SourceAuthorizationProvenance,
+        admitted_at_ms: u64,
+        effective_writes: &BTreeSet<ElementId>,
+    ) -> Result<Self, SourceAttemptError> {
+        let binding = patch.binding();
+        if authorization.principal != binding.principal
+            || admitted_at_ms < binding.created_at_ms
+            || admitted_at_ms >= binding.expires_at_ms
+            || binding.expires_at_ms > policy.input().expires_at_ms
+        {
+            return Err(SourceAttemptError::BindingMismatch);
+        }
+        policy.validate_patch_paths(patch, base, effective_writes)?;
+        let application = patch.apply(base)?;
+        for (path, input) in crate::snapshot::effective_workspace(application.snapshot())
+            .map_err(|_| SourceAttemptError::BindingMismatch)?
+        {
+            if let Some(bytes) = input.bytes {
+                policy.input().credentials.admit_input(&path, &bytes)?;
+            }
+        }
+        let expected_binding = SourcePlanBinding {
+            scope: binding.scope.clone(),
+            base_snapshot: binding.base_snapshot,
+            analysis_artifact: binding.analysis_artifact,
+            index_generation: binding.index_generation,
+            impact_request: binding.impact_request,
+            impact_result: binding.impact_result,
+            patch: patch.id(),
+            operation_digest: patch.operation_digest(),
+            resulting_snapshot: application.snapshot().id(),
+            resulting_manifest: application.snapshot().manifest().digest(),
+        };
+        if plan.policy() != policy.digest() || plan.binding() != &expected_binding {
+            return Err(SourceAttemptError::BindingMismatch);
+        }
+        plan.validate_resulting_snapshot(application.snapshot())?;
+        let mut admission = Self {
+            id: SourceAdmissionId(Digest::from_bytes([0; 32])),
+            binding: binding.clone(),
+            patch: patch.id(),
+            operation_digest: patch.operation_digest(),
+            resulting_snapshot: application.snapshot().id(),
+            resulting_manifest: application.snapshot().manifest().digest(),
+            application_report: application.report().digest(),
+            policy: policy.digest(),
+            policy_generation: policy.input().generation,
+            plan,
+            authorization,
+            admitted_at_ms,
+            expires_at_ms: binding.expires_at_ms,
+            retention_policy: policy.input().retention_policy,
+        };
+        admission.id = admission.compute_id();
+        Ok(admission)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

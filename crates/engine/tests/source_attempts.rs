@@ -5,12 +5,317 @@ use celetixo_engine::credentials::CredentialError;
 use celetixo_engine::engine::*;
 use celetixo_engine::evidence::CheckSpec;
 use celetixo_engine::ids::*;
+use celetixo_engine::persistence::{
+    DomainDecodeLimits, RestoreError, SourceAdmissionDependencies, SourceAdmissionRecord,
+    restore_source_admission,
+};
 use celetixo_engine::repository::*;
 use celetixo_engine::snapshot::*;
 use celetixo_engine::source_execution::*;
 use celetixo_engine::source_patch::*;
 use celetixo_engine::transaction::*;
 use std::collections::{BTreeMap, BTreeSet};
+
+mod admission_persistence {
+    use super::*;
+
+    fn fixture() -> (Harness, SourcePatch, SourceAdmission, BTreeSet<ElementId>) {
+        let h = Harness::new(false);
+        let tx = h.execute("durable-admission");
+        let patch = h.patch(&tx, "historical-attempt");
+        let admission = h
+            .engine
+            .admit_source_attempt(
+                &h.owner,
+                &scope(),
+                patch.clone(),
+                IdempotencyKey::new("historical-operation").unwrap(),
+            )
+            .unwrap();
+        (h, patch, admission, [element("file:main")].into())
+    }
+
+    // Independent layout encoder: deliberately does not use Canonical or the
+    // record writer. It names every existing source-admission/v1 field.
+    fn fields(a: &SourceAdmission) -> Vec<Vec<u8>> {
+        vec![
+            a.patch().0.as_bytes().to_vec(),
+            a.operation_digest().as_bytes().to_vec(),
+            a.resulting_snapshot().0.as_bytes().to_vec(),
+            a.resulting_manifest().as_bytes().to_vec(),
+            a.application_report().as_bytes().to_vec(),
+            a.policy().as_bytes().to_vec(),
+            a.policy_generation().to_be_bytes().to_vec(),
+            a.plan().id().0.as_bytes().to_vec(),
+            a.authorization().principal.as_str().as_bytes().to_vec(),
+            a.authorization().capability_reference.as_bytes().to_vec(),
+            a.admitted_at_ms().to_be_bytes().to_vec(),
+            a.expires_at_ms().to_be_bytes().to_vec(),
+            a.retention_policy().as_bytes().to_vec(),
+        ]
+    }
+    fn encode(fields: &[Vec<u8>]) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        for field in fields {
+            bytes.extend_from_slice(&(field.len() as u64).to_be_bytes());
+            bytes.extend_from_slice(field);
+        }
+        bytes
+    }
+    fn restore(
+        h: &Harness,
+        patch: &SourcePatch,
+        admission: &SourceAdmission,
+        writes: &BTreeSet<ElementId>,
+        bytes: &[u8],
+        limits: DomainDecodeLimits,
+    ) -> Result<SourceAdmission, RestoreError> {
+        restore_source_admission(
+            SourceAdmissionDependencies {
+                base: &h.base,
+                patch,
+                policy: &h.policy,
+                plan: admission.plan(),
+                effective_writes: writes,
+                authorization: admission.authorization(),
+            },
+            SourceAdmissionId(Digest::of(SourceAdmissionRecord::FORMAT, bytes)),
+            bytes,
+            limits,
+        )
+    }
+
+    #[test]
+    fn historical_admission_replays_exact_layout_after_revocation_and_expiry() {
+        let (h, patch, admission, writes) = fixture();
+        let bytes = encode(&fields(&admission));
+        assert_eq!(bytes, admission.canonical_bytes());
+        assert_eq!(
+            Digest::of(SourceAdmissionRecord::FORMAT, &bytes),
+            admission.id().0
+        );
+        let record = SourceAdmissionRecord::new(admission.clone());
+        assert_eq!(record.admission(), &admission);
+        assert_eq!(record.digest(), admission.id().0);
+        assert_eq!(record.canonical_bytes(), bytes);
+        h.admin.revoke(&h.owner).unwrap();
+        h.admin.advance_time(20_000).unwrap();
+        assert_eq!(
+            restore(&h, &patch, &admission, &writes, &bytes, Default::default()).unwrap(),
+            admission
+        );
+        // Metadata reconstruction cannot restore revoked session authority.
+        assert_eq!(
+            h.engine.current(&h.owner, &scope()),
+            Err(EngineError::Unauthorized)
+        );
+        assert!(
+            h.engine
+                .claim_source_attempt(&h.executor, &admission)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn every_admission_dependency_and_historical_grant_is_bound() {
+        let (h, patch, admission, writes) = fixture();
+        let original = fields(&admission);
+        for index in [0, 1, 2, 3, 4, 5, 7, 9, 12] {
+            let mut changed = original.clone();
+            changed[index] = vec![42; 32];
+            assert!(
+                matches!(
+                    restore(
+                        &h,
+                        &patch,
+                        &admission,
+                        &writes,
+                        &encode(&changed),
+                        Default::default()
+                    ),
+                    Err(RestoreError::BindingMismatch)
+                ),
+                "field {index}"
+            );
+        }
+        for (index, value) in [
+            (6, 2),
+            (10, admission.expires_at_ms()),
+            (11, admission.expires_at_ms() + 1),
+        ] {
+            let mut changed = original.clone();
+            changed[index] = value.to_be_bytes().to_vec();
+            assert!(
+                restore(
+                    &h,
+                    &patch,
+                    &admission,
+                    &writes,
+                    &encode(&changed),
+                    Default::default()
+                )
+                .is_err(),
+                "field {index}"
+            );
+        }
+        let mut changed = original.clone();
+        changed[8] = b"another-principal".to_vec();
+        assert_eq!(
+            restore(
+                &h,
+                &patch,
+                &admission,
+                &writes,
+                &encode(&changed),
+                Default::default()
+            ),
+            Err(RestoreError::BindingMismatch)
+        );
+        assert!(matches!(
+            restore(
+                &h,
+                &patch,
+                &admission,
+                &BTreeSet::new(),
+                &encode(&original),
+                Default::default()
+            ),
+            Err(RestoreError::SourceAttempt(_))
+        ));
+        let mut policy_input = h.policy.input().clone();
+        policy_input.generation += 1;
+        let other_policy = SourceExecutionPolicy::new(policy_input).unwrap();
+        let bytes = encode(&original);
+        assert_eq!(
+            restore_source_admission(
+                SourceAdmissionDependencies {
+                    base: &h.base,
+                    patch: &patch,
+                    policy: &other_policy,
+                    plan: admission.plan(),
+                    effective_writes: &writes,
+                    authorization: admission.authorization(),
+                },
+                admission.id(),
+                &bytes,
+                Default::default()
+            ),
+            Err(RestoreError::BindingMismatch)
+        );
+    }
+
+    #[test]
+    fn malformed_admission_and_large_checked_dependencies_fail_with_explicit_budgets() {
+        let (h, patch, admission, writes) = fixture();
+        let bytes = encode(&fields(&admission));
+        for end in 0..bytes.len() {
+            assert!(
+                restore(
+                    &h,
+                    &patch,
+                    &admission,
+                    &writes,
+                    &bytes[..end],
+                    Default::default()
+                )
+                .is_err(),
+                "prefix {end}"
+            );
+        }
+        let mut trailing = bytes.clone();
+        trailing.push(0);
+        assert_eq!(
+            restore(
+                &h,
+                &patch,
+                &admission,
+                &writes,
+                &trailing,
+                Default::default()
+            ),
+            Err(RestoreError::NonCanonical)
+        );
+        for limits in [
+            DomainDecodeLimits {
+                encoded_bytes: bytes.len() - 1,
+                ..Default::default()
+            },
+            // The admission fits; its source/plan dependency graph does not.
+            DomainDecodeLimits {
+                encoded_bytes: bytes.len() + 1,
+                ..Default::default()
+            },
+            DomainDecodeLimits {
+                collection_entries: 1,
+                ..Default::default()
+            },
+            DomainDecodeLimits {
+                field_bytes: 31,
+                ..Default::default()
+            },
+        ] {
+            assert_eq!(
+                restore(&h, &patch, &admission, &writes, &bytes, limits),
+                Err(RestoreError::Limit)
+            );
+        }
+        let mut malformed = fields(&admission);
+        malformed[6] = vec![0; 9];
+        assert_eq!(
+            restore(
+                &h,
+                &patch,
+                &admission,
+                &writes,
+                &encode(&malformed),
+                Default::default()
+            ),
+            Err(RestoreError::Encoding)
+        );
+        let mut malformed = fields(&admission);
+        malformed[8] = vec![0xff];
+        assert_eq!(
+            restore(
+                &h,
+                &patch,
+                &admission,
+                &writes,
+                &encode(&malformed),
+                Default::default()
+            ),
+            Err(RestoreError::Encoding)
+        );
+        let mut malformed = fields(&admission);
+        malformed[8] = b"bad\0principal".to_vec();
+        assert_eq!(
+            restore(
+                &h,
+                &patch,
+                &admission,
+                &writes,
+                &encode(&malformed),
+                Default::default()
+            ),
+            Err(RestoreError::Identity)
+        );
+        assert_eq!(
+            restore_source_admission(
+                SourceAdmissionDependencies {
+                    base: &h.base,
+                    patch: &patch,
+                    policy: &h.policy,
+                    plan: admission.plan(),
+                    effective_writes: &writes,
+                    authorization: admission.authorization(),
+                },
+                SourceAdmissionId(d("wrong-record-address")),
+                &bytes,
+                Default::default()
+            ),
+            Err(RestoreError::DigestMismatch)
+        );
+    }
+}
 
 fn d(value: &str) -> Digest {
     Digest::of("source-attempt-fixture/v1", value.as_bytes())
