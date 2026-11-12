@@ -16,6 +16,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex, MutexGuard};
 use thiserror::Error;
 
+pub mod authority;
 mod commit_request;
 mod runtime;
 mod source_attempts;
@@ -85,6 +86,7 @@ pub struct InMemoryStore {
     // Live capabilities and adapters belong to this embedding, never to stored state.
     identity: Arc<StoreIdentity>,
     source_artifact_readers: Arc<Mutex<SourceArtifactReaders>>,
+    authority: Option<Arc<dyn authority::AuthorityBackend>>,
 }
 
 /// Held only by the trusted embedding application, separate from worker Engine handles.
@@ -163,6 +165,9 @@ pub enum LeaseEventKind {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LeaseEvent {
     pub fence: u64,
+    /// Original scoped grant and attempt at acquisition, retained after revalidation.
+    pub authorization_grant: u64,
+    pub acquisition_attempt: u64,
     pub at: u64,
     pub owner: PrincipalId,
     /// Canonical acquisition order; an entire set is acquired atomically.
@@ -183,6 +188,8 @@ pub enum CommitFault {
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum EngineError {
+    #[error(transparent)]
+    Authority(#[from] authority::AuthorityFailure),
     #[error("authoritative store unavailable or poisoned")]
     StoreUnavailable,
     #[error("unauthorized scoped action")]
@@ -212,6 +219,8 @@ pub enum EngineError {
     InvalidTime,
     #[error("revision or attempt space exhausted")]
     CounterExhausted,
+    #[error("durable commit requires the complete explicit commit request")]
+    CommitRequestRequired,
     #[error(
         "explicit commit request does not match its exact attempt, snapshot, patch, analysis or evidence"
     )]
@@ -266,8 +275,24 @@ struct Grant {
 struct Lease {
     fence: u64,
     owner: u64,
+    acquired_at: u64,
+    acquired_attempt: u64,
     expires_at: u64,
     writes: BTreeSet<ElementId>,
+}
+
+impl Lease {
+    fn event(&self, at: u64, owner: PrincipalId, kind: LeaseEventKind) -> LeaseEvent {
+        LeaseEvent {
+            fence: self.fence,
+            authorization_grant: self.owner,
+            acquisition_attempt: self.acquired_attempt,
+            at,
+            owner,
+            scopes: self.writes.clone(),
+            kind,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -416,6 +441,7 @@ impl InMemoryStore {
             inner: Arc::new(Mutex::new(Database::default())),
             identity: Arc::new(StoreIdentity),
             source_artifact_readers: Arc::new(Mutex::new(SourceArtifactReaders::default())),
+            authority: None,
         };
         let admin = Administrator {
             store: store.clone(),
@@ -423,18 +449,53 @@ impl InMemoryStore {
         (store, admin)
     }
     fn lock(&self) -> Result<MutexGuard<'_, Database>, EngineError> {
+        if self.authority.is_some() {
+            return Err(authority::AuthorityFailure::UnsupportedProfile.into());
+        }
         self.inner.lock().map_err(|_| EngineError::StoreUnavailable)
     }
 }
 
 impl Administrator {
+    /// Fresh authentication by the trusted embedding, followed by a new read of
+    /// the durable grant. Numeric selectors never mint a Session on their own.
+    /// The authenticator runs outside store callbacks and must independently
+    /// authenticate this exact principal/scope; workers cannot hold this admin.
+    pub fn authenticate_existing_session(
+        &self,
+        scope: &Scope,
+        grant_id: u64,
+        authenticate: impl FnOnce(&PrincipalId, &Scope) -> Result<(), EngineError>,
+    ) -> Result<Session, EngineError> {
+        let principal = self.store.administration(scope).read(|db| {
+            let grant = db.grants.get(&grant_id).ok_or(EngineError::Unauthorized)?;
+            if !grant.active || grant.scope != *scope {
+                return Err(EngineError::Unauthorized);
+            }
+            Ok(grant.principal.clone())
+        })?;
+        authenticate(&principal, scope)?;
+        self.store.administration(scope).read(|db| {
+            let grant = db.grants.get(&grant_id).ok_or(EngineError::Unauthorized)?;
+            if !grant.active || grant.scope != *scope || grant.principal != principal {
+                return Err(EngineError::Unauthorized);
+            }
+            Ok(Session {
+                store: self.store.identity.clone(),
+                token: grant_id,
+                principal,
+                scope: scope.clone(),
+            })
+        })
+    }
+
     pub fn grant(
         &self,
         principal: PrincipalId,
         scope: Scope,
         permissions: BTreeSet<Permission>,
     ) -> Result<Session, EngineError> {
-        self.store.update(|db| {
+        self.store.administration(&scope).update(|db| {
             let token = db
                 .next_token
                 .checked_add(1)
@@ -461,7 +522,7 @@ impl Administrator {
         if !Arc::ptr_eq(&self.store.identity, &session.store) {
             return Err(EngineError::Unauthorized);
         }
-        self.store.update(|db| {
+        self.store.administration(&session.scope).update(|db| {
             let grant = db
                 .grants
                 .get_mut(&session.token)
@@ -475,13 +536,11 @@ impl Administrator {
                 if let Some(lease) = &tx.lease
                     && lease.owner == session.token
                 {
-                    tx.lease_history.push(LeaseEvent {
-                        fence: lease.fence,
-                        at: now,
-                        owner: session.principal.clone(),
-                        scopes: lease.writes.clone(),
-                        kind: LeaseEventKind::Revoked,
-                    });
+                    tx.lease_history.push(lease.event(
+                        now,
+                        session.principal.clone(),
+                        LeaseEventKind::Revoked,
+                    ));
                 }
             }
             Ok(())
@@ -490,36 +549,53 @@ impl Administrator {
     /// Monotonic test clock shared by every Engine handle. Actors cannot supply commit time.
     pub fn advance_time(&self, ticks: u64) -> Result<u64, EngineError> {
         self.store.update(|db| {
-            let previous = db.now;
-            db.now = db.now.checked_add(ticks).ok_or(EngineError::InvalidTime)?;
-            let now = db.now;
-            let principals: BTreeMap<_, _> = db
-                .grants
-                .iter()
-                .map(|(token, g)| (*token, g.principal.clone()))
-                .collect();
-            for tx in db.transactions.values_mut() {
-                if let Some(lease) = &tx.lease
-                    && lease.expires_at > previous
-                    && lease.expires_at <= now
-                {
-                    tx.lease_history.push(LeaseEvent {
-                        fence: lease.fence,
-                        at: lease.expires_at,
-                        owner: principals[&lease.owner].clone(),
-                        scopes: lease.writes.clone(),
-                        kind: LeaseEventKind::Expired,
-                    });
-                }
-            }
-            Ok(db.now)
+            let now = db.now.checked_add(ticks).ok_or(EngineError::InvalidTime)?;
+            advance_clock(db, now)
         })
     }
+}
+
+fn advance_clock(db: &mut Database, now: u64) -> Result<u64, EngineError> {
+    if now < db.now {
+        return Err(EngineError::InvalidTime);
+    }
+    let previous = db.now;
+    db.now = now;
+    let principals: BTreeMap<_, _> = db
+        .grants
+        .iter()
+        .map(|(token, g)| (*token, g.principal.clone()))
+        .collect();
+    for tx in db.transactions.values_mut() {
+        if let Some(lease) = &tx.lease
+            && lease.expires_at > previous
+            && lease.expires_at <= now
+        {
+            tx.lease_history.push(lease.event(
+                lease.expires_at,
+                principals[&lease.owner].clone(),
+                LeaseEventKind::Expired,
+            ));
+        }
+    }
+    Ok(db.now)
 }
 
 impl Engine {
     pub fn new(store: InMemoryStore) -> Self {
         Self { store }
+    }
+    /// Trusted embedding selects its authoritative adapter explicitly. This
+    /// creates fresh process-local capability identity, never restored sessions.
+    pub fn with_authority_backend(
+        backend: Arc<dyn authority::AuthorityBackend>,
+    ) -> (Self, Administrator) {
+        let (mut store, _) = InMemoryStore::new();
+        store.authority = Some(backend);
+        let administrator = Administrator {
+            store: store.clone(),
+        };
+        (Self { store }, administrator)
     }
     fn authorize(
         &self,
@@ -550,34 +626,36 @@ impl Engine {
         snapshot: Snapshot,
         model: EngineeringModel,
     ) -> Result<(), EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, snapshot.scope(), Permission::Register)?;
-            // The integer reference harness has no source inputs. Captured workspaces
-            // must enter through the artifact-bound repository registration path.
-            if captured_workspace(&snapshot) {
-                return Err(EngineError::SourceAnalysisRequired);
-            }
-            validate_model(&model)?;
-            if snapshot.revision() != Revision(0) {
-                return Err(EngineError::InvalidIntent(
-                    "initial revision must be zero".into(),
-                ));
-            }
-            if db.repositories.contains_key(snapshot.scope()) {
-                return Err(EngineError::AlreadyExists);
-            }
-            db.repositories.insert(
-                snapshot.scope().clone(),
-                Repository {
-                    snapshots: BTreeMap::from([(snapshot.id(), snapshot.clone())]),
-                    current: snapshot,
-                    model,
-                    history: vec![],
-                    source_analysis: None,
-                },
-            );
-            Ok(())
-        })
+        self.store
+            .session(session, snapshot.scope(), Permission::Register)
+            .update(|db| {
+                self.authorize(db, session, snapshot.scope(), Permission::Register)?;
+                // The integer reference harness has no source inputs. Captured workspaces
+                // must enter through the artifact-bound repository registration path.
+                if captured_workspace(&snapshot) {
+                    return Err(EngineError::SourceAnalysisRequired);
+                }
+                validate_model(&model)?;
+                if snapshot.revision() != Revision(0) {
+                    return Err(EngineError::InvalidIntent(
+                        "initial revision must be zero".into(),
+                    ));
+                }
+                if db.repositories.contains_key(snapshot.scope()) {
+                    return Err(EngineError::AlreadyExists);
+                }
+                db.repositories.insert(
+                    snapshot.scope().clone(),
+                    Repository {
+                        snapshots: BTreeMap::from([(snapshot.id(), snapshot.clone())]),
+                        current: snapshot,
+                        model,
+                        history: vec![],
+                        source_analysis: None,
+                    },
+                );
+                Ok(())
+            })
     }
     /// Register captured source state with an exact analysis artifact. This does not
     /// execute or mutate source. The reference integer-patch path remains unavailable.
@@ -587,30 +665,32 @@ impl Engine {
         snapshot: Snapshot,
         analysis: RepositoryAnalysis,
     ) -> Result<(), EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, snapshot.scope(), Permission::Register)?;
-            self.authorize(db, session, snapshot.scope(), Permission::ManageModel)?;
-            analysis.validate(&snapshot, analysis.index_generation())?;
-            if snapshot.revision() != Revision(0) {
-                return Err(EngineError::InvalidIntent(
-                    "initial revision must be zero".into(),
-                ));
-            }
-            if db.repositories.contains_key(snapshot.scope()) {
-                return Err(EngineError::AlreadyExists);
-            }
-            db.repositories.insert(
-                snapshot.scope().clone(),
-                Repository {
-                    snapshots: BTreeMap::from([(snapshot.id(), snapshot.clone())]),
-                    current: snapshot,
-                    model: analysis.model(1),
-                    history: vec![],
-                    source_analysis: Some(analysis),
-                },
-            );
-            Ok(())
-        })
+        self.store
+            .session(session, snapshot.scope(), Permission::Register)
+            .update(|db| {
+                self.authorize(db, session, snapshot.scope(), Permission::Register)?;
+                self.authorize(db, session, snapshot.scope(), Permission::ManageModel)?;
+                analysis.validate(&snapshot, analysis.index_generation())?;
+                if snapshot.revision() != Revision(0) {
+                    return Err(EngineError::InvalidIntent(
+                        "initial revision must be zero".into(),
+                    ));
+                }
+                if db.repositories.contains_key(snapshot.scope()) {
+                    return Err(EngineError::AlreadyExists);
+                }
+                db.repositories.insert(
+                    snapshot.scope().clone(),
+                    Repository {
+                        snapshots: BTreeMap::from([(snapshot.id(), snapshot.clone())]),
+                        current: snapshot,
+                        model: analysis.model(1),
+                        history: vec![],
+                        source_analysis: Some(analysis),
+                    },
+                );
+                Ok(())
+            })
     }
     /// A fresh analysis may replace facts only for the exact current captured snapshot.
     /// It cannot advance repository revision or import an unverified workspace mutation.
@@ -624,35 +704,37 @@ impl Engine {
         expected_artifact: Digest,
         analysis: RepositoryAnalysis,
     ) -> Result<(), EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::ManageModel)?;
-            let repo = db
-                .repositories
-                .get_mut(scope)
-                .ok_or(EngineError::NotFound)?;
-            if repo.source_analysis.is_none() {
-                return Err(EngineError::SourceAnalysisRequired);
-            }
-            analysis.validate(&repo.current, analysis.index_generation())?;
-            if repo.source_analysis.as_ref() == Some(&analysis) {
-                return Ok(());
-            }
-            if repo
-                .source_analysis
-                .as_ref()
-                .is_none_or(|current| current.digest() != expected_artifact)
-            {
-                return Err(RepositoryAnalysisError::StaleGeneration.into());
-            }
-            let generation = repo
-                .model
-                .generation
-                .checked_add(1)
-                .ok_or(EngineError::CounterExhausted)?;
-            repo.model = analysis.model(generation);
-            repo.source_analysis = Some(analysis);
-            Ok(())
-        })
+        self.store
+            .session(session, scope, Permission::ManageModel)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::ManageModel)?;
+                let repo = db
+                    .repositories
+                    .get_mut(scope)
+                    .ok_or(EngineError::NotFound)?;
+                if repo.source_analysis.is_none() {
+                    return Err(EngineError::SourceAnalysisRequired);
+                }
+                analysis.validate(&repo.current, analysis.index_generation())?;
+                if repo.source_analysis.as_ref() == Some(&analysis) {
+                    return Ok(());
+                }
+                if repo
+                    .source_analysis
+                    .as_ref()
+                    .is_none_or(|current| current.digest() != expected_artifact)
+                {
+                    return Err(RepositoryAnalysisError::StaleGeneration.into());
+                }
+                let generation = repo
+                    .model
+                    .generation
+                    .checked_add(1)
+                    .ok_or(EngineError::CounterExhausted)?;
+                repo.model = analysis.model(generation);
+                repo.source_analysis = Some(analysis);
+                Ok(())
+            })
     }
     /// Query even an incomplete graph. Returned uncertainty does not authorize admission
     /// or commit, and requested snapshot/generation must match authoritative registration.
@@ -664,30 +746,34 @@ impl Engine {
         index_generation: Digest,
         explicit: &AccessSet,
     ) -> Result<RepositoryImpact, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Analyze)?;
-            let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
-            let analysis = repo
-                .source_analysis
-                .as_ref()
-                .ok_or(EngineError::SourceAnalysisRequired)?;
-            if repo.current.id() != snapshot {
-                return Err(RepositoryAnalysisError::SnapshotMismatch.into());
-            }
-            analysis.validate(&repo.current, index_generation)?;
-            Ok(analysis.inspect(repo.model.generation, explicit)?)
-        })
+        self.store
+            .session(session, scope, Permission::Analyze)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Analyze)?;
+                let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
+                let analysis = repo
+                    .source_analysis
+                    .as_ref()
+                    .ok_or(EngineError::SourceAnalysisRequired)?;
+                if repo.current.id() != snapshot {
+                    return Err(RepositoryAnalysisError::SnapshotMismatch.into());
+                }
+                analysis.validate(&repo.current, index_generation)?;
+                Ok(analysis.inspect(repo.model.generation, explicit)?)
+            })
     }
     pub fn current(&self, session: &Session, scope: &Scope) -> Result<Snapshot, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Read)?;
-            Ok(db
-                .repositories
-                .get(scope)
-                .ok_or(EngineError::NotFound)?
-                .current
-                .clone())
-        })
+        self.store
+            .session(session, scope, Permission::Read)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Read)?;
+                Ok(db
+                    .repositories
+                    .get(scope)
+                    .ok_or(EngineError::NotFound)?
+                    .current
+                    .clone())
+            })
     }
     pub fn transaction(
         &self,
@@ -695,14 +781,16 @@ impl Engine {
         scope: &Scope,
         id: &TransactionId,
     ) -> Result<TransactionView, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Read)?;
-            Ok(db
-                .transactions
-                .get(&(scope.clone(), id.clone()))
-                .ok_or(EngineError::NotFound)?
-                .view())
-        })
+        self.store
+            .session(session, scope, Permission::Read)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Read)?;
+                Ok(db
+                    .transactions
+                    .get(&(scope.clone(), id.clone()))
+                    .ok_or(EngineError::NotFound)?
+                    .view())
+            })
     }
     pub fn attempts(
         &self,
@@ -710,25 +798,27 @@ impl Engine {
         scope: &Scope,
         id: &TransactionId,
     ) -> Result<Vec<AttemptView>, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Read)?;
-            let tx = db
-                .transactions
-                .get(&(scope.clone(), id.clone()))
-                .ok_or(EngineError::NotFound)?;
-            Ok(tx
-                .attempts
-                .iter()
-                .map(|a| AttemptView {
-                    number: a.number,
-                    base: a.base.id(),
-                    candidate: a.candidate.as_ref().map(Snapshot::id),
-                    patch: a.patch.as_ref().map(Patch::id),
-                    analysis: a.analysis.clone(),
-                    evidence: a.evidence.clone(),
-                })
-                .collect())
-        })
+        self.store
+            .session(session, scope, Permission::Read)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Read)?;
+                let tx = db
+                    .transactions
+                    .get(&(scope.clone(), id.clone()))
+                    .ok_or(EngineError::NotFound)?;
+                Ok(tx
+                    .attempts
+                    .iter()
+                    .map(|a| AttemptView {
+                        number: a.number,
+                        base: a.base.id(),
+                        candidate: a.candidate.as_ref().map(Snapshot::id),
+                        patch: a.patch.as_ref().map(Patch::id),
+                        analysis: a.analysis.clone(),
+                        evidence: a.evidence.clone(),
+                    })
+                    .collect())
+            })
     }
     pub fn lease_history(
         &self,
@@ -736,15 +826,17 @@ impl Engine {
         scope: &Scope,
         id: &TransactionId,
     ) -> Result<Vec<LeaseEvent>, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Read)?;
-            Ok(db
-                .transactions
-                .get(&(scope.clone(), id.clone()))
-                .ok_or(EngineError::NotFound)?
-                .lease_history
-                .clone())
-        })
+        self.store
+            .session(session, scope, Permission::Read)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Read)?;
+                Ok(db
+                    .transactions
+                    .get(&(scope.clone(), id.clone()))
+                    .ok_or(EngineError::NotFound)?
+                    .lease_history
+                    .clone())
+            })
     }
     pub fn update_model(
         &self,
@@ -752,22 +844,24 @@ impl Engine {
         scope: &Scope,
         model: EngineeringModel,
     ) -> Result<(), EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::ManageModel)?;
-            validate_model(&model)?;
-            let repository = db
-                .repositories
-                .get_mut(scope)
-                .ok_or(EngineError::NotFound)?;
-            if repository.source_analysis.is_some() {
-                return Err(EngineError::SourceAnalysisRequired);
-            }
-            if model.generation <= repository.model.generation {
-                return Err(EngineError::ModelChanged);
-            }
-            repository.model = model;
-            Ok(())
-        })
+        self.store
+            .session(session, scope, Permission::ManageModel)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::ManageModel)?;
+                validate_model(&model)?;
+                let repository = db
+                    .repositories
+                    .get_mut(scope)
+                    .ok_or(EngineError::NotFound)?;
+                if repository.source_analysis.is_some() {
+                    return Err(EngineError::SourceAnalysisRequired);
+                }
+                if model.generation <= repository.model.generation {
+                    return Err(EngineError::ModelChanged);
+                }
+                repository.model = model;
+                Ok(())
+            })
     }
     pub fn propose(
         &self,
@@ -777,60 +871,62 @@ impl Engine {
         base: SnapshotId,
         intent: TransactionIntent,
     ) -> Result<TransactionView, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Propose)?;
-            validate_intent(&intent)?;
-            let key = (scope.clone(), id.clone());
-            if let Some(existing) = db.transactions.get(&key) {
-                if existing.intent == intent
-                    && existing.attempts[0].base.id() == base
-                    && existing.owner == session.principal
-                {
-                    return Ok(existing.view());
+        self.store
+            .session(session, scope, Permission::Propose)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Propose)?;
+                validate_intent(&intent)?;
+                let key = (scope.clone(), id.clone());
+                if let Some(existing) = db.transactions.get(&key) {
+                    if existing.intent == intent
+                        && existing.attempts[0].base.id() == base
+                        && existing.owner == session.principal
+                    {
+                        return Ok(existing.view());
+                    }
+                    return Err(EngineError::AlreadyExists);
                 }
-                return Err(EngineError::AlreadyExists);
-            }
-            let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
-            let snapshot = repo
-                .snapshots
-                .get(&base)
-                .ok_or(EngineError::NotFound)?
-                .clone();
-            for dependency in &intent.depends_on {
-                if dependency == &id
-                    || !db
-                        .transactions
-                        .get(&(scope.clone(), dependency.clone()))
-                        .is_some_and(|tx| tx.state == TransactionState::Committed)
-                {
-                    return Err(EngineError::UnsatisfiedDependency);
+                let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
+                let snapshot = repo
+                    .snapshots
+                    .get(&base)
+                    .ok_or(EngineError::NotFound)?
+                    .clone();
+                for dependency in &intent.depends_on {
+                    if dependency == &id
+                        || !db
+                            .transactions
+                            .get(&(scope.clone(), dependency.clone()))
+                            .is_some_and(|tx| tx.state == TransactionState::Committed)
+                    {
+                        return Err(EngineError::UnsatisfiedDependency);
+                    }
                 }
-            }
-            let tx = Transaction {
-                id,
-                owner: session.principal.clone(),
-                owner_capability: session.token,
-                scope: scope.clone(),
-                intent,
-                state: TransactionState::Proposed,
-                attempts: vec![Attempt {
-                    number: 0,
-                    base: snapshot,
-                    model: repo.model.clone(),
-                    effective: None,
-                    analysis: None,
-                    patch: None,
-                    candidate: None,
-                    evidence: BTreeMap::new(),
-                }],
-                lease: None,
-                lease_history: vec![],
-                last_reason: None,
-            };
-            let view = tx.view();
-            db.transactions.insert(key, tx);
-            Ok(view)
-        })
+                let tx = Transaction {
+                    id,
+                    owner: session.principal.clone(),
+                    owner_capability: session.token,
+                    scope: scope.clone(),
+                    intent,
+                    state: TransactionState::Proposed,
+                    attempts: vec![Attempt {
+                        number: 0,
+                        base: snapshot,
+                        model: repo.model.clone(),
+                        effective: None,
+                        analysis: None,
+                        patch: None,
+                        candidate: None,
+                        evidence: BTreeMap::new(),
+                    }],
+                    lease: None,
+                    lease_history: vec![],
+                    last_reason: None,
+                };
+                let view = tx.view();
+                db.transactions.insert(key, tx);
+                Ok(view)
+            })
     }
     pub fn analyze(
         &self,
@@ -838,32 +934,34 @@ impl Engine {
         scope: &Scope,
         id: &TransactionId,
     ) -> Result<AccessSet, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Analyze)?;
-            let key = (scope.clone(), id.clone());
-            let mut tx = db
-                .transactions
-                .get(&key)
-                .ok_or(EngineError::NotFound)?
-                .clone();
-            tx.transition(TransactionState::Analyzed)?;
-            let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
-            if tx.attempt().model != repo.model {
-                return Err(EngineError::ModelChanged);
-            }
-            analyze_attempt(
-                &mut tx,
-                repo.source_analysis.as_ref(),
-                db.source_policies.get(scope),
-            )?;
-            let accesses = tx
-                .attempt()
-                .effective
-                .clone()
-                .ok_or(EngineError::IncompleteAnalysis)?;
-            db.transactions.insert(key, tx);
-            Ok(accesses)
-        })
+        self.store
+            .session(session, scope, Permission::Analyze)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Analyze)?;
+                let key = (scope.clone(), id.clone());
+                let mut tx = db
+                    .transactions
+                    .get(&key)
+                    .ok_or(EngineError::NotFound)?
+                    .clone();
+                tx.transition(TransactionState::Analyzed)?;
+                let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
+                if tx.attempt().model != repo.model {
+                    return Err(EngineError::ModelChanged);
+                }
+                analyze_attempt(
+                    &mut tx,
+                    repo.source_analysis.as_ref(),
+                    db.source_policies.get(scope),
+                )?;
+                let accesses = tx
+                    .attempt()
+                    .effective
+                    .clone()
+                    .ok_or(EngineError::IncompleteAnalysis)?;
+                db.transactions.insert(key, tx);
+                Ok(accesses)
+            })
     }
     pub fn reserve(
         &self,
@@ -872,60 +970,63 @@ impl Engine {
         id: &TransactionId,
         ttl: u64,
     ) -> Result<u64, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Reserve)?;
-            let key = (scope.clone(), id.clone());
-            let mut tx = db
-                .transactions
-                .get(&key)
-                .ok_or(EngineError::NotFound)?
-                .clone();
-            if tx.owner != session.principal {
-                return Err(EngineError::Unauthorized);
-            }
-            tx.transition(TransactionState::Reserved)?;
-            let expires_at = expiration(db.now, ttl)?;
-            let writes = tx
-                .attempt()
-                .effective
-                .as_ref()
-                .ok_or(EngineError::IncompleteAnalysis)?
-                .writes
-                .clone();
-            for ((other_scope, other_id), other) in &db.transactions {
-                if other_scope == scope
-                    && other_id != id
-                    && let Some(lease) = &other.lease
-                    && lease_active(db, lease)
-                    && !lease.writes.is_disjoint(&writes)
-                {
-                    return Err(EngineError::ReservationConflict);
+        self.store
+            .session(session, scope, Permission::Reserve)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Reserve)?;
+                let key = (scope.clone(), id.clone());
+                let mut tx = db
+                    .transactions
+                    .get(&key)
+                    .ok_or(EngineError::NotFound)?
+                    .clone();
+                if tx.owner != session.principal {
+                    return Err(EngineError::Unauthorized);
                 }
-            }
-            let fence = db
-                .reservation_fences
-                .get(scope)
-                .copied()
-                .unwrap_or(0)
-                .checked_add(1)
-                .ok_or(EngineError::CounterExhausted)?;
-            tx.lease_history.push(LeaseEvent {
-                fence,
-                at: db.now,
-                owner: session.principal.clone(),
-                scopes: writes.clone(),
-                kind: LeaseEventKind::Acquired { expires_at },
-            });
-            tx.lease = Some(Lease {
-                fence,
-                owner: session.token,
-                expires_at,
-                writes,
-            });
-            db.reservation_fences.insert(scope.clone(), fence);
-            db.transactions.insert(key, tx);
-            Ok(expires_at)
-        })
+                tx.transition(TransactionState::Reserved)?;
+                let expires_at = expiration(db.now, ttl)?;
+                let writes = tx
+                    .attempt()
+                    .effective
+                    .as_ref()
+                    .ok_or(EngineError::IncompleteAnalysis)?
+                    .writes
+                    .clone();
+                for ((other_scope, other_id), other) in &db.transactions {
+                    if other_scope == scope
+                        && other_id != id
+                        && let Some(lease) = &other.lease
+                        && lease_active(db, lease)
+                        && !lease.writes.is_disjoint(&writes)
+                    {
+                        return Err(EngineError::ReservationConflict);
+                    }
+                }
+                let fence = db
+                    .reservation_fences
+                    .get(scope)
+                    .copied()
+                    .unwrap_or(0)
+                    .checked_add(1)
+                    .ok_or(EngineError::CounterExhausted)?;
+                let lease = Lease {
+                    fence,
+                    owner: session.token,
+                    acquired_at: db.now,
+                    acquired_attempt: tx.attempt().number,
+                    expires_at,
+                    writes,
+                };
+                tx.lease_history.push(lease.event(
+                    db.now,
+                    session.principal.clone(),
+                    LeaseEventKind::Acquired { expires_at },
+                ));
+                tx.lease = Some(lease);
+                db.reservation_fences.insert(scope.clone(), fence);
+                db.transactions.insert(key, tx);
+                Ok(expires_at)
+            })
     }
     pub fn renew(
         &self,
@@ -934,30 +1035,30 @@ impl Engine {
         id: &TransactionId,
         ttl: u64,
     ) -> Result<u64, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Reserve)?;
-            let key = (scope.clone(), id.clone());
-            let tx = db.transactions.get(&key).ok_or(EngineError::NotFound)?;
-            require_lease(db, tx, session)?;
-            let expires = expiration(db.now, ttl)?;
-            let now = db.now;
-            let tx = db.transactions.get_mut(&key).ok_or(EngineError::NotFound)?;
-            let lease = tx.lease.as_mut().ok_or(EngineError::InvalidLease)?;
-            // Renewal never accidentally shortens a still-valid lease.
-            let previous_expiry = lease.expires_at;
-            lease.expires_at = expires.max(lease.expires_at);
-            tx.lease_history.push(LeaseEvent {
-                fence: lease.fence,
-                at: now,
-                owner: session.principal.clone(),
-                scopes: lease.writes.clone(),
-                kind: LeaseEventKind::Renewed {
-                    previous_expiry,
-                    expires_at: lease.expires_at,
-                },
-            });
-            Ok(lease.expires_at)
-        })
+        self.store
+            .session(session, scope, Permission::Reserve)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Reserve)?;
+                let key = (scope.clone(), id.clone());
+                let tx = db.transactions.get(&key).ok_or(EngineError::NotFound)?;
+                require_lease(db, tx, session)?;
+                let expires = expiration(db.now, ttl)?;
+                let now = db.now;
+                let tx = db.transactions.get_mut(&key).ok_or(EngineError::NotFound)?;
+                let lease = tx.lease.as_mut().ok_or(EngineError::InvalidLease)?;
+                // Renewal never accidentally shortens a still-valid lease.
+                let previous_expiry = lease.expires_at;
+                lease.expires_at = expires.max(lease.expires_at);
+                tx.lease_history.push(lease.event(
+                    now,
+                    session.principal.clone(),
+                    LeaseEventKind::Renewed {
+                        previous_expiry,
+                        expires_at: lease.expires_at,
+                    },
+                ));
+                Ok(lease.expires_at)
+            })
     }
     pub fn execute(
         &self,
@@ -965,16 +1066,18 @@ impl Engine {
         scope: &Scope,
         id: &TransactionId,
     ) -> Result<(), EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Execute)?;
-            let key = (scope.clone(), id.clone());
-            let tx = db.transactions.get(&key).ok_or(EngineError::NotFound)?;
-            require_lease(db, tx, session)?;
-            db.transactions
-                .get_mut(&key)
-                .ok_or(EngineError::NotFound)?
-                .transition(TransactionState::Executing)
-        })
+        self.store
+            .session(session, scope, Permission::Execute)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Execute)?;
+                let key = (scope.clone(), id.clone());
+                let tx = db.transactions.get(&key).ok_or(EngineError::NotFound)?;
+                require_lease(db, tx, session)?;
+                db.transactions
+                    .get_mut(&key)
+                    .ok_or(EngineError::NotFound)?
+                    .transition(TransactionState::Executing)
+            })
     }
     pub fn submit_patch(
         &self,
@@ -983,53 +1086,55 @@ impl Engine {
         id: &TransactionId,
         patch: Patch,
     ) -> Result<EvidenceBindings, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Execute)?;
-            if db
-                .repositories
-                .get(scope)
-                .ok_or(EngineError::NotFound)?
-                .source_analysis
-                .is_some()
-            {
-                return Err(EngineError::SourceMutationUnsupported);
-            }
-            let key = (scope.clone(), id.clone());
-            let mut tx = db
-                .transactions
-                .get(&key)
-                .ok_or(EngineError::NotFound)?
-                .clone();
-            require_lease(db, &tx, session)?;
-            tx.transition(TransactionState::Validating)?;
-            if patch.base_snapshot() != tx.attempt().base.id() {
-                return Err(EngineError::WrongPatchBase);
-            }
-            let writes = &tx
-                .attempt()
-                .effective
-                .as_ref()
-                .ok_or(EngineError::IncompleteAnalysis)?
-                .writes;
-            if patch
-                .changes()
-                .keys()
-                .any(|element| !writes.contains(element))
-            {
-                return Err(EngineError::UndeclaredWrite);
-            }
-            let state = patch.apply(tx.attempt().base.state())?;
-            for invariant in &tx.intent.invariants {
-                invariant.evaluate(&state)?;
-            }
-            let revision = next_revision(tx.attempt().base.revision())?;
-            let candidate = tx.attempt().base.successor(revision, state)?;
-            tx.attempt_mut().patch = Some(patch);
-            tx.attempt_mut().candidate = Some(candidate);
-            let bindings = tx.bindings()?;
-            db.transactions.insert(key, tx);
-            Ok(bindings)
-        })
+        self.store
+            .session(session, scope, Permission::Execute)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Execute)?;
+                if db
+                    .repositories
+                    .get(scope)
+                    .ok_or(EngineError::NotFound)?
+                    .source_analysis
+                    .is_some()
+                {
+                    return Err(EngineError::SourceMutationUnsupported);
+                }
+                let key = (scope.clone(), id.clone());
+                let mut tx = db
+                    .transactions
+                    .get(&key)
+                    .ok_or(EngineError::NotFound)?
+                    .clone();
+                require_lease(db, &tx, session)?;
+                tx.transition(TransactionState::Validating)?;
+                if patch.base_snapshot() != tx.attempt().base.id() {
+                    return Err(EngineError::WrongPatchBase);
+                }
+                let writes = &tx
+                    .attempt()
+                    .effective
+                    .as_ref()
+                    .ok_or(EngineError::IncompleteAnalysis)?
+                    .writes;
+                if patch
+                    .changes()
+                    .keys()
+                    .any(|element| !writes.contains(element))
+                {
+                    return Err(EngineError::UndeclaredWrite);
+                }
+                let state = patch.apply(tx.attempt().base.state())?;
+                for invariant in &tx.intent.invariants {
+                    invariant.evaluate(&state)?;
+                }
+                let revision = next_revision(tx.attempt().base.revision())?;
+                let candidate = tx.attempt().base.successor(revision, state)?;
+                tx.attempt_mut().patch = Some(patch);
+                tx.attempt_mut().candidate = Some(candidate);
+                let bindings = tx.bindings()?;
+                db.transactions.insert(key, tx);
+                Ok(bindings)
+            })
     }
     pub fn bindings(
         &self,
@@ -1037,13 +1142,15 @@ impl Engine {
         scope: &Scope,
         id: &TransactionId,
     ) -> Result<EvidenceBindings, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Read)?;
-            db.transactions
-                .get(&(scope.clone(), id.clone()))
-                .ok_or(EngineError::NotFound)?
-                .bindings()
-        })
+        self.store
+            .session(session, scope, Permission::Read)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Read)?;
+                db.transactions
+                    .get(&(scope.clone(), id.clone()))
+                    .ok_or(EngineError::NotFound)?
+                    .bindings()
+            })
     }
     pub fn candidate(
         &self,
@@ -1051,16 +1158,18 @@ impl Engine {
         scope: &Scope,
         id: &TransactionId,
     ) -> Result<Snapshot, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Read)?;
-            db.transactions
-                .get(&(scope.clone(), id.clone()))
-                .ok_or(EngineError::NotFound)?
-                .attempt()
-                .candidate
-                .clone()
-                .ok_or(EngineError::NotFound)
-        })
+        self.store
+            .session(session, scope, Permission::Read)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Read)?;
+                db.transactions
+                    .get(&(scope.clone(), id.clone()))
+                    .ok_or(EngineError::NotFound)?
+                    .attempt()
+                    .candidate
+                    .clone()
+                    .ok_or(EngineError::NotFound)
+            })
     }
     pub fn record_evidence(
         &self,
@@ -1069,46 +1178,48 @@ impl Engine {
         id: &TransactionId,
         evidence: VerificationEvidence,
     ) -> Result<EvidenceId, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Verify)?;
-            let key = (scope.clone(), id.clone());
-            let tx = db.transactions.get(&key).ok_or(EngineError::NotFound)?;
-            if tx.state != TransactionState::Validating {
-                return Err(EngineError::IllegalTransition {
-                    from: tx.state,
-                    to: TransactionState::Validating,
-                });
-            }
-            if evidence.provenance().verifier != session.principal
-                || evidence.bindings() != &tx.bindings()?
-            {
-                return Err(EngineError::EvidenceMismatch);
-            }
-            let required = tx
-                .intent
-                .required_checks
-                .iter()
-                .find(|check| check.id() == evidence.check().id())
-                .ok_or(EngineError::EvidenceMismatch)?;
-            if !evidence.matches(&tx.bindings()?, required) {
-                return Err(EngineError::EvidenceMismatch);
-            }
-            if evidence.provenance().finished_at > db.now {
-                return Err(EngineError::EvidenceMismatch);
-            }
-            let evidence_id = evidence.id();
-            let check_id = evidence.check().id().clone();
-            db.evidence.insert((scope.clone(), evidence_id), evidence);
-            db.evidence_sources
-                .insert((scope.clone(), evidence_id), session.token);
-            db.transactions
-                .get_mut(&key)
-                .ok_or(EngineError::NotFound)?
-                .attempt_mut()
-                .evidence
-                .insert(check_id, evidence_id);
-            Ok(evidence_id)
-        })
+        self.store
+            .session(session, scope, Permission::Verify)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Verify)?;
+                let key = (scope.clone(), id.clone());
+                let tx = db.transactions.get(&key).ok_or(EngineError::NotFound)?;
+                if tx.state != TransactionState::Validating {
+                    return Err(EngineError::IllegalTransition {
+                        from: tx.state,
+                        to: TransactionState::Validating,
+                    });
+                }
+                if evidence.provenance().verifier != session.principal
+                    || evidence.bindings() != &tx.bindings()?
+                {
+                    return Err(EngineError::EvidenceMismatch);
+                }
+                let required = tx
+                    .intent
+                    .required_checks
+                    .iter()
+                    .find(|check| check.id() == evidence.check().id())
+                    .ok_or(EngineError::EvidenceMismatch)?;
+                if !evidence.matches(&tx.bindings()?, required) {
+                    return Err(EngineError::EvidenceMismatch);
+                }
+                if evidence.provenance().finished_at > db.now {
+                    return Err(EngineError::EvidenceMismatch);
+                }
+                let evidence_id = evidence.id();
+                let check_id = evidence.check().id().clone();
+                db.evidence.insert((scope.clone(), evidence_id), evidence);
+                db.evidence_sources
+                    .insert((scope.clone(), evidence_id), session.token);
+                db.transactions
+                    .get_mut(&key)
+                    .ok_or(EngineError::NotFound)?
+                    .attempt_mut()
+                    .evidence
+                    .insert(check_id, evidence_id);
+                Ok(evidence_id)
+            })
     }
     pub fn abort(
         &self,
@@ -1117,36 +1228,37 @@ impl Engine {
         id: &TransactionId,
         reason: String,
     ) -> Result<(), EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Cancel)?;
-            if reason.trim().is_empty() {
-                return Err(EngineError::InvalidIntent("abort needs reason".into()));
-            }
-            let now = db.now;
-            let tx = db
-                .transactions
-                .get_mut(&(scope.clone(), id.clone()))
-                .ok_or(EngineError::NotFound)?;
-            if tx.state == TransactionState::Aborted && tx.last_reason.as_ref() == Some(&reason) {
-                return Ok(());
-            }
-            tx.transition(TransactionState::Aborted)?;
-            if let Some(lease) = &tx.lease {
-                tx.lease_history.push(LeaseEvent {
-                    fence: lease.fence,
-                    at: now,
-                    owner: tx.owner.clone(),
-                    scopes: lease.writes.clone(),
-                    kind: LeaseEventKind::Released {
-                        reason: reason.clone(),
-                    },
-                });
-            }
-            tx.lease = None;
-            tx.last_reason = Some(reason);
-            source_attempts::cancel_transaction_attempts(db, scope, id)?;
-            Ok(())
-        })
+        self.store
+            .session(session, scope, Permission::Cancel)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Cancel)?;
+                if reason.trim().is_empty() {
+                    return Err(EngineError::InvalidIntent("abort needs reason".into()));
+                }
+                let now = db.now;
+                let tx = db
+                    .transactions
+                    .get_mut(&(scope.clone(), id.clone()))
+                    .ok_or(EngineError::NotFound)?;
+                if tx.state == TransactionState::Aborted && tx.last_reason.as_ref() == Some(&reason)
+                {
+                    return Ok(());
+                }
+                tx.transition(TransactionState::Aborted)?;
+                if let Some(lease) = &tx.lease {
+                    tx.lease_history.push(lease.event(
+                        now,
+                        tx.owner.clone(),
+                        LeaseEventKind::Released {
+                            reason: reason.clone(),
+                        },
+                    ));
+                }
+                tx.lease = None;
+                tx.last_reason = Some(reason);
+                source_attempts::cancel_transaction_attempts(db, scope, id)?;
+                Ok(())
+            })
     }
     pub fn revalidate(
         &self,
@@ -1154,64 +1266,67 @@ impl Engine {
         scope: &Scope,
         id: &TransactionId,
     ) -> Result<EvidenceBindings, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Analyze)?;
-            if db
-                .repositories
-                .get(scope)
-                .ok_or(EngineError::NotFound)?
-                .source_analysis
-                .is_some()
-            {
-                return Err(EngineError::SourceMutationUnsupported);
-            }
-            let key = (scope.clone(), id.clone());
-            let mut tx = db
-                .transactions
-                .get(&key)
-                .ok_or(EngineError::NotFound)?
-                .clone();
-            require_lease(db, &tx, session)?;
-            tx.transition(TransactionState::Validating)?;
-            let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
-            check_intervening(&tx, repo)?;
-            if tx.attempt().model != repo.model {
-                return Err(EngineError::ModelChanged);
-            }
-            let old = tx.attempt();
-            let old_patch = old.patch.as_ref().ok_or(EngineError::WrongPatchBase)?;
-            let patch = Patch::new(repo.current.id(), old_patch.changes().clone())?;
-            let candidate = repo.current.successor(
-                next_revision(repo.current.revision())?,
-                patch.apply(repo.current.state())?,
-            )?;
-            for invariant in &tx.intent.invariants {
-                invariant.evaluate(candidate.state())?;
-            }
-            let number = old
-                .number
-                .checked_add(1)
-                .ok_or(EngineError::CounterExhausted)?;
-            tx.attempts.push(Attempt {
-                number,
-                base: repo.current.clone(),
-                model: repo.model.clone(),
-                effective: None,
-                analysis: None,
-                patch: Some(patch),
-                candidate: Some(candidate),
-                evidence: BTreeMap::new(),
-            });
-            analyze_attempt(
-                &mut tx,
-                repo.source_analysis.as_ref(),
-                db.source_policies.get(scope),
-            )?;
-            tx.last_reason = Some("compatible revision advance; fresh evidence required".into());
-            let bindings = tx.bindings()?;
-            db.transactions.insert(key, tx);
-            Ok(bindings)
-        })
+        self.store
+            .session(session, scope, Permission::Analyze)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Analyze)?;
+                if db
+                    .repositories
+                    .get(scope)
+                    .ok_or(EngineError::NotFound)?
+                    .source_analysis
+                    .is_some()
+                {
+                    return Err(EngineError::SourceMutationUnsupported);
+                }
+                let key = (scope.clone(), id.clone());
+                let mut tx = db
+                    .transactions
+                    .get(&key)
+                    .ok_or(EngineError::NotFound)?
+                    .clone();
+                require_lease(db, &tx, session)?;
+                tx.transition(TransactionState::Validating)?;
+                let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
+                check_intervening(&tx, repo)?;
+                if tx.attempt().model != repo.model {
+                    return Err(EngineError::ModelChanged);
+                }
+                let old = tx.attempt();
+                let old_patch = old.patch.as_ref().ok_or(EngineError::WrongPatchBase)?;
+                let patch = Patch::new(repo.current.id(), old_patch.changes().clone())?;
+                let candidate = repo.current.successor(
+                    next_revision(repo.current.revision())?,
+                    patch.apply(repo.current.state())?,
+                )?;
+                for invariant in &tx.intent.invariants {
+                    invariant.evaluate(candidate.state())?;
+                }
+                let number = old
+                    .number
+                    .checked_add(1)
+                    .ok_or(EngineError::CounterExhausted)?;
+                tx.attempts.push(Attempt {
+                    number,
+                    base: repo.current.clone(),
+                    model: repo.model.clone(),
+                    effective: None,
+                    analysis: None,
+                    patch: Some(patch),
+                    candidate: Some(candidate),
+                    evidence: BTreeMap::new(),
+                });
+                analyze_attempt(
+                    &mut tx,
+                    repo.source_analysis.as_ref(),
+                    db.source_policies.get(scope),
+                )?;
+                tx.last_reason =
+                    Some("compatible revision advance; fresh evidence required".into());
+                let bindings = tx.bindings()?;
+                db.transactions.insert(key, tx);
+                Ok(bindings)
+            })
     }
     pub fn commit(
         &self,
@@ -1243,132 +1358,137 @@ impl Engine {
         fault: CommitFault,
         request: Option<&CommitRequest>,
     ) -> Result<CommitReceipt, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Commit)?;
-            let tx_key = (scope.clone(), id.clone());
-            let tx = db
-                .transactions
-                .get(&tx_key)
-                .ok_or(EngineError::NotFound)?
-                .clone();
-            let operation_key = (scope.clone(), key);
-            if let Some(request) = request
-                && (request.authorization_grant != session.token || tx.owner != session.principal)
-            {
-                return Err(EngineError::Unauthorized);
-            }
-            let request_digest = request.map(|request| request.digest(scope, session.principal()));
-            if let Some(record) = db.operations.get(&operation_key) {
-                let attempt = request.map_or(tx.attempt().number, |request| request.attempt);
-                let recorded_digest = record
-                    .request
-                    .as_ref()
-                    .map(|recorded| recorded.digest(scope, session.principal()));
-                if record.transaction != *id
-                    || record.attempt != attempt
-                    || recorded_digest != request_digest
+        self.store
+            .session(session, scope, Permission::Commit)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Commit)?;
+                if self.store.authority.is_some() && request.is_none() {
+                    return Err(EngineError::CommitRequestRequired);
+                }
+                let tx_key = (scope.clone(), id.clone());
+                let tx = db
+                    .transactions
+                    .get(&tx_key)
+                    .ok_or(EngineError::NotFound)?
+                    .clone();
+                let operation_key = (scope.clone(), key);
+                if let Some(request) = request
+                    && (request.authorization_grant != session.token
+                        || tx.owner != session.principal)
                 {
-                    return Err(EngineError::IdempotencyConflict);
+                    return Err(EngineError::Unauthorized);
                 }
-                return record.outcome.clone();
-            }
-            if let Some(request) = request {
-                commit_request::validate_request(&tx, request)?;
-            }
-            if fault == CommitFault::BeforeValidation {
-                return Err(EngineError::InjectedFailure(fault));
-            }
-            let result = validate_commit(db, &tx, session);
-            if fault == CommitFault::DuringValidation {
-                return Err(EngineError::InjectedFailure(fault));
-            }
-            let receipt = match result {
-                Ok(receipt) => receipt,
-                Err(error) => {
-                    if let EngineError::RevalidationRequired { .. } = &error {
-                        let stored = db
-                            .transactions
-                            .get_mut(&tx_key)
-                            .ok_or(EngineError::NotFound)?;
-                        stored.transition(TransactionState::RevalidationRequired)?;
-                        stored.last_reason = Some(error.to_string());
+                let request_digest =
+                    request.map(|request| request.digest(scope, session.principal()));
+                if let Some(record) = db.operations.get(&operation_key) {
+                    let attempt = request.map_or(tx.attempt().number, |request| request.attempt);
+                    let recorded_digest = record
+                        .request
+                        .as_ref()
+                        .map(|recorded| recorded.digest(scope, session.principal()));
+                    if record.transaction != *id
+                        || record.attempt != attempt
+                        || recorded_digest != request_digest
+                    {
+                        return Err(EngineError::IdempotencyConflict);
                     }
-                    db.operations.insert(
-                        operation_key,
-                        RecordedOperation {
-                            transaction: id.clone(),
-                            attempt: tx.attempt().number,
-                            request: request.cloned(),
-                            outcome: Err(error.clone()),
-                        },
-                    );
-                    return Err(error);
+                    return record.outcome.clone();
                 }
-            };
-            if fault == CommitFault::BeforePublication {
-                return Err(EngineError::InjectedFailure(fault));
-            }
-            // Stage *every* side effect together. No authoritative field is changed before swap.
-            // A durable adapter must replace this boundary with one storage transaction/CAS.
-            let mut staged = db.clone();
-            let repo = staged
-                .repositories
-                .get_mut(scope)
-                .ok_or(EngineError::NotFound)?;
-            let candidate = tx
-                .attempt()
-                .candidate
-                .clone()
-                .ok_or(EngineError::EvidenceMismatch)?;
-            repo.current = candidate.clone();
-            repo.snapshots.insert(candidate.id(), candidate);
-            repo.history.push(CommittedChange {
-                transaction: tx.id.clone(),
-                attempt: tx.attempt().number,
-                revision: receipt.revision,
-                accesses: tx
+                if let Some(request) = request {
+                    commit_request::validate_request(&tx, request)?;
+                }
+                if fault == CommitFault::BeforeValidation {
+                    return Err(EngineError::InjectedFailure(fault));
+                }
+                let result = validate_commit(db, &tx, session);
+                if fault == CommitFault::DuringValidation {
+                    return Err(EngineError::InjectedFailure(fault));
+                }
+                let receipt = match result {
+                    Ok(receipt) => receipt,
+                    Err(error) => {
+                        if let EngineError::RevalidationRequired { .. } = &error {
+                            let stored = db
+                                .transactions
+                                .get_mut(&tx_key)
+                                .ok_or(EngineError::NotFound)?;
+                            stored.transition(TransactionState::RevalidationRequired)?;
+                            stored.last_reason = Some(error.to_string());
+                        }
+                        db.operations.insert(
+                            operation_key,
+                            RecordedOperation {
+                                transaction: id.clone(),
+                                attempt: tx.attempt().number,
+                                request: request.cloned(),
+                                outcome: Err(error.clone()),
+                            },
+                        );
+                        return Err(error);
+                    }
+                };
+                if fault == CommitFault::BeforePublication {
+                    return Err(EngineError::InjectedFailure(fault));
+                }
+                // Stage *every* side effect together. No authoritative field is changed before swap.
+                // A durable adapter must replace this boundary with one storage transaction/CAS.
+                let mut staged = db.clone();
+                let repo = staged
+                    .repositories
+                    .get_mut(scope)
+                    .ok_or(EngineError::NotFound)?;
+                let candidate = tx
                     .attempt()
-                    .effective
+                    .candidate
                     .clone()
-                    .ok_or(EngineError::IncompleteAnalysis)?,
-                provenance: provenance(&tx)?,
-            });
-            let stored = staged
-                .transactions
-                .get_mut(&tx_key)
-                .ok_or(EngineError::NotFound)?;
-            stored.transition(TransactionState::Committed)?;
-            if let Some(lease) = &stored.lease {
-                stored.lease_history.push(LeaseEvent {
-                    fence: lease.fence,
-                    at: db.now,
-                    owner: session.principal.clone(),
-                    scopes: lease.writes.clone(),
-                    kind: LeaseEventKind::Released {
-                        reason: "committed".into(),
-                    },
-                });
-            }
-            stored.lease = None;
-            stored.last_reason = Some("atomic validation and publication".into());
-            staged.operations.insert(
-                operation_key,
-                RecordedOperation {
-                    transaction: id.clone(),
+                    .ok_or(EngineError::EvidenceMismatch)?;
+                repo.current = candidate.clone();
+                repo.snapshots.insert(candidate.id(), candidate);
+                repo.history.push(CommittedChange {
+                    transaction: tx.id.clone(),
                     attempt: tx.attempt().number,
-                    request: request.cloned(),
-                    outcome: Ok(receipt.clone()),
-                },
-            );
-            if fault == CommitFault::DuringPublication {
-                return Err(EngineError::InjectedFailure(fault));
-            }
-            *db = staged;
-            if fault == CommitFault::AfterPublication {
-                return Err(EngineError::ResponseLost);
-            }
-            Ok(receipt)
-        })
+                    revision: receipt.revision,
+                    accesses: tx
+                        .attempt()
+                        .effective
+                        .clone()
+                        .ok_or(EngineError::IncompleteAnalysis)?,
+                    provenance: provenance(&tx)?,
+                });
+                let stored = staged
+                    .transactions
+                    .get_mut(&tx_key)
+                    .ok_or(EngineError::NotFound)?;
+                stored.transition(TransactionState::Committed)?;
+                if let Some(lease) = &stored.lease {
+                    stored.lease_history.push(lease.event(
+                        db.now,
+                        session.principal.clone(),
+                        LeaseEventKind::Released {
+                            reason: "committed".into(),
+                        },
+                    ));
+                }
+                stored.lease = None;
+                stored.last_reason = Some("atomic validation and publication".into());
+                staged.operations.insert(
+                    operation_key,
+                    RecordedOperation {
+                        transaction: id.clone(),
+                        attempt: tx.attempt().number,
+                        request: request.cloned(),
+                        outcome: Ok(receipt.clone()),
+                    },
+                );
+                if fault == CommitFault::DuringPublication {
+                    return Err(EngineError::InjectedFailure(fault));
+                }
+                *db = staged;
+                if fault == CommitFault::AfterPublication {
+                    return Err(EngineError::ResponseLost);
+                }
+                Ok(receipt)
+            })
     }
 }
 

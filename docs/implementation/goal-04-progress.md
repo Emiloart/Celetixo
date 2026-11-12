@@ -1,6 +1,6 @@
 # Goal 04 progress and foundation validation
 
-**Status:** active; 04.1a–04.1e foundations verified; Goal 04 and milestone 04.1 remain incomplete.
+**Status:** paused at the user’s request after 04.1f publication; 04.1a–04.1f prerequisites verified. Goal 04 and milestone 04.1 remain incomplete.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -12,13 +12,39 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 
 | Milestone | Current evidence / remaining work |
 |---|---|
-| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a supplies schema/snapshot/protocol prerequisites; 04.1b separates runtime resources; 04.1c retains checked semantic candidates; 04.1d separates state evaluation/publication; 04.1e adds checked lifecycle/request contracts, reference fences and a supported schema upgrade. Routing the complete lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
+| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a supplies schema/snapshot/protocol prerequisites; 04.1b separates runtime resources; 04.1c retains checked semantic candidates; 04.1d separates state evaluation/publication; 04.1e adds checked lifecycle/request contracts, reference fences and a supported schema upgrade; 04.1f adds checked scoped reconstruction, backend routing and schema v3. Routing the complete lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
 | 04.2 — Multi-instance atomic commit | Pending: independent Engine processes, authoritative SQL commit/CAS, complete request-bound idempotency, races and crash-ambiguity reconciliation. |
 | 04.3 — Transactional events | Schema placeholders exist. No outbox publisher, inbox consumer or real NATS integration yet. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. Existing local Goal 03 storage is unchanged. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
 | 04.7 — End-to-end operational proof | Pending: complete real-service path, multi-instance/fault/security/load tests, backup/restore drills and measured operational baselines. |
+
+## 04.1f — Checked reconstruction and trusted backend boundary
+
+The [authority boundary](goal-04-authority-boundary.md) reconstructs normalized
+native lifecycle facts through the existing Rust analysis/patch/commit rules.
+It retains original requests, evidence selection, lease acquisition attribution
+and typed outcomes, and rejects forged associations and unsupported source state.
+Fresh authentication resolves a new embedding-bound session; stored IDs cannot
+restore capabilities. Explicit scoped backend callbacks reject protocol failures
+and withhold outcomes until publication confirms. No SQL backend exists yet.
+
+Schema v3 preserves published v1/v2, adds native-profile/attempt/lease/reason
+metadata, evidence admission/signer relationships and scoped immutable publication
+audit. Real upgrade tests preserve earlier data across injected errors and child
+process death. Binary-safe reason and lease-event codecs preserve exact values.
+
+[Source-bound checks](goal-04-reconstruction-validation/checks.json) and the
+[raw log](goal-04-reconstruction-validation/checks.log) record final verification,
+including 409 ordinary workspace tests passed (25 opt-in tests ignored), all 12
+real PostgreSQL groups, ten actual Linux T1 tests, strict workspace Clippy,
+formatting, example builds/run, workflow semantics, protocol integrity/four
+mutation groups and 25 attribution fixtures. The dedicated database was stopped
+with its data preserved.
+The [session handoff](goal-04-session-handoff.md) preserves the remaining full-goal
+work and local operating details. Work stops after this commit/push as requested;
+no completion, SQL lifecycle durability or distributed authority is claimed.
 
 ## 04.1e — Lifecycle payloads, exact requests and supported schema upgrade
 
@@ -400,8 +426,9 @@ readiness, whole-goal completion or service-level performance claim is made.
 
 ## Next implementation boundary
 
-Separate serializable, checked engineering state from transient reader/capability
-objects. Route the existing Rust transition logic through an explicit database
+Use the checked scoped reconstruction/backend boundary while retaining transient
+reader/capability separation. Implement the actual PostgreSQL adapter and route
+the existing Rust transition logic through an explicit database
 transaction with normalized mutable authority, shared repository lock/version
 rules and a database clock read after lock acquisition. Preserve mutations that
 intentionally persist a rejection/revalidation outcome, keep artifact reads outside

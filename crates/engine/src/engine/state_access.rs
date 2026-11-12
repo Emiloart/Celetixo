@@ -38,6 +38,109 @@ fn evaluate_and_publish<R>(
     outcome
 }
 
+/// Each durable operation carries explicit scope and actor attribution. The
+/// private Session remains in the Engine callback; metadata cannot authenticate.
+pub(super) struct ScopedAccess<'a> {
+    store: &'a InMemoryStore,
+    scope: Scope,
+    actor: authority::AuthorityActor,
+}
+impl InMemoryStore {
+    pub(super) fn session(
+        &self,
+        session: &Session,
+        scope: &Scope,
+        permission: Permission,
+    ) -> ScopedAccess<'_> {
+        ScopedAccess {
+            store: self,
+            scope: scope.clone(),
+            actor: authority::AuthorityActor::Session {
+                principal: session.principal.clone(),
+                grant: session.token,
+                permission,
+            },
+        }
+    }
+    pub(super) fn administration(&self, scope: &Scope) -> ScopedAccess<'_> {
+        ScopedAccess {
+            store: self,
+            scope: scope.clone(),
+            actor: authority::AuthorityActor::EmbeddingAdministrator,
+        }
+    }
+}
+impl ScopedAccess<'_> {
+    pub(super) fn read<R>(
+        &self,
+        operation: impl FnOnce(&Database) -> Result<R, EngineError>,
+    ) -> Result<R, EngineError> {
+        if self.store.authority.is_none() {
+            return self.store.read(operation);
+        }
+        let mode = if matches!(
+            self.actor,
+            authority::AuthorityActor::EmbeddingAdministrator
+        ) {
+            authority::AuthorityMode::AdministrativeRead
+        } else {
+            authority::AuthorityMode::Read
+        };
+        self.durable(mode, |state| operation(state))
+    }
+    pub(super) fn update<R>(
+        &self,
+        operation: impl FnOnce(&mut Database) -> Result<R, EngineError>,
+    ) -> Result<R, EngineError> {
+        if self.store.authority.is_none() {
+            return self.store.update(operation);
+        }
+        let mode = if matches!(
+            self.actor,
+            authority::AuthorityActor::EmbeddingAdministrator
+        ) {
+            authority::AuthorityMode::AdministrativeUpdate
+        } else {
+            authority::AuthorityMode::Update
+        };
+        self.durable(mode, operation)
+    }
+    fn durable<R>(
+        &self,
+        mode: authority::AuthorityMode,
+        operation: impl FnOnce(&mut Database) -> Result<R, EngineError>,
+    ) -> Result<R, EngineError> {
+        use authority::{AuthorityAccess, AuthorityFailure};
+        let backend = self
+            .store
+            .authority
+            .as_ref()
+            .ok_or(AuthorityFailure::Protocol)?;
+        let context = AuthorityAccess::new(self.scope.clone(), mode, self.actor.clone());
+        let mut operation = Some(operation);
+        let mut outcome = None;
+        let mut violation = None;
+        backend.access(&context, &mut |state| {
+            if operation.is_none() || violation.is_some() {
+                violation = Some(AuthorityFailure::Protocol);
+                return Err(AuthorityFailure::Protocol);
+            }
+            if state.scope() != context.scope() {
+                violation = Some(AuthorityFailure::Integrity);
+                return Err(AuthorityFailure::Integrity);
+            }
+            let operation = operation.take().ok_or(AuthorityFailure::Protocol)?;
+            outcome = Some(operation(&mut state.db));
+            Ok(())
+        })?;
+        if let Some(failure) = violation {
+            return Err(EngineError::Authority(failure));
+        }
+        // Storage Ok without one evaluation cannot acknowledge any domain result.
+        outcome.ok_or(EngineError::Authority(AuthorityFailure::Protocol))?
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

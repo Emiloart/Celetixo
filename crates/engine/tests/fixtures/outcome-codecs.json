@@ -1,0 +1,24 @@
+{
+  "schema": "celetixo/outcome-codec-frozen-fixtures/v1",
+  "method": "Independent Python length-delimited field encoding; neither Rust codec was called.",
+  "files": {
+    "commit-outcome-accepted-v1.hex": {
+      "domain": "celetixo/commit-outcome-record/v1",
+      "digest": "de85d90b24e41a48e9d7440e59f48d12f45fbb057e236dd79a443b38ed0d1d21",
+      "file_sha256": "342ead90047e38ca31a8875f28a3255aa968eab594a1e79d930882ad9d23d0c2",
+      "bytes": 178
+    },
+    "commit-outcome-rejected-v1.hex": {
+      "domain": "celetixo/commit-outcome-record/v1",
+      "digest": "69e387d9b1a7f572540bbfe06942221b9511966631e0091ac7703a7b2357cac3",
+      "file_sha256": "bd530a5453ade048ec3f4202c12ef325360e82144107e8547aa6008b2be691cc",
+      "bytes": 172
+    },
+    "access-provenance-record-v1.hex": {
+      "domain": "celetixo/access-provenance-record/v1",
+      "digest": "ac6ceac9a0793921bb045a8eb02d9fe0d1af49001e5e2a3cb8543b40223fc814",
+      "file_sha256": "b1b02c3d874833f8b024b1a6e10174e6eb75f636023ff06b13c735266ceb8eb2",
+      "bytes": 504
+    }
+  }
+}

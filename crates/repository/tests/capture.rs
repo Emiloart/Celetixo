@@ -1173,7 +1173,7 @@ fn private_keys_and_environment_credentials_are_not_snapshot_inputs() {
 }
 
 #[test]
-fn public_detector_source_literals_are_not_mistaken_for_private_material() {
+fn public_source_literals_and_reviewed_grant_assignments_require_exact_admission() {
     let dir = repository();
     for (path, bytes) in [
         (
@@ -1182,10 +1182,6 @@ fn public_detector_source_literals_are_not_mistaken_for_private_material() {
         ),
         ("capture_tests.rs", include_bytes!("capture.rs").as_slice()),
         (
-            "engine.rs",
-            include_bytes!("../../engine/src/engine.rs").as_slice(),
-        ),
-        (
             "language_service.rs",
             include_bytes!("../src/lsp.rs").as_slice(),
         ),
@@ -1193,6 +1189,48 @@ fn public_detector_source_literals_are_not_mistaken_for_private_material() {
         fs::write(dir.path().join(path), bytes).unwrap();
     }
     capture(&request(dir.path())).unwrap();
+    // These public Rust assignments now contain credential-shaped numeric grant
+    // selectors. Keep the conservative default rejection and an explicit frozen
+    // review; do not discover/approve arbitrary source bytes in the test.
+    for (path, bytes) in [
+        (
+            "engine.rs",
+            include_bytes!("../../engine/src/engine.rs").as_slice(),
+        ),
+        (
+            "authority_records.rs",
+            include_bytes!("../../engine/src/engine/authority/records.rs").as_slice(),
+        ),
+    ] {
+        fs::write(dir.path().join(path), bytes).unwrap();
+    }
+    assert!(matches!(
+        capture(&request(dir.path())),
+        Err(CaptureError::SensitiveInput(_))
+    ));
+    let mut approved = request(dir.path());
+    for argument in [
+        "engine.rs=9f896e748937467d9713ca5a9c323e34f8e9b413de1aa8fd3b4a3a1864379811",
+        "authority_records.rs=99330c01b6fe6fabe1834ac343d8c9ae76c7685d3750eab34ced9118235eb98f",
+    ] {
+        celetixo_repository::reviewed_inputs::add_exact_review(
+            &mut approved.policy.credentials,
+            argument,
+        )
+        .unwrap();
+    }
+    capture(&approved).unwrap();
+    for path in ["engine.rs", "authority_records.rs"] {
+        let original = fs::read(dir.path().join(path)).unwrap();
+        let mut changed = original.clone();
+        changed.extend_from_slice(b"\n// changed public bytes\n");
+        fs::write(dir.path().join(path), changed).unwrap();
+        assert!(matches!(
+            capture(&approved),
+            Err(CaptureError::SensitiveInput(_))
+        ));
+        fs::write(dir.path().join(path), original).unwrap();
+    }
 }
 
 #[test]

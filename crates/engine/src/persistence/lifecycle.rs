@@ -462,7 +462,7 @@ fn validate_context(r: &mut Reader<'_>, snapshot: &Snapshot) -> Result<(), Resto
     }
     Ok(())
 }
-fn canonical(
+pub(super) fn canonical(
     actual: Digest,
     expected: Digest,
     encoded: &[u8],
@@ -473,16 +473,16 @@ fn canonical(
     }
     Ok(())
 }
-fn element(r: &mut Reader<'_>) -> Result<ElementId, RestoreError> {
+pub(super) fn element(r: &mut Reader<'_>) -> Result<ElementId, RestoreError> {
     ElementId::new(r.text()?).map_err(|_| RestoreError::Identity)
 }
-fn encode_elements(c: &mut Canonical, elements: &BTreeSet<ElementId>) {
+pub(super) fn encode_elements(c: &mut Canonical, elements: &BTreeSet<ElementId>) {
     c.u64(elements.len() as u64);
     for id in elements {
         c.str(id.as_str());
     }
 }
-fn decode_elements(r: &mut Reader<'_>) -> Result<BTreeSet<ElementId>, RestoreError> {
+pub(super) fn decode_elements(r: &mut Reader<'_>) -> Result<BTreeSet<ElementId>, RestoreError> {
     let mut result = BTreeSet::new();
     for _ in 0..r.count()? {
         if !result.insert(element(r)?) {
@@ -491,7 +491,7 @@ fn decode_elements(r: &mut Reader<'_>) -> Result<BTreeSet<ElementId>, RestoreErr
     }
     Ok(result)
 }
-fn decode_access(r: &mut Reader<'_>) -> Result<AccessSet, RestoreError> {
+pub(super) fn decode_access(r: &mut Reader<'_>) -> Result<AccessSet, RestoreError> {
     let reads = decode_elements(r)?;
     let writes = decode_elements(r)?;
     let invariant_scopes = decode_elements(r)?;
@@ -535,7 +535,7 @@ fn decode_check(r: &mut Reader<'_>) -> Result<CheckSpec, RestoreError> {
         r.digest()?,
     )?)
 }
-fn optional_value(r: &mut Reader<'_>) -> Result<Option<i64>, RestoreError> {
+pub(super) fn optional_value(r: &mut Reader<'_>) -> Result<Option<i64>, RestoreError> {
     match r.text()?.as_str() {
         "absent" => Ok(None),
         "present" => Ok(Some(r.signed()?)),
@@ -545,7 +545,7 @@ fn optional_value(r: &mut Reader<'_>) -> Result<Option<i64>, RestoreError> {
 fn signed_exit(r: &mut Reader<'_>) -> Result<i32, RestoreError> {
     i32::try_from(r.signed()?).map_err(|_| RestoreError::Encoding)
 }
-fn encode_completeness(c: &mut Canonical, completeness: &Completeness) {
+pub(super) fn encode_completeness(c: &mut Canonical, completeness: &Completeness) {
     match completeness {
         Completeness::Complete => c.u64(0),
         Completeness::Incomplete { reasons } => {
@@ -557,7 +557,7 @@ fn encode_completeness(c: &mut Canonical, completeness: &Completeness) {
         }
     }
 }
-fn decode_completeness(r: &mut Reader<'_>) -> Result<Completeness, RestoreError> {
+pub(super) fn decode_completeness(r: &mut Reader<'_>) -> Result<Completeness, RestoreError> {
     match r.number()? {
         0 => Ok(Completeness::Complete),
         1 => {

@@ -3,6 +3,12 @@
 **Status:** 04.1e prerequisite; lifecycle authority remains in the reference
 Engine's memory. This does not complete 04.1 or distributed commit milestone 04.2.
 
+This record describes the verified 04.1e boundary. The subsequent
+[04.1f contract](goal-04-authority-boundary.md) adds checked native state
+reconstruction, backend routing and the current schema-v3 upgrade. Statements
+below about v2 and pending reconstruction describe this earlier milestone; its
+source-bound evidence remains unchanged.
+
 **Authority:** [Goal 04](goal-04.md), ADR-0003, the
 [identity contract](../spec/engineering-identity.md) and
 [failure model](../spec/failure-model.md).

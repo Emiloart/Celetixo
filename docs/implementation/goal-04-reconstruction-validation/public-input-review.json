@@ -1,0 +1,9 @@
+{
+  "schema": "celetixo/goal04-reconstruction-public-review/v1",
+  "basis": "Explicit review of public Rust declarations and numeric grant/counter assignments; no live credentials. Default capture admission policy unchanged. Only exact path/content exceptions are installed in the two trusted CI smoke commands.",
+  "reviewed_public_inputs": {
+    "crates/engine/src/engine.rs": "9f896e748937467d9713ca5a9c323e34f8e9b413de1aa8fd3b4a3a1864379811",
+    "crates/engine/src/engine/authority/records.rs": "99330c01b6fe6fabe1834ac343d8c9ae76c7685d3750eab34ced9118235eb98f"
+  },
+  "workflow_sha256": "92261877b70806af0abf7d7b4ea32c9a135b63886e02b1856f32b500736ddf0b"
+}

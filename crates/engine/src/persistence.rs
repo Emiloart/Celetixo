@@ -1,7 +1,7 @@
 //! Checked reconstruction of immutable domain values from durable storage.
 //!
 //! These codecs restore data through existing validated constructors. They never
-//! deserialize sessions, capabilities, reader objects, or transaction authority.
+//! deserialize sessions, capabilities, reader objects, or independently grant transaction authority.
 use crate::ids::{
     Digest, ElementId, OrganizationId, RepositoryId, Revision, Scope, SnapshotId, WorkspaceId,
 };
@@ -13,11 +13,19 @@ use std::collections::{BTreeMap, BTreeSet};
 use thiserror::Error;
 
 mod lifecycle;
+mod metadata;
+mod outcome;
 mod semantic;
 pub use lifecycle::{
     ImpactAnalysisRecord, NativeIntentRecord, VerificationEvidenceRecord, restore_access_set,
     restore_commit_request, restore_impact_record, restore_native_intent, restore_reference_patch,
     restore_verification_record,
+};
+pub use metadata::{
+    LeaseEventRecord, TransactionReasonRecord, restore_lease_event, restore_transaction_reason,
+};
+pub use outcome::{
+    AccessProvenanceRecord, CommitOutcomeRecord, restore_access_provenance, restore_commit_outcome,
 };
 pub use semantic::{EngineeringModelRecord, restore_model_record, restore_repository_analysis};
 
@@ -57,6 +65,8 @@ pub enum RestoreError {
     BindingMismatch,
     #[error("durable domain record violates its validated value contract")]
     InvalidDomainValue,
+    #[error("durable domain record kind is not supported by this reconstruction profile")]
+    UnsupportedDomainValue,
     #[error(transparent)]
     Patch(#[from] crate::patch::PatchError),
     #[error(transparent)]

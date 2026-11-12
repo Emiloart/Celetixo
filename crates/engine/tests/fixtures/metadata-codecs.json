@@ -1,0 +1,18 @@
+{
+  "schema": "celetixo/metadata-codec-frozen-fixtures/v1",
+  "method": "Independent Python length-delimited field encoding; neither Rust codec was called.",
+  "files": {
+    "transaction-reason-record-v1.hex": {
+      "domain": "celetixo/transaction-reason-record/v1",
+      "digest": "a8f98a9397a81c02fa2029a0728c35b863dac6c47fff4f6eaa3cc13804f6048b",
+      "bytes": 78,
+      "file_sha256": "ca5700a688008d798a9478421c99d6acff71be24c5c410e4d191a485403a9792"
+    },
+    "lease-event-record-v1.hex": {
+      "domain": "celetixo/lease-event-record/v1",
+      "digest": "810499b6496fbeabd93b2e4bb98779167fb9df2d2b664fce43429aebebef05c7",
+      "bytes": 203,
+      "file_sha256": "993c987483f5d0a27e0dd01ae39b77802092375411a6bcdf0487bc9e618afa42"
+    }
+  }
+}

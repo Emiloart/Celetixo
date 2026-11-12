@@ -1,7 +1,7 @@
 # Goal 04 PostgreSQL authority schema
 
 **Status:** implementation foundation for milestone 04.1; not a completed durable Engine or a distributed-commit claim
-**Canonical SQL:** immutable [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql), additive [0002_lifecycle_reconstruction.sql](../../crates/postgres/migrations/0002_lifecycle_reconstruction.sql)
+**Canonical SQL:** immutable [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql), additive [0002_lifecycle_reconstruction.sql](../../crates/postgres/migrations/0002_lifecycle_reconstruction.sql) and [0003_native_lifecycle.sql](../../crates/postgres/migrations/0003_native_lifecycle.sql)
 **Authority:** [Goal 04](goal-04.md), ADR-0003 and ADR-0004
 
 This schema separates mutable operational authority, immutable engineering values and
@@ -14,7 +14,7 @@ Engine through PostgreSQL.
 The migration runner owns `celetixo.schema_migrations`, its migration checksum and
 the migration advisory lock. It verifies an exact supported history prefix, then applies all missing files
 and records their versions in the same explicit database transaction. See the
-[v1-to-v2 upgrade and rollback contract](goal-04-lifecycle-records.md#schema-v2-and-supported-upgrade). The SQL creates no cluster-global login, group or
+[v1-to-v2 contract](goal-04-lifecycle-records.md#schema-v2-and-supported-upgrade) and [current v3 upgrade contract](goal-04-authority-boundary.md#schema-v3-and-upgrade). The SQL creates no cluster-global login, group or
 deployment owner. Application migration/reopen/race evidence belongs in the milestone
 validation record; the existence of tables is not that evidence.
 
@@ -49,6 +49,8 @@ unsigned decimal values; SQL numeric coercion is not an integer request parser.
 | `operations` | Immutable resolved operation outcome, keyed by scope, operation kind and idempotency key; canonical request digest, original request-payload reference and exact transaction/attempt are retained. |
 | `source_attempts`, `source_attempt_events`, `source_attempt_outcomes`, `source_rejections` | Source admission, exact patch/application, single active attempt per transaction, executor claim, history, terminal result and pre-admission rejection records. |
 | `artifact_objects`, `evidence`, `evidence_receipts`, `attempt_checks` | Immutable object metadata and evidence, unique source-attempt admission receipt and mutable reference-check selection. Evidence bytes are not made trustworthy by inserting metadata. |
+| `reference_evidence_admissions`, `reference_evidence_signers` | Immutable fresh native admissions and mutable current verifier selection, preserving an evidence value’s original issuer. |
+| `authority_publications` | Scoped immutable publication facts, separating authenticated database service identity from requested actor attribution; no implemented lifecycle writer yet. |
 | `outbox`, `outbox_delivery`, `inbox` | Immutable event facts, separately mutable publication progress, immutable idempotent consumer results. Event delivery is not transaction authority. |
 
 `domain_payloads` caps each value at 64 MiB and records its format and version.
@@ -189,7 +191,9 @@ The reference Engine now separates adapter-free records from the embedding's liv
 capability allocation identity and artifact-reader registry (04.1b). Copying those
 records does not authenticate an old session, executor, cleanup grant or storage
 capability, and does not restore a reader. This is a prerequisite for checked
-reconstruction, not a public restore API or an implemented PostgreSQL lifecycle.
+reconstruction. The subsequent [04.1f trusted boundary](goal-04-authority-boundary.md)
+exposes checked native facts, never restored live capabilities; there is still no
+implemented PostgreSQL lifecycle.
 Runtime identity is not durable authorization. The database-backed path must still
 authenticate each request, load current scoped grants and policy, and bind trusted
 adapters to their current registration before using them.

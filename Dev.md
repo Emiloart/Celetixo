@@ -207,6 +207,16 @@ TaskIntent. Durable integration must require the exact request and retain its
 original body/outcome rather than deriving past requests from current evidence.
 The reference clock/fences still do not supply distributed authority.
 
+The [04.1f reconstruction/backend boundary](docs/implementation/goal-04-authority-boundary.md)
+adds checked scoped native state, typed outcomes/metadata, fresh authentication
+resolution and explicit trusted backend routing. No SQL implementation exists yet.
+The selected backend cannot fall back to memory and requires prepared commit
+requests. Schema v3 is additive and must remain immutable after publication.
+Preserve full source-state recovery as a remaining gate; the native profile rejects
+unsupported source state rather than omitting it. Follow the
+[session handoff](docs/implementation/goal-04-session-handoff.md) when resuming the
+user-requested pause after this piece.
+
 ### Phase 7 — Real worker integration and evaluation
 
 Connect real coding workers through provider-neutral adapters. Run tasks against immutable repository snapshots and pass every patch through the same transaction and verification path.

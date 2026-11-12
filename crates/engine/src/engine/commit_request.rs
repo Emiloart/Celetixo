@@ -59,6 +59,8 @@ pub struct ReservationView {
     /// Attribution only; the corresponding opaque Session is still required.
     pub authorization_grant: u64,
     pub fence: u64,
+    pub acquired_at: u64,
+    pub acquired_attempt: u64,
     pub expires_at: u64,
     pub writes: BTreeSet<ElementId>,
 }
@@ -70,27 +72,31 @@ impl Engine {
         scope: &Scope,
         id: &TransactionId,
     ) -> Result<ReservationView, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Read)?;
-            let tx = db
-                .transactions
-                .get(&(scope.clone(), id.clone()))
-                .ok_or(EngineError::NotFound)?;
-            let lease = tx.lease.as_ref().ok_or(EngineError::InvalidLease)?;
-            let owner = db
-                .grants
-                .get(&lease.owner)
-                .ok_or(EngineError::Unauthorized)?;
-            Ok(ReservationView {
-                transaction: tx.id.clone(),
-                attempt: tx.attempt().number,
-                owner: owner.principal.clone(),
-                authorization_grant: lease.owner,
-                fence: lease.fence,
-                expires_at: lease.expires_at,
-                writes: lease.writes.clone(),
+        self.store
+            .session(session, scope, Permission::Read)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Read)?;
+                let tx = db
+                    .transactions
+                    .get(&(scope.clone(), id.clone()))
+                    .ok_or(EngineError::NotFound)?;
+                let lease = tx.lease.as_ref().ok_or(EngineError::InvalidLease)?;
+                let owner = db
+                    .grants
+                    .get(&lease.owner)
+                    .ok_or(EngineError::Unauthorized)?;
+                Ok(ReservationView {
+                    transaction: tx.id.clone(),
+                    attempt: tx.attempt().number,
+                    owner: owner.principal.clone(),
+                    authorization_grant: lease.owner,
+                    fence: lease.fence,
+                    acquired_at: lease.acquired_at,
+                    acquired_attempt: lease.acquired_attempt,
+                    expires_at: lease.expires_at,
+                    writes: lease.writes.clone(),
+                })
             })
-        })
     }
 
     /// Prepare exact request data, not a commit permission. It remains subject
@@ -102,31 +108,33 @@ impl Engine {
         id: &TransactionId,
         key: IdempotencyKey,
     ) -> Result<CommitRequest, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Commit)?;
-            let tx = db
-                .transactions
-                .get(&(scope.clone(), id.clone()))
-                .ok_or(EngineError::NotFound)?;
-            if tx.owner != *session.principal() {
-                return Err(EngineError::Unauthorized);
-            }
-            require_lease(db, tx, session)?;
-            let bindings = tx.bindings()?;
-            Ok(CommitRequest {
-                transaction: id.clone(),
-                attempt: bindings.attempt,
-                authorization_grant: session.token,
-                fence: tx.lease.as_ref().ok_or(EngineError::InvalidLease)?.fence,
-                base_snapshot: bindings.base_snapshot,
-                candidate_snapshot: bindings.candidate_snapshot,
-                patch: bindings.patch,
-                analysis: bindings.analysis,
-                intent: intent_digest(tx)?,
-                evidence: tx.attempt().evidence.clone(),
-                key,
+        self.store
+            .session(session, scope, Permission::Commit)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Commit)?;
+                let tx = db
+                    .transactions
+                    .get(&(scope.clone(), id.clone()))
+                    .ok_or(EngineError::NotFound)?;
+                if tx.owner != *session.principal() {
+                    return Err(EngineError::Unauthorized);
+                }
+                require_lease(db, tx, session)?;
+                let bindings = tx.bindings()?;
+                Ok(CommitRequest {
+                    transaction: id.clone(),
+                    attempt: bindings.attempt,
+                    authorization_grant: session.token,
+                    fence: tx.lease.as_ref().ok_or(EngineError::InvalidLease)?.fence,
+                    base_snapshot: bindings.base_snapshot,
+                    candidate_snapshot: bindings.candidate_snapshot,
+                    patch: bindings.patch,
+                    analysis: bindings.analysis,
+                    intent: intent_digest(tx)?,
+                    evidence: tx.attempt().evidence.clone(),
+                    key,
+                })
             })
-        })
     }
 
     pub fn commit_prepared(
