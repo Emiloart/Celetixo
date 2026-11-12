@@ -1,0 +1,24 @@
+{
+  "kind": "Observed dedicated local test profile; not a production deployment or capacity claim",
+  "verification_command": [
+    "python3",
+    "scripts/goal04/postgres_fixture.py",
+    "verify",
+    "--root",
+    "/home/emiloart/.local/share/celetixo-goal04/pg17-ci"
+  ],
+  "server_version": "PostgreSQL 17.9 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "durability": {
+    "fsync": "on",
+    "full_page_writes": "on",
+    "synchronous_commit": "on",
+    "data_checksums": "on"
+  },
+  "private_unix_scram_verified": true,
+  "invalid_authentication_rejected": true,
+  "application_roles_nonprivileged": true,
+  "network_mode": "none",
+  "published_ports": [],
+  "data_budget_bytes": 1073741824,
+  "hard_disk_quota": false
+}

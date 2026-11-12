@@ -1,5 +1,5 @@
-//! PostgreSQL catalogs and the bounded native registration authority adapter.
-//! Transaction lifecycle publication and source recovery remain unsupported.
+//! PostgreSQL catalogs and checked native lifecycle/commit authority.
+//! Complete captured-source recovery and network service deployment are pending.
 //! Rust evaluates domain transitions; there is no memory fallback or SQL
 //! semantic decision service.
 mod authority;

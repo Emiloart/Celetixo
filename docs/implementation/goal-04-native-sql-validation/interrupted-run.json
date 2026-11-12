@@ -1,0 +1,9 @@
+{
+  "record": "interrupted-checks.log",
+  "status": "Interrupted: no SQL suite exit status; not passing evidence",
+  "raw_sha256": "35945656f720b96a18416a66f9e0c6689693cc526a1306f99c3ebdd76b955b43",
+  "raw_bytes": 52626,
+  "nul_bytes": 95,
+  "public_representation": "NUL bytes escaped as literal \\0 for readable text; original bytes preserved privately. No other bytes changed.",
+  "termination_evidence": "write_stdin Unknown process id 21499; process listing had no runner/test process; dedicated fixture was stopped. Source manifest unchanged."
+}

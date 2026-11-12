@@ -1,0 +1,57 @@
+{
+  "kind": "development findings; final-source checks are in checks.json; not Engine-admitted evidence",
+  "date": "2026-11-12",
+  "findings": [
+    {
+      "observed": "The latest audit lookup selected generation 9 after publishing generation 10.",
+      "cause": "ORDER BY resolved a selected ::text alias, giving lexical numeric ordering.",
+      "change": "Qualify all loader ordering columns and the latest-audit key with their underlying table alias.",
+      "regression": "native_numeric_attempt_revision_and_event_order_survives_double_digits; all lifecycle tests cross publication 10."
+    },
+    {
+      "observed": "Native commit publication returned infrastructure Unavailable before COMMIT.",
+      "cause": "The outbox event-type parameter inferred a PostgreSQL domain rather than text for the Rust string binding.",
+      "change": "Bind the event type with an explicit ::text cast.",
+      "regression": "native_lifecycle_reopens_and_commits_receipt_operation_terminal_and_outbox_atomically."
+    },
+    {
+      "observed": "A deliberate signer mutation failed at its admission foreign key before the loader could inspect it.",
+      "change": "Retain that database constraint and remove the mutable signer row in the corruption fixture to test missing-link recovery rejection.",
+      "regression": "native_auxiliary_corruption_and_unsupported_state_cannot_be_silently_repaired."
+    },
+    {
+      "observed": "A six-second lease fixture expired during normal phase-by-phase reopen.",
+      "change": "Use a longer initial fixture lease, wait outside the SQL transaction until a short live interval, then cross expiry at the trusted BeforeCommit hook within the existing idle-transaction deadline. Production renewal still cannot shorten a lease.",
+      "regression": "native_expiry_read_observation_final_gate_and_revocation_fail_closed."
+    },
+    {
+      "observed": "The first complete serial PostgreSQL run passed 31 of 32 groups; the registration-fault assertion saw the lifecycle-fault snapshot.",
+      "cause": "Both tests used the literal scope label native-faults within the same process ID.",
+      "change": "Give the lifecycle fault test its own native-lifecycle-faults label; audit all static and generated scope labels. Preserve the first-pass source manifest/log, and rerun the complete suite.",
+      "regression": "Run native_sql_faults_roll_back_or_reconcile_exactly_once and sql_registration_rolls_back_failures_and_withholds_lost_commit_acknowledgement in one process; full serial PostgreSQL suite."
+    }
+  ],
+  "policy": "No migration ledger, default credential admission, authorization assertion, verification requirement or Engine semantic rule was weakened.",
+  "oracle_followup": "Expand the independent SQL pair oracle to all 16 combinations of read/write, invariant-scope and predicate attributes, so pure predicate and pure invariant conflicts are exercised separately.",
+  "focused_namespace_regression": {
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "-p",
+      "celetixo-postgres",
+      "--test",
+      "foundation",
+      "--",
+      "--ignored",
+      "--test-threads=1",
+      "native_authority::native_sql_faults_roll_back_or_reconcile_exactly_once",
+      "sql_registration_rolls_back_failures_and_withholds_lost_commit_acknowledgement"
+    ],
+    "passed": 2,
+    "failed": 0,
+    "elapsed_test_seconds": 33.88,
+    "result": "Both formerly colliding groups passed together in one process after scope separation."
+  }
+}

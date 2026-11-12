@@ -1,0 +1,18 @@
+{
+  "kind": "Public text-log presentation; execution outcomes unchanged",
+  "transformation": "Remove trailing ASCII spaces/tabs from subprocess output lines for repository whitespace checks. Original bytes are preserved privately. No other bytes changed.",
+  "logs": [
+    {
+      "path": "checks.log",
+      "raw_sha256": "2aa49005a0352cc18ec4bdd0b30d2f9a535beb9fde2c1550ef50b3c2b1ce09e3",
+      "public_sha256": "93a49955c215c275d4c656e80c27b7026e91b3b3c591d99b614b2fa9e4612de0",
+      "trailing_ascii_bytes_removed": 2
+    },
+    {
+      "path": "first-pass-checks.log",
+      "raw_sha256": "f383859e3581aca045d08021564d6fc056d2948dbbb2d0e10cf31a7b9b1491cf",
+      "public_sha256": "099dfd85d3f0546db06da7febf928ce75f2ff360e48f499fb589840c0bf09650",
+      "trailing_ascii_bytes_removed": 2
+    }
+  ]
+}

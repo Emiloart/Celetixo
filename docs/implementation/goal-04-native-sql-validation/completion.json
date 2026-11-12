@@ -1,0 +1,26 @@
+{
+  "kind": "Completion of bounded 04.1h verification; full Goal04 remains active",
+  "checks_record": "checks.json",
+  "checks_log_sha256": "93a49955c215c275d4c656e80c27b7026e91b3b3c591d99b614b2fa9e4612de0",
+  "source_manifest_unchanged": true,
+  "ordinary_workspace_passed": 409,
+  "ordinary_opt_in_ignored": 45,
+  "real_postgres_groups_passed": 32,
+  "native_oracle_pair_scenarios": 16,
+  "independent_process_race_cases": 3,
+  "original_checkout_preserved": true,
+  "published_migrations_changed": false,
+  "goal_contract_sha256": "339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743",
+  "independent_source_review": "No actionable defect found in native authority loader/publisher/final gate; no code or fixtures changed by review.",
+  "hosted_ci": "Unconfirmed; local results are not hosted results.",
+  "retained_failures": [
+    "first-pass-checks.json",
+    "first-pass-checks.log",
+    "interrupted-run.json",
+    "development-findings.json"
+  ],
+  "user_private_env_contents_read": false,
+  "dedicated_fixture_stopped": true,
+  "dedicated_fixture_data_preserved": true,
+  "public_log_presentation": "log-presentation.json"
+}

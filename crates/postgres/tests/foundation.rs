@@ -741,6 +741,7 @@ fn immutable_catalogs_survive_actual_database_process_restart() {
             .unwrap();
         backend.inspect_registration(&native_scope).unwrap()
     };
+    let (full_native_scope, full_native_before) = native_authority::prepare_database_restart();
     let root = config.host.parent().unwrap();
     let script =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../scripts/goal04/postgres_fixture.py");
@@ -759,6 +760,7 @@ fn immutable_catalogs_survive_actual_database_process_restart() {
         sql_authority().inspect_registration(&native_scope).unwrap(),
         native_before
     );
+    native_authority::assert_database_restart(&full_native_scope, &full_native_before);
     let mut reopened = SnapshotCatalog::connect(&connection("runtime", None)).unwrap();
     let expected = snapshot(selected.clone(), 123);
     assert_eq!(reopened.read(&selected, expected.id()).unwrap(), expected);
@@ -1257,6 +1259,7 @@ fn authorize_registration(owner: &mut Client, selected: &Scope) {
             .collect::<Vec<_>>()
             .join(",");
         owner.batch_execute(&format!("GRANT SELECT ON {reads} TO {name}; GRANT INSERT,UPDATE ON celetixo.engine_counters,celetixo.engine_model_heads TO {name}; GRANT INSERT ON celetixo.authority_publications TO {name};")).unwrap();
+        owner.batch_execute(&format!("GRANT INSERT ON celetixo.access_provenance,celetixo.transaction_outcomes,celetixo.committed_changes,celetixo.reservation_events,celetixo.operations,celetixo.evidence,celetixo.reference_evidence_admissions,celetixo.outbox,celetixo.outbox_delivery TO {name}; GRANT INSERT,UPDATE ON celetixo.transactions,celetixo.attempts,celetixo.reservations,celetixo.reservation_fences,celetixo.attempt_checks,celetixo.reference_evidence_signers TO {name}; GRANT INSERT,DELETE ON celetixo.reservation_claims TO {name}; GRANT UPDATE ON celetixo.repository_heads TO {name};")).unwrap();
         if role == "runtime_other" {
             owner.batch_execute(&format!("GRANT INSERT ON celetixo.principals,celetixo.grants,celetixo.grant_permissions TO {name}; GRANT UPDATE(active,generation) ON celetixo.grants TO {name};")).unwrap();
         }
@@ -1469,7 +1472,7 @@ fn sql_registration_rolls_back_failures_and_withholds_lost_commit_acknowledgemen
 
 #[test]
 #[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
-fn sql_registration_rejects_unsupported_state_budget_clock_and_scope_without_publication() {
+fn sql_native_preserves_lifecycle_and_rejects_budget_clock_and_scope_without_publication() {
     use celetixo_engine::engine::authority::{AuthorityFailure, NativeRecordLimits};
     use celetixo_engine::engine::{Engine, Permission};
     use celetixo_engine::evidence::CheckSpec;
@@ -1491,7 +1494,6 @@ fn sql_registration_rejects_unsupported_state_budget_clock_and_scope_without_pub
     engine
         .register(&worker, base.clone(), native_model(1))
         .unwrap();
-    let before = backend.inspect_registration(&selected).unwrap();
     let check = CheckSpec::new(
         CheckId::new("check").unwrap(),
         vec!["reference-not-executed".into()],
@@ -1501,22 +1503,28 @@ fn sql_registration_rejects_unsupported_state_budget_clock_and_scope_without_pub
     )
     .unwrap();
     assert_eq!(
-        engine.propose(
-            &worker,
-            &selected,
-            TransactionId::new("unsupported").unwrap(),
-            base.id(),
-            TransactionIntent {
-                objective: "unimplemented lifecycle must reject".into(),
-                accesses: Default::default(),
-                invariants: vec![],
-                required_checks: vec![check],
-                depends_on: BTreeSet::new()
-            }
-        ),
-        Err(authority_error(AuthorityFailure::UnsupportedProfile))
+        engine
+            .propose(
+                &worker,
+                &selected,
+                TransactionId::new("supported").unwrap(),
+                base.id(),
+                TransactionIntent {
+                    objective: "native lifecycle survives recovery".into(),
+                    accesses: Default::default(),
+                    invariants: vec![],
+                    required_checks: vec![check],
+                    depends_on: BTreeSet::new()
+                }
+            )
+            .map(|view| view.state),
+        Ok(celetixo_engine::transaction::TransactionState::Proposed)
     );
-    assert_eq!(backend.inspect_registration(&selected).unwrap(), before);
+    let before = backend.inspect_registration(&selected).unwrap();
+    assert_eq!(
+        before.records.transactions[&TransactionId::new("supported").unwrap()].state,
+        celetixo_engine::transaction::TransactionState::Proposed
+    );
     let foreign = scope("unmapped");
     assert_eq!(
         backend.inspect_registration(&foreign),
@@ -1538,6 +1546,15 @@ fn sql_registration_rejects_unsupported_state_budget_clock_and_scope_without_pub
         selected.repository.as_str(),
     ];
     owner.execute("UPDATE celetixo.engine_counters SET last_clock_ms='18446744073709551615' WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text",&[&a[0],&a[1],&a[2]]).unwrap();
+    // Counter-only tampering is detached from the append-only publication and
+    // fails checked recovery. Inject a matching NEW publication to exercise a
+    // coherent future clock without rewriting any historical audit record.
+    assert_eq!(
+        backend.inspect_registration(&selected),
+        Err(AuthorityFailure::Integrity)
+    );
+    owner.execute("INSERT INTO celetixo.authority_publications (organization_id,workspace_id,repository_id,state_generation,observed_clock_ms,authenticated_database_role,authenticated_database_role_oid,actor_kind,snapshot_digest) SELECT organization_id,workspace_id,repository_id,state_generation+1,'18446744073709551615',session_user::name,(SELECT oid FROM pg_roles WHERE rolname=session_user),'EmbeddingAdministrator',snapshot_digest FROM celetixo.authority_publications WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text ORDER BY state_generation DESC LIMIT 1", &[&a[0],&a[1],&a[2]]).unwrap();
+    owner.execute("UPDATE celetixo.repositories SET state_generation=state_generation+1 WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text", &[&a[0],&a[1],&a[2]]).unwrap();
     let future = backend.inspect_registration(&selected).unwrap();
     assert_eq!(
         engine.current(&worker, &selected),
@@ -2017,3 +2034,6 @@ fn sql_registration_checks_the_new_schema_after_waiting_for_a_migrator() {
     let generation:String=owner.query_one("SELECT state_generation::text FROM celetixo.repositories WHERE organization_id=$1::text",&[&selected.organization.as_str()]).unwrap().get(0);
     assert_eq!(generation, before.state_generation.to_string());
 }
+
+#[path = "foundation/native_authority.rs"]
+mod native_authority;

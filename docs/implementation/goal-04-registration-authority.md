@@ -1,8 +1,9 @@
 # Goal 04 PostgreSQL registration authority
 
-**Status:** 04.1g bounded SQL integration. PostgreSQL now stores native grants,
+**Status:** historical 04.1g scope; [04.1h](goal-04-native-sql-authority.md)
+supersedes its lifecycle restriction. At 04.1g, PostgreSQL stored native grants,
 repository/model registration and model updates through the existing Rust Engine.
-Transaction lifecycle publication, source recovery and distributed commit remain
+Transaction lifecycle publication, source recovery and distributed commit were
 unsupported. Milestone 04.1 and the full [Goal 04](goal-04.md) remain incomplete.
 
 ## Scope and authority

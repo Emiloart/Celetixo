@@ -1193,6 +1193,26 @@ fn public_source_literals_and_reviewed_grant_assignments_require_exact_admission
             "postgres_authority_tests.rs",
             include_bytes!("../../postgres/tests/foundation.rs").as_slice(),
         ),
+        (
+            "postgres_native.rs",
+            include_bytes!("../../postgres/src/authority/native.rs").as_slice(),
+        ),
+        (
+            "postgres_native_load.rs",
+            include_bytes!("../../postgres/src/authority/native/load.rs").as_slice(),
+        ),
+        (
+            "postgres_native_publish.rs",
+            include_bytes!("../../postgres/src/authority/native/publish.rs").as_slice(),
+        ),
+        (
+            "postgres_native_tests.rs",
+            include_bytes!("../../postgres/tests/foundation/native_authority.rs").as_slice(),
+        ),
+        (
+            "postgres_transport_tests.rs",
+            include_bytes!("../../postgres/tests/foundation/commit_transport.rs").as_slice(),
+        ),
     ] {
         fs::write(dir.path().join(path), bytes).unwrap();
     }

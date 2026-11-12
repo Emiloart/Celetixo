@@ -4,7 +4,7 @@
 (`f1f2b83a4193f483c79216ed6e8140a75d9ecea6`). The following preserves the original
 pause context; consult current [progress](goal-04-progress.md) and the
 [04.1g PostgreSQL registration adapter](goal-04-registration-authority.md) for
-subsequent work. Goal 04 is not complete; preserve the entire accepted
+subsequent work, followed by the [04.1h native SQL profile](goal-04-native-sql-authority.md). Goal 04 is not complete; preserve the entire accepted
 [seven-milestone objective](goal-04.md). Its contract SHA-256 remains
 `339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743`.
 
@@ -37,11 +37,13 @@ this handoff; obtain its identity with Git. The previous published milestone was
 lifecycle records, explicit evaluation/publication, exact requests/fences, fresh
 session resolution, scoped backend routing and supported schema upgrades through
 v3. At the pause, the adapter test double was memory-only and there was no
-PostgreSQL `AuthorityBackend`. There is still no durable Engine lease/commit
-service or distributed commit.
+PostgreSQL `AuthorityBackend` or durable lease/commit backend. The native SQL
+library added later does not establish a production service deployment.
 04.1g now supplies a bounded PostgreSQL `AuthorityBackend` for scoped grants and
 native repository/model registration. It explicitly rejects all lifecycle rows;
-the complete durable lease/commit backend remains pending. Its shared schema and
+that restriction describes the historical 04.1g profile. 04.1h adds normalized
+native lifecycle/commit recovery; complete captured-source recovery remains
+pending. Its shared schema and
 repository locking, independent restricted runtime/admin logins and checked
 publication protocol are the starting point for the remaining SQL integration.
 
@@ -52,31 +54,35 @@ as complete source recovery. All remaining 04.1–04.7 requirements still apply.
 
 ## Next implementation work
 
-1. Implement a normalized, bounded PostgreSQL `AuthorityBackend` using the existing
-   Rust transitions and checked facts. Do not serialize the private Database blob
-   or introduce a separate transaction decision service.
-2. Independently authenticate nonowner/non-superuser/non-BYPASSRLS runtime roles;
-   verify both role name and OID against scope mapping. Administrative writes use
-   a separate trusted role. Requested actor fields are attribution only.
-3. Coordinate schema validation with migration locking, then use the common scoped
-   repository lock/generation protocol for every relevant mutation. Reads need a
-   coherent snapshot. Sample the documented database clock after locking; reject
-   backward clocks. Reads must not manufacture durable lease events.
-4. Retain intentional domain-error mutations, all exact historical request bodies,
-   evidence admissions/selection and lease acquisition attribution. Preserve legal
-   NUL reasons through binary records. Keep private candidates out of registered
-   proposal bases. Require prepared commit requests in the backend profile.
-5. Publish current authority, committed history, receipt, exact idempotent result
-   and required outbox fact atomically. Confirm SQL commit before acknowledging.
-   Reconcile ambiguous responses through durable authenticated lookup.
-6. Add real independent-process races/restart/fault tests and reference-oracle
-   equivalence. Integrate complete captured-source/model/Goal 03 execution and
-   evidence recovery before claiming 04.1 complete. Continue 04.2–04.7 afterward.
+The original 04.1f-to-native integration tasks are now covered by 04.1g/04.1h.
+Continue the entire accepted goal from these remaining gates:
+
+1. Complete captured-source/model/policy/Goal 03 execution and evidence recovery
+   using checked normalized records and fresh adapter resolution. Preserve every
+   source attempt, receipt, cleanup grant, artifact registration and governed
+   provenance relation. Do not reinterpret native reference proof as source proof.
+2. Add exact durable administrative request identities/digests/results for grants,
+   revocation, registration and model/policy mutation, plus every externally
+   retriable lifecycle mutation (including reservation, renewal and cancellation).
+   Diagnostic state/generation does not resolve an uncertain request automatically.
+3. Extend multi-instance source commit, authorization/index/policy/evidence/fence
+   rechecks and fault recovery; retain atomic history/head/outcome/outbox and exact
+   original requests. Expand independent generated histories and shrinking against
+   SQL and complete source-path proof before claiming 04.1/04.2 accepted.
+4. Add authenticated versioned service boundaries from canonical Protobuf contracts,
+   preserving complete TaskIntent and Rust Engine authority. The reviewed Unix
+   embedding profile does not establish production network identity/transport.
+5. Implement 04.3–04.6: canonical transactional events/JetStream, Temporal workflows,
+   verified immutable S3 storage/admission/governance, ClickHouse replay and scoped
+   shared language/execution services. None becomes transaction truth.
+6. Execute 04.7: the real end-to-end service path, partitions/failover/crashes,
+   security/isolation, backpressure/cancellation, backup/restore and measured load.
+   Preserve exact evidence and distinguish target, implementation and validation.
 
 Published migrations 0001/0002/0003 must not be edited. Future changes require a new
 migration. Do not rewrite applied checksums or promote SQL row shape into semantic
-admissibility. Live schema fencing, backup/restore and production identity services
-remain pending and need their own implementation/evidence.
+admissibility. Live schema fencing is implemented for the SQL adapter; backup/restore and
+production identity services remain pending and need their own implementation/evidence.
 
 ## Local verification resources
 
