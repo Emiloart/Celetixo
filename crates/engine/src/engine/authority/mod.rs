@@ -2,6 +2,7 @@
 //! identity, runtime adapter or authenticated session is reconstructed here.
 mod backend;
 mod records;
+mod source_records;
 use super::*;
 use crate::persistence::{
     AccessProvenanceRecord, EngineeringModelRecord, ImpactAnalysisRecord, NativeIntentRecord,
@@ -9,6 +10,7 @@ use crate::persistence::{
 };
 pub use backend::*;
 pub use records::*;
+pub use source_records::*;
 
 /// Opaque evaluation state supplied by a trusted authority backend. Normalized
 /// rows enter through checked construction; this is not a Database blob codec.

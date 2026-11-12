@@ -4,11 +4,11 @@ use super::*;
 
 #[derive(Clone)]
 pub struct SourceCleanupCapability {
-    store: Arc<StoreIdentity>,
-    token: u64,
-    principal: PrincipalId,
-    scope: Scope,
-    backend: Digest,
+    pub(super) store: Arc<StoreIdentity>,
+    pub(super) token: u64,
+    pub(super) principal: PrincipalId,
+    pub(super) scope: Scope,
+    pub(super) backend: Digest,
 }
 
 impl SourceCleanupCapability {
@@ -19,11 +19,11 @@ impl SourceCleanupCapability {
 
 #[derive(Clone)]
 pub(super) struct SourceCleanupGrant {
-    principal: PrincipalId,
-    scope: Scope,
-    backend: Digest,
-    expires_at_ms: u64,
-    active: bool,
+    pub(super) principal: PrincipalId,
+    pub(super) scope: Scope,
+    pub(super) backend: Digest,
+    pub(super) expires_at_ms: u64,
+    pub(super) active: bool,
 }
 
 impl Administrator {
@@ -37,7 +37,7 @@ impl Administrator {
         backend: Digest,
         expires_at_ms: u64,
     ) -> Result<SourceCleanupCapability, EngineError> {
-        self.store.update(|db| {
+        self.store.administration(&scope).update(|db| {
             if expires_at_ms <= db.now {
                 return Err(EngineError::InvalidTime);
             }
@@ -73,7 +73,7 @@ impl Administrator {
         if !Arc::ptr_eq(&self.store.identity, &capability.store) {
             return Err(EngineError::Unauthorized);
         }
-        self.store.update(|db| {
+        self.store.administration(&capability.scope).update(|db| {
             let grant = db
                 .source_cleanup_grants
                 .get_mut(&capability.token)
@@ -103,23 +103,25 @@ impl Engine {
         if !Arc::ptr_eq(&self.store.identity, &capability.store) {
             return Err(EngineError::Unauthorized);
         }
-        self.store.read(|db| {
-            let grant = db
-                .source_cleanup_grants
-                .get(&capability.token)
-                .ok_or(EngineError::Unauthorized)?;
-            if !grant.active
-                || grant.expires_at_ms <= db.now
-                || grant.principal != capability.principal
-                || grant.scope != *scope
-                || capability.scope != *scope
-                || grant.backend != backend
-                || capability.backend != backend
-            {
-                return Err(EngineError::Unauthorized);
-            }
-            Ok(())
-        })
+        self.store
+            .source_cleanup(&capability.principal, capability.token, scope)
+            .read(|db| {
+                let grant = db
+                    .source_cleanup_grants
+                    .get(&capability.token)
+                    .ok_or(EngineError::Unauthorized)?;
+                if !grant.active
+                    || grant.expires_at_ms <= db.now
+                    || grant.principal != capability.principal
+                    || grant.scope != *scope
+                    || capability.scope != *scope
+                    || grant.backend != backend
+                    || capability.backend != backend
+                {
+                    return Err(EngineError::Unauthorized);
+                }
+                Ok(())
+            })
     }
 }
 

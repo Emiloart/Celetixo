@@ -4,7 +4,7 @@ use super::super::*;
 use crate::persistence::{CommitOutcomeRecord, RestoreError};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct NativeRecords {
+pub struct BaseRecords {
     pub scope: Scope,
     pub clock_ms: u64,
     pub session_counter: u64,
@@ -15,7 +15,10 @@ pub struct NativeRecords {
     pub evidence: BTreeMap<EvidenceId, AdmittedEvidenceRecord>,
     pub operations: BTreeMap<IdempotencyKey, CommitOperationRecord>,
 }
-impl NativeRecords {
+/// Compatibility name for the strictly native entry point. Base rows alone
+/// never select a source profile; source reconstruction needs SourceRecords.
+pub type NativeRecords = BaseRecords;
+impl BaseRecords {
     pub fn empty(scope: Scope) -> Self {
         Self {
             scope,
@@ -95,14 +98,24 @@ pub struct CommitOperationRecord {
 }
 
 pub(super) fn export(db: &Database, scope: &Scope) -> Result<NativeRecords, RestoreError> {
-    if !db.source_executors.is_empty()
-        || !db.source_policies.is_empty()
-        || !db.source_attempts.is_empty()
-        || !db.source_operations.is_empty()
-        || !db.source_rejections.is_empty()
-        || !db.source_cleanup_grants.is_empty()
-        || !db.source_artifact_stores.is_empty()
-        || !db.source_evidence_records.is_empty()
+    export_base(db, scope, false)
+}
+pub(super) fn export_base(
+    db: &Database,
+    scope: &Scope,
+    source: bool,
+) -> Result<BaseRecords, RestoreError> {
+    if !source
+        && (!db.source_executors.is_empty()
+            || !db.source_policies.is_empty()
+            || !db.source_analysis_records.is_empty()
+            || !db.source_policy_records.is_empty()
+            || !db.source_attempts.is_empty()
+            || !db.source_operations.is_empty()
+            || !db.source_rejections.is_empty()
+            || !db.source_cleanup_grants.is_empty()
+            || !db.source_artifact_stores.is_empty()
+            || !db.source_evidence_records.is_empty())
     {
         return Err(RestoreError::UnsupportedDomainValue);
     }
@@ -123,7 +136,7 @@ pub(super) fn export(db: &Database, scope: &Scope) -> Result<NativeRecords, Rest
         }
     }
     if let Some(repo) = db.repositories.get(scope) {
-        if repo.source_analysis.is_some() || captured_workspace(&repo.current) {
+        if !source && (repo.source_analysis.is_some() || captured_workspace(&repo.current)) {
             return Err(RestoreError::UnsupportedDomainValue);
         }
         let initial = repo
@@ -226,6 +239,9 @@ pub(super) fn export(db: &Database, scope: &Scope) -> Result<NativeRecords, Rest
         if record_scope != scope {
             continue;
         }
+        if source && record.request.is_none() {
+            continue;
+        } // SourceRecords retains these explicitly.
         records.operations.insert(
             key.clone(),
             CommitOperationRecord {
@@ -241,6 +257,12 @@ pub(super) fn export(db: &Database, scope: &Scope) -> Result<NativeRecords, Rest
 }
 
 pub(super) fn restore(records: NativeRecords) -> Result<Database, RestoreError> {
+    restore_base(records, None)
+}
+pub(super) fn restore_base(
+    records: BaseRecords,
+    source: Option<&super::source_records::SourceRecords>,
+) -> Result<Database, RestoreError> {
     let scope = records.scope.clone();
     let mut db = Database {
         now: records.clock_ms,
@@ -296,7 +318,7 @@ pub(super) fn restore(records: NativeRecords) -> Result<Database, RestoreError> 
     }
     let mut revisions = BTreeSet::new();
     for (id, snapshot) in &repo.registered {
-        if captured_workspace(snapshot) {
+        if source.is_none() && captured_workspace(snapshot) {
             return Err(RestoreError::UnsupportedDomainValue);
         }
         if *id != snapshot.id()
@@ -372,12 +394,18 @@ pub(super) fn restore(records: NativeRecords) -> Result<Database, RestoreError> 
                     return Err(RestoreError::BindingMismatch);
                 }
             }
+            let context = source.and_then(|s| s.attempt_contexts.get(&(id.clone(), a.number)));
+            if source.is_some() && context.is_none() {
+                return Err(RestoreError::BindingMismatch);
+            }
             attempts.push(Attempt {
                 number: a.number,
                 base,
                 model: a.model,
                 effective: a.effective,
                 analysis: a.analysis,
+                source_analysis: context.map(|c| c.analysis),
+                source_policy: context.and_then(|c| c.policy),
                 patch: a.patch,
                 candidate: a.candidate,
                 evidence: a.evidence,
@@ -403,7 +431,11 @@ pub(super) fn restore(records: NativeRecords) -> Result<Database, RestoreError> 
             lease_history: record.lease_history,
             last_reason: record.last_reason,
         };
-        validate_attempts(&tx)?;
+        if let Some(source) = source {
+            super::source_records::validate_transaction(&tx, source)?;
+        } else {
+            validate_attempts(&tx)?;
+        }
         validate_lease(&db, &tx, records.reservation_fence)?;
         for event in &tx.lease_history {
             if matches!(event.kind, LeaseEventKind::Acquired { .. }) && !fences.insert(event.fence)
@@ -490,7 +522,9 @@ pub(super) fn restore(records: NativeRecords) -> Result<Database, RestoreError> 
             snapshots: repo.registered,
             model: repo.model,
             history,
-            source_analysis: None,
+            source_analysis: source
+                .and_then(|s| s.analysis_head.and_then(|id| s.analyses.get(&id)))
+                .cloned(),
         },
     );
     for (id, record) in records.evidence {

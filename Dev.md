@@ -227,8 +227,11 @@ full-goal work and preserved operating context.
 The [04.1i source codecs](docs/implementation/goal-04-source-codecs.md) preserve
 existing policy/plan/admission/evidence identities with explicit checked
 dependencies and aggregate decoding budgets. Use them when implementing complete
-historical source records. Reconstructed metadata cannot restore runtime grants,
-authorize a plan, establish object durability or enable source publication.
+historical source records. The [complete source graph and fresh runtime boundary](docs/implementation/goal-04-source-recovery.md)
+now support checked source recovery through a normalized memory adapter. Integrate
+that whole graph with SQL; preserve the distinction between restored records and
+fresh authenticated capabilities. Metadata alone cannot establish current object
+availability or enable source publication.
 
 ### Phase 7 — Real worker integration and evaluation
 

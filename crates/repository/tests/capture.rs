@@ -1229,6 +1229,10 @@ fn public_source_literals_and_reviewed_grant_assignments_require_exact_admission
             "authority_records.rs",
             include_bytes!("../../engine/src/engine/authority/records.rs").as_slice(),
         ),
+        (
+            "source_recovery.rs",
+            include_bytes!("../../engine/src/engine/source_recovery.rs").as_slice(),
+        ),
     ] {
         fs::write(dir.path().join(path), bytes).unwrap();
     }
@@ -1238,8 +1242,9 @@ fn public_source_literals_and_reviewed_grant_assignments_require_exact_admission
     ));
     let mut approved = request(dir.path());
     for argument in [
-        "engine.rs=9f896e748937467d9713ca5a9c323e34f8e9b413de1aa8fd3b4a3a1864379811",
-        "authority_records.rs=99330c01b6fe6fabe1834ac343d8c9ae76c7685d3750eab34ced9118235eb98f",
+        "engine.rs=2c3985b8772bba136a04df1201c2c811e50a6d861f09094d363c79dd5117fc2a",
+        "authority_records.rs=ab6382a281a84da5968c7f1a2e6e5415349340d137b00290a42377a3c3ccaf62",
+        "source_recovery.rs=c3dab277a55cf144fbaed0c5b26aab95a5e1273cf7b70ad157a7edcb914c3395",
     ] {
         celetixo_repository::reviewed_inputs::add_exact_review(
             &mut approved.policy.credentials,
@@ -1248,7 +1253,7 @@ fn public_source_literals_and_reviewed_grant_assignments_require_exact_admission
         .unwrap();
     }
     capture(&approved).unwrap();
-    for path in ["engine.rs", "authority_records.rs"] {
+    for path in ["engine.rs", "authority_records.rs", "source_recovery.rs"] {
         let original = fs::read(dir.path().join(path)).unwrap();
         let mut changed = original.clone();
         changed.extend_from_slice(b"\n// changed public bytes\n");

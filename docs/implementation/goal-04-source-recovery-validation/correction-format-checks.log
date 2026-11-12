@@ -1,0 +1,15 @@
+COMMAND ["cargo", "fmt", "--all", "--", "--check"]
+Diff in /home/emiloart/.local/share/celetixo-goal04/worktree/crates/engine/tests/source_evidence.rs:1904:
+         reject(bad);
+         let recorded_at = r.evidence.values().next().unwrap().receipt.recorded_at_ms;
+         let mut boundary = r.clone();
+-        boundary.executors.values_mut().next().unwrap().expires_at_ms = recorded_at + 1;
++        boundary
++            .executors
++            .values_mut()
++            .next()
++            .unwrap()
++            .expires_at_ms = recorded_at + 1;
+         AuthorityState::from_source_records(boundary, NativeRecordLimits::default()).unwrap();
+         let mut bad = r.clone();
+         bad.executors.values_mut().next().unwrap().expires_at_ms = recorded_at;

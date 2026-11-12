@@ -692,13 +692,13 @@ fn credentials(r: &mut Reader<'_>) -> Result<CredentialPolicy, RestoreError> {
 /// collection budgets apply to the complete recovered value, not each digest
 /// reference independently. Measurement allocates no canonical payload buffers.
 #[derive(Default)]
-pub(super) struct Cost {
-    pub(super) bytes: usize,
-    pub(super) entries: usize,
-    pub(super) max_field: usize,
+pub(crate) struct Cost {
+    pub(crate) bytes: usize,
+    pub(crate) entries: usize,
+    pub(crate) max_field: usize,
 }
 impl Cost {
-    pub(super) fn merge(&mut self, other: Self) -> Result<(), RestoreError> {
+    pub(crate) fn merge(&mut self, other: Self) -> Result<(), RestoreError> {
         self.bytes(other.bytes)?;
         self.entries = self
             .entries
@@ -707,28 +707,28 @@ impl Cost {
         self.max_field = self.max_field.max(other.max_field);
         Ok(())
     }
-    pub(super) fn bytes(&mut self, n: usize) -> Result<(), RestoreError> {
+    pub(crate) fn bytes(&mut self, n: usize) -> Result<(), RestoreError> {
         self.bytes = self.bytes.checked_add(n).ok_or(RestoreError::Limit)?;
         Ok(())
     }
-    pub(super) fn number(&mut self) -> Result<(), RestoreError> {
+    pub(crate) fn number(&mut self) -> Result<(), RestoreError> {
         self.max_field = self.max_field.max(8);
         self.bytes(16)
     }
-    pub(super) fn digest(&mut self) -> Result<(), RestoreError> {
+    pub(crate) fn digest(&mut self) -> Result<(), RestoreError> {
         self.max_field = self.max_field.max(32);
         self.bytes(40)
     }
-    pub(super) fn text(&mut self, s: &str) -> Result<(), RestoreError> {
+    pub(crate) fn text(&mut self, s: &str) -> Result<(), RestoreError> {
         self.max_field = self.max_field.max(s.len());
         self.bytes(8)?;
         self.bytes(s.len())
     }
-    pub(super) fn count(&mut self, n: usize) -> Result<(), RestoreError> {
+    pub(crate) fn count(&mut self, n: usize) -> Result<(), RestoreError> {
         self.entries = self.entries.checked_add(n).ok_or(RestoreError::Limit)?;
         self.number()
     }
-    pub(super) fn spec(&mut self, spec: &CheckSpec) -> Result<(), RestoreError> {
+    pub(crate) fn spec(&mut self, spec: &CheckSpec) -> Result<(), RestoreError> {
         self.text(spec.id().as_str())?;
         self.count(spec.command().len())?;
         for arg in spec.command() {
@@ -738,7 +738,7 @@ impl Cost {
         self.digest()?;
         self.digest()
     }
-    pub(super) fn digest_map(
+    pub(crate) fn digest_map(
         &mut self,
         map: &BTreeMap<String, Digest>,
     ) -> Result<(), RestoreError> {
@@ -750,7 +750,7 @@ impl Cost {
         Ok(())
     }
 }
-pub(super) fn charge(
+pub(crate) fn charge(
     r: &mut Reader<'_>,
     already: usize,
     cost: Cost,
@@ -768,7 +768,7 @@ pub(super) fn charge(
     }
     Ok(total)
 }
-pub(super) fn definition_cost(definition: &SourceCheckDefinition) -> Result<Cost, RestoreError> {
+pub(crate) fn definition_cost(definition: &SourceCheckDefinition) -> Result<Cost, RestoreError> {
     let i = definition.input();
     let mut c = Cost::default();
     c.spec(&i.check)?;
@@ -840,7 +840,7 @@ pub(super) fn definition_cost(definition: &SourceCheckDefinition) -> Result<Cost
 
 /// Full-registry preflight also bounds resolver-generated rationales. Invariant
 /// fan-out and dependency edges may be absent from an untrusted plan payload.
-pub(super) fn plan_context_cost(
+pub(crate) fn plan_context_cost(
     policy: &SourceExecutionPolicy,
     requirements: &PlanRequirements,
 ) -> Result<Cost, RestoreError> {

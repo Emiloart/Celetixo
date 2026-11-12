@@ -1806,3 +1806,519 @@ fn failed_attempt_evidence_remains_immutable_and_cannot_satisfy_a_fresh_retry() 
     );
     assert_eq!(h.engine.current(&h.observer, &scope()).unwrap(), h.base);
 }
+
+mod source_authority_recovery {
+    use super::*;
+    use celetixo_engine::engine::authority::{AuthorityState, NativeRecordLimits, SourceRecords};
+    fn check(h: &Harness) -> SourceRecords {
+        let before = h.reader.reads.load(Ordering::SeqCst);
+        let records = h
+            .admin
+            .inspect_source_records(&scope(), NativeRecordLimits::default())
+            .unwrap();
+        let state =
+            AuthorityState::from_source_records(records.clone(), NativeRecordLimits::default())
+                .unwrap();
+        assert_eq!(
+            state.source_records(NativeRecordLimits::default()).unwrap(),
+            records
+        );
+        assert_eq!(
+            before,
+            h.reader.reads.load(Ordering::SeqCst),
+            "record recovery invoked artifact I/O"
+        );
+        records
+    }
+    #[test]
+    fn passed_failed_and_incomplete_receipts_recover_with_missing_readers_and_revoked_grants() {
+        for case in 0..3 {
+            let h = Harness::new();
+            let attempt = h.start();
+            check(&h);
+            let mut input = h.input(&attempt);
+            match case {
+                1 => input.outcome = SourceCheckOutcome::Exited { code: 7 },
+                2 => {
+                    input.cleanup = SourceCleanup::Quarantined {
+                        reason: "retained for operator".into(),
+                    }
+                }
+                _ => {}
+            }
+            let bundle = h.seal(&attempt, input);
+            let receipt = h.deliver(&attempt, &bundle).unwrap();
+            let r = check(&h);
+            match case {
+                0 => assert_eq!(receipt.assessment, SourceEvidenceAssessment::Passed),
+                1 => assert!(matches!(
+                    receipt.assessment,
+                    SourceEvidenceAssessment::Failed { .. }
+                )),
+                _ => assert!(matches!(
+                    receipt.assessment,
+                    SourceEvidenceAssessment::Incomplete { .. }
+                )),
+            }
+            h.reader.unavailable.store(true, Ordering::SeqCst);
+            h.admin.revoke_source_artifact_store(&h.storage).unwrap();
+            h.admin.revoke_source_executor(&h.executor).unwrap();
+            h.admin.revoke(&h.owner).unwrap();
+            h.admin.advance_time(20_000).unwrap();
+            let after = check(&h);
+            assert_eq!(r.evidence, after.evidence);
+            assert_eq!(after.evidence[&bundle.evidence.id()].receipt, receipt);
+            assert!(!after.artifact_stores.values().next().unwrap().active);
+            assert!(!after.executors.values().next().unwrap().active);
+            // Typed metadata has no reader, and cannot revive the original
+            // executor or make a lost physical artifact available.
+            assert!(h.deliver(&attempt, &bundle).is_err());
+        }
+    }
+    #[test]
+    fn receipt_selection_assessment_provenance_and_source_transaction_state_are_checked() {
+        let h = Harness::new();
+        let attempt = h.start();
+        let bundle = h.seal(&attempt, h.input(&attempt));
+        h.deliver(&attempt, &bundle).unwrap();
+        let r = check(&h);
+        fn reject(r: SourceRecords) {
+            assert!(AuthorityState::from_source_records(r, NativeRecordLimits::default()).is_err());
+        }
+        let mut bad = r.clone();
+        bad.evidence.values_mut().next().unwrap().receipt.assessment =
+            SourceEvidenceAssessment::Failed {
+                checks: [cid()].into(),
+            };
+        reject(bad);
+        let mut bad = r.clone();
+        bad.evidence
+            .values_mut()
+            .next()
+            .unwrap()
+            .receipt
+            .storage_provenance = d("other-store");
+        reject(bad);
+        let mut bad = r.clone();
+        bad.evidence.values_mut().next().unwrap().store_registration += 1;
+        reject(bad);
+        let recorded_at = r.evidence.values().next().unwrap().receipt.recorded_at_ms;
+        let mut boundary = r.clone();
+        boundary
+            .executors
+            .values_mut()
+            .next()
+            .unwrap()
+            .expires_at_ms = recorded_at + 1;
+        AuthorityState::from_source_records(boundary, NativeRecordLimits::default()).unwrap();
+        let mut bad = r.clone();
+        bad.executors.values_mut().next().unwrap().expires_at_ms = recorded_at;
+        reject(bad);
+        let mut bad = r.clone();
+        bad.evidence
+            .values_mut()
+            .next()
+            .unwrap()
+            .receipt
+            .recorded_at_ms += 1;
+        reject(bad);
+        let mut bad = r.clone();
+        bad.evidence
+            .values_mut()
+            .next()
+            .unwrap()
+            .receipt
+            .envelope
+            .bytes += 1;
+        reject(bad);
+        let mut bad = r.clone();
+        bad.evidence.clear();
+        reject(bad);
+        let mut bad = r.clone();
+        bad.attempts.values_mut().next().unwrap().evidence = None;
+        reject(bad);
+        let mut bad = r.clone();
+        bad.attempts.values_mut().next().unwrap().executor_grant = None;
+        reject(bad);
+        let mut bad = r.clone();
+        bad.base
+            .transactions
+            .get_mut(&attempt.transaction)
+            .unwrap()
+            .state = TransactionState::Executing;
+        reject(bad);
+        let mut bad = r.clone();
+        bad.base
+            .transactions
+            .get_mut(&attempt.transaction)
+            .unwrap()
+            .attempts[0]
+            .effective
+            .as_mut()
+            .unwrap()
+            .writes
+            .clear();
+        reject(bad);
+        let mut bad = r.clone();
+        bad.artifact_stores.values_mut().next().unwrap().retention = d("changed-retention");
+        reject(bad);
+    }
+}
+
+mod recovered_runtime {
+    use super::*;
+    use celetixo_engine::engine::authority::*;
+    #[derive(Default)]
+    pub(super) struct RecordBackend {
+        pub(super) records: Mutex<BTreeMap<Scope, SourceRecords>>,
+        contexts: Mutex<Vec<AuthorityAccess>>,
+    }
+    impl AuthorityBackend for RecordBackend {
+        fn access(
+            &self,
+            context: &AuthorityAccess,
+            evaluate: &mut dyn FnMut(&mut AuthorityState) -> Result<(), AuthorityFailure>,
+        ) -> Result<(), AuthorityFailure> {
+            self.contexts.lock().unwrap().push(context.clone());
+            let mut rows = self.records.lock().unwrap();
+            let records = rows
+                .get(context.scope())
+                .ok_or(AuthorityFailure::ScopeDenied)?
+                .clone();
+            let mut state =
+                AuthorityState::from_source_records(records.clone(), NativeRecordLimits::default())
+                    .map_err(|_| AuthorityFailure::Integrity)?;
+            evaluate(&mut state)?;
+            let next = state
+                .source_records(NativeRecordLimits::default())
+                .map_err(|_| AuthorityFailure::Integrity)?;
+            if matches!(
+                context.mode(),
+                AuthorityMode::Update | AuthorityMode::AdministrativeUpdate
+            ) {
+                rows.insert(context.scope().clone(), next);
+            } else if next != records {
+                return Err(AuthorityFailure::Protocol);
+            }
+            Ok(())
+        }
+    }
+    fn backend(records: SourceRecords) -> Arc<RecordBackend> {
+        Arc::new(RecordBackend {
+            records: Mutex::new([(records.base.scope.clone(), records)].into()),
+            ..Default::default()
+        })
+    }
+    #[test]
+    fn fresh_embedding_resumes_claimed_work_only_after_independent_authentication_and_reader_resolution()
+     {
+        let h = Harness::new();
+        let attempt = h.start();
+        let records = h
+            .admin
+            .inspect_source_records(&scope(), Default::default())
+            .unwrap();
+        let service = backend(records.clone());
+        let (engine, admin) = Engine::with_authority_backend(service.clone());
+        let executor_id = *records.executors.keys().next().unwrap();
+        let storage_id = *records.artifact_stores.keys().next().unwrap();
+        assert!(
+            engine
+                .validate_source_attempt(&h.executor, &attempt.admission)
+                .is_err()
+        );
+        assert!(
+            engine
+                .source_evidence_record(&h.observer, &scope(), SourceEvidenceId(d("none")))
+                .is_err()
+        );
+        let executor = admin
+            .authenticate_existing_source_executor(&scope(), executor_id, |s, g| {
+                assert_eq!(*s, scope());
+                assert_eq!(g.principal, *h.executor.principal());
+                // This reentrant state read proves authentication has no state lock.
+                assert_eq!(
+                    admin
+                        .inspect_source_records(s, Default::default())
+                        .unwrap()
+                        .executors[&executor_id],
+                    *g
+                );
+                Ok(())
+            })
+            .unwrap();
+        assert_eq!(
+            engine
+                .validate_source_attempt(&executor, &attempt.admission)
+                .unwrap(),
+            SourceAttemptState::Verifying
+        );
+        assert_eq!(
+            engine.claim_source_attempt(&executor, &attempt.admission),
+            Err(EngineError::SourceAttempt(
+                SourceAttemptError::AlreadyClaimed
+            ))
+        );
+        assert_eq!(
+            admin
+                .authenticate_existing_source_executor(&scope(), executor_id, |_, _| Err(
+                    EngineError::Unauthorized
+                ))
+                .err(),
+            Some(EngineError::Unauthorized)
+        );
+        let reader = h.reader.clone();
+        let storage = admin
+            .resolve_existing_source_artifact_store(&scope(), storage_id, |s, g| {
+                assert_eq!(
+                    admin
+                        .inspect_source_records(s, Default::default())
+                        .unwrap()
+                        .artifact_stores[&storage_id],
+                    *g
+                );
+                Ok(reader)
+            })
+            .unwrap();
+        // Generate exact immutable bytes through the original independent test
+        // fixture. The newly recovered Engine must perform its own object reads.
+        let bundle = h.seal(&attempt, h.input(&attempt));
+        {
+            let mut rows = service.records.lock().unwrap();
+            let row = rows.get_mut(&scope()).unwrap();
+            let mut state =
+                AuthorityState::from_source_records(row.clone(), Default::default()).unwrap();
+            state.advance_authoritative_clock(10).unwrap();
+            *row = state.source_records(Default::default()).unwrap();
+        }
+        let reenter = admin.clone();
+        h.reader.on_read(move || {
+            reenter
+                .inspect_source_records(&scope(), Default::default())
+                .unwrap();
+        });
+        let receipt = engine
+            .record_source_evidence(
+                &executor,
+                &attempt.admission,
+                &storage,
+                bundle.evidence.clone(),
+                bundle.envelope.clone(),
+            )
+            .unwrap();
+        assert_eq!(receipt.assessment, SourceEvidenceAssessment::Passed);
+        let new_records = admin
+            .inspect_source_records(&scope(), Default::default())
+            .unwrap();
+        assert_eq!(
+            new_records.base.transactions[&attempt.transaction].state,
+            TransactionState::Validating
+        );
+        assert!(
+            new_records.base.transactions[&attempt.transaction].attempts[0]
+                .patch
+                .is_none()
+        );
+        let (engine2, admin2) = Engine::with_authority_backend(backend(new_records));
+        let owner_id = records
+            .base
+            .grants
+            .iter()
+            .find(|(_, g)| g.principal == *h.owner.principal())
+            .unwrap()
+            .0;
+        let owner = admin2
+            .authenticate_existing_session(&scope(), *owner_id, |_, _| Ok(()))
+            .unwrap();
+        assert_eq!(
+            engine2
+                .source_evidence_record(&owner, &scope(), receipt.evidence)
+                .unwrap()
+                .1,
+            receipt
+        );
+        assert!(
+            engine2
+                .record_source_evidence(
+                    &executor,
+                    &attempt.admission,
+                    &storage,
+                    bundle.evidence,
+                    bundle.envelope
+                )
+                .is_err()
+        );
+        assert!(
+            service
+                .contexts
+                .lock()
+                .unwrap()
+                .iter()
+                .any(|c| matches!(c.actor(), AuthorityActor::SourceExecutor { .. }))
+        );
+    }
+    #[test]
+    fn resolver_rechecks_revocation_after_external_authentication() {
+        let h = Harness::new();
+        let records = h
+            .admin
+            .inspect_source_records(&scope(), Default::default())
+            .unwrap();
+        let id = *records.executors.keys().next().unwrap();
+        let service = backend(records);
+        let (_, admin) = Engine::with_authority_backend(service.clone());
+        assert!(
+            admin
+                .authenticate_existing_source_executor(&scope(), id, |_, _| {
+                    service
+                        .records
+                        .lock()
+                        .unwrap()
+                        .get_mut(&scope())
+                        .unwrap()
+                        .executors
+                        .get_mut(&id)
+                        .unwrap()
+                        .active = false;
+                    Ok(())
+                })
+                .is_err()
+        );
+        let store_id = *service.records.lock().unwrap()[&scope()]
+            .artifact_stores
+            .keys()
+            .next()
+            .unwrap();
+        assert!(
+            admin
+                .resolve_existing_source_artifact_store(&scope(), store_id, |_, _| {
+                    service
+                        .records
+                        .lock()
+                        .unwrap()
+                        .get_mut(&scope())
+                        .unwrap()
+                        .artifact_stores
+                        .get_mut(&store_id)
+                        .unwrap()
+                        .active = false;
+                    Ok(h.reader.clone())
+                })
+                .is_err()
+        );
+    }
+}
+
+// Reuse the scoped test adapter while keeping this separate from its execution
+// harness so two source scopes can allocate the same numeric registration IDs.
+#[test]
+fn recovered_scopes_can_reuse_executor_cleanup_and_storage_ids_without_runtime_aliasing() {
+    use celetixo_engine::engine::authority::*;
+    let first = scope();
+    let mut second = scope();
+    second.repository = RepositoryId::new("second").unwrap();
+    let service = Arc::new(recovered_runtime::RecordBackend::default());
+    // The adapter is test-only; real PostgreSQL source publication is not enabled.
+    service
+        .records
+        .lock()
+        .unwrap()
+        .insert(first.clone(), SourceRecords::empty(first.clone()));
+    service
+        .records
+        .lock()
+        .unwrap()
+        .insert(second.clone(), SourceRecords::empty(second.clone()));
+    let (engine, admin) = Engine::with_authority_backend(service);
+    let grant = |s: Scope| {
+        admin
+            .grant_source_executor(
+                PrincipalId::new("executor").unwrap(),
+                s,
+                backend(),
+                [ExecutionTier::T1].into(),
+                resources(),
+                1000,
+            )
+            .unwrap()
+    };
+    let e1 = grant(first.clone());
+    let _e2 = grant(second.clone());
+    let cleanup = |s: Scope| {
+        admin
+            .grant_source_cleanup(
+                PrincipalId::new("cleanup").unwrap(),
+                s,
+                backend().profile,
+                1000,
+            )
+            .unwrap()
+    };
+    let c1 = cleanup(first.clone());
+    let c2 = cleanup(second.clone());
+    let r1 = Arc::new(ReferenceReader::new());
+    let r2 = Arc::new(ReferenceReader::new());
+    let s1 = admin
+        .register_source_artifact_store(first.clone(), r1.clone())
+        .unwrap();
+    let _s2 = admin
+        .register_source_artifact_store(second.clone(), r2.clone())
+        .unwrap();
+    for s in [&first, &second] {
+        let r = admin.inspect_source_records(s, Default::default()).unwrap();
+        assert_eq!(r.executors.keys().copied().collect::<Vec<_>>(), vec![1]);
+        assert_eq!(r.cleanup.keys().copied().collect::<Vec<_>>(), vec![1]);
+        assert_eq!(
+            r.artifact_stores.keys().copied().collect::<Vec<_>>(),
+            vec![1]
+        );
+    }
+    admin.revoke_source_executor(&e1).unwrap();
+    admin.revoke_source_cleanup(&c1).unwrap();
+    admin.revoke_source_artifact_store(&s1).unwrap();
+    assert!(
+        admin
+            .authenticate_existing_source_executor(&first, 1, |_, _| Ok(()))
+            .is_err()
+    );
+    assert!(
+        admin
+            .authenticate_existing_source_executor(&second, 1, |_, _| Ok(()))
+            .is_ok()
+    );
+    assert!(
+        engine
+            .validate_source_cleanup(&c1, &first, backend().profile)
+            .is_err()
+    );
+    assert!(
+        engine
+            .validate_source_cleanup(&c2, &second, backend().profile)
+            .is_ok()
+    );
+    assert!(
+        engine
+            .validate_source_cleanup(&c2, &first, backend().profile)
+            .is_err()
+    );
+    assert!(
+        admin
+            .resolve_existing_source_artifact_store(&first, 1, |_, _| Ok(r1))
+            .is_err()
+    );
+    assert!(
+        admin
+            .resolve_existing_source_artifact_store(&second, 1, |_, _| Ok(r2))
+            .is_ok()
+    );
+    assert!(
+        admin
+            .authenticate_existing_source_cleanup(&first, 1, |_, _| Ok(()))
+            .is_err()
+    );
+    assert!(
+        admin
+            .authenticate_existing_source_cleanup(&second, 1, |_, _| Ok(()))
+            .is_ok()
+    );
+}

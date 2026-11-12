@@ -74,9 +74,10 @@ rejects it. Evidence plan/check applicability, current executor authorization,
 object retrieval, digest/length verification and durable admission remain the
 responsibility of the existing evidence gate and `validate_persisted`.
 
-The PostgreSQL adapter still rejects source state. Complete source AuthorityState
-records, historical definitions/attempts/events/requests/outcomes, scoped runtime
-resolution and SQL reconstruction/publication remain required. Exact mutation
+The PostgreSQL adapter still rejects source state. The subsequent
+[source recovery capability](goal-04-source-recovery.md) supplies complete checked
+source AuthorityState metadata and fresh scoped runtime resolution. SQL
+reconstruction/publication remains required. Exact mutation
 reconciliation, source revalidation and atomic source commit remain pending;
 `SourceMutationUnsupported` is preserved. This milestone does not close 04.1,
 04.2 or any later Goal 04 service/recovery gate.

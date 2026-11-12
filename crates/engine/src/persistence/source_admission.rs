@@ -185,7 +185,7 @@ fn field_cost(cost: &mut Cost, length: usize) -> Result<(), RestoreError> {
     cost.bytes(length)
 }
 
-fn snapshot_cost(cost: &mut Cost, snapshot: &Snapshot) -> Result<(), RestoreError> {
+pub(crate) fn snapshot_cost(cost: &mut Cost, snapshot: &Snapshot) -> Result<(), RestoreError> {
     for s in [
         snapshot.scope().organization.as_str(),
         snapshot.scope().workspace.as_str(),

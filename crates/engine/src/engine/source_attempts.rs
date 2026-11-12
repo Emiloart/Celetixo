@@ -120,14 +120,14 @@ pub struct SourceAttemptOptions {
 }
 
 impl SourceAttemptOptions {
-    fn validate(&self) -> Result<(), SourceAttemptError> {
+    pub(crate) fn validate(&self) -> Result<(), SourceAttemptError> {
         if self.optional_checks.len() > 4096 {
             return Err(SourceAttemptError::InvalidOptions);
         }
         Ok(())
     }
 
-    fn request_digest(&self, patch: SourcePatchId) -> Digest {
+    pub fn request_digest(&self, patch: SourcePatchId) -> Digest {
         // Preserve the published empty-options operation identity. Nonempty
         // selections use a separate domain and bind every sorted CheckId.
         if self.optional_checks.is_empty() {
@@ -323,11 +323,11 @@ pub struct SourceRejectionView {
 
 #[derive(Clone)]
 pub struct SourceExecutorCapability {
-    store: Arc<StoreIdentity>,
-    token: u64,
-    principal: PrincipalId,
-    scope: Scope,
-    backend: BackendIdentity,
+    pub(super) store: Arc<StoreIdentity>,
+    pub(super) token: u64,
+    pub(super) principal: PrincipalId,
+    pub(super) scope: Scope,
+    pub(super) backend: BackendIdentity,
 }
 
 impl SourceExecutorCapability {
@@ -347,13 +347,13 @@ impl SourceExecutorCapability {
 
 #[derive(Clone)]
 pub(super) struct SourceExecutorGrant {
-    principal: PrincipalId,
-    scope: Scope,
-    backend: BackendIdentity,
-    tiers: BTreeSet<ExecutionTier>,
-    resource_ceiling: ResourceLimits,
-    expires_at_ms: u64,
-    active: bool,
+    pub(super) principal: PrincipalId,
+    pub(super) scope: Scope,
+    pub(super) backend: BackendIdentity,
+    pub(super) tiers: BTreeSet<ExecutionTier>,
+    pub(super) resource_ceiling: ResourceLimits,
+    pub(super) expires_at_ms: u64,
+    pub(super) active: bool,
 }
 
 #[derive(Clone)]
@@ -361,6 +361,9 @@ pub(super) struct SourceAttemptRecord {
     pub(super) admission: SourceAdmission,
     pub(super) application: AppliedSourcePatch,
     pub(super) patch: SourcePatch,
+    pub(super) options: SourceAttemptOptions,
+    pub(super) admission_fence: u64,
+    pub(super) admission_lease_event_count: u64,
     pub(super) state: SourceAttemptState,
     pub(super) owner_capability: u64,
     pub(super) executor_capability: Option<u64>,
@@ -407,10 +410,20 @@ impl SourceAttemptRecord {
 
 #[derive(Clone)]
 pub(super) struct RecordedSourceOperation {
-    request: Digest,
-    attempt: SourceAttemptId,
-    owner_capability: u64,
-    outcome: Result<(), EngineError>,
+    pub(super) request: Digest,
+    pub(super) patch: SourcePatch,
+    pub(super) options: SourceAttemptOptions,
+    /// The real attempt resolved before validating the submitted binding.
+    pub(super) target_attempt: u64,
+    pub(super) recorded_at_ms: u64,
+    pub(super) fence: Option<u64>,
+    pub(super) lease_event_count: u64,
+    pub(super) observed_analysis: Option<Digest>,
+    pub(super) observed_policy: Option<Digest>,
+    pub(super) observed_model_generation: u64,
+    pub(super) attempt: SourceAttemptId,
+    pub(super) owner_capability: u64,
+    pub(super) outcome: Result<SourceAdmissionId, EngineError>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -471,7 +484,7 @@ impl Administrator {
         resource_ceiling: ResourceLimits,
         expires_at_ms: u64,
     ) -> Result<SourceExecutorCapability, EngineError> {
-        self.store.update(|db| {
+        self.store.administration(&scope).update(|db| {
             if tiers.is_empty()
                 || tiers.contains(&ExecutionTier::T0)
                 || !valid_text(&backend.name)
@@ -517,7 +530,7 @@ impl Administrator {
         if !Arc::ptr_eq(&self.store.identity, &executor.store) {
             return Err(EngineError::Unauthorized);
         }
-        self.store.update(|db| {
+        self.store.administration(&executor.scope).update(|db| {
             let grant = db
                 .source_executors
                 .get_mut(&executor.token)
@@ -531,7 +544,9 @@ impl Administrator {
             grant.active = false;
             let now = db.now;
             for record in db.source_attempts.values_mut() {
-                if record.executor_capability == Some(executor.token) && !record.state.is_terminal()
+                if record.admission.binding().scope == executor.scope
+                    && record.executor_capability == Some(executor.token)
+                    && !record.state.is_terminal()
                 {
                     record.transition(
                         now,
@@ -553,76 +568,80 @@ impl Engine {
         expected_current: Option<Digest>,
         policy: SourceExecutionPolicy,
     ) -> Result<Digest, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::ManageModel)?;
-            let current = db.source_policies.get(scope);
-            if current == Some(&policy) {
-                return Ok(policy.digest());
-            }
-            if current.map(SourceExecutionPolicy::digest) != expected_current {
-                return Err(SourceAttemptError::PolicyChanged.into());
-            }
-            if current.is_some_and(|old| policy.input().generation <= old.input().generation)
-                || policy.input().expires_at_ms <= db.now
-            {
-                return Err(SourceAttemptError::PolicyChanged.into());
-            }
-            let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
-            let analysis = repo
-                .source_analysis
-                .as_ref()
-                .ok_or(SourceAttemptError::SourceRepositoryRequired)?;
-            if !analysis.is_complete() {
-                return Err(EngineError::IncompleteAnalysis);
-            }
-            policy
-                .validate_snapshot(&repo.current)
-                .map_err(SourceAttemptError::from)?;
-            if policy.input().scope != *scope
-                || policy.input().analysis_artifact != analysis.digest()
-                || policy.input().index_generation != analysis.index_generation()
-            {
-                return Err(SourceAttemptError::BindingMismatch.into());
-            }
-            let files = crate::snapshot::effective_workspace(&repo.current)
-                .map_err(|_| SourceAttemptError::BindingMismatch)?;
-            for (path, rule) in &policy.input().paths {
-                let actual = files
-                    .get(path)
-                    .map(crate::source_patch::Preimage::of)
-                    .transpose()
-                    .map_err(SourceAttemptError::from)?;
-                if actual != rule.expected_base {
-                    return Err(SourceAttemptError::Plan(SourcePlanError::PathPreimage(
-                        path.clone(),
-                    ))
-                    .into());
+        self.store
+            .session(session, scope, Permission::ManageModel)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::ManageModel)?;
+                let current = db.source_policies.get(scope);
+                if current == Some(&policy) {
+                    return Ok(policy.digest());
                 }
-                if !rule.required_writes.is_subset(analysis.elements()) {
+                if current.map(SourceExecutionPolicy::digest) != expected_current {
+                    return Err(SourceAttemptError::PolicyChanged.into());
+                }
+                if current.is_some_and(|old| policy.input().generation <= old.input().generation)
+                    || policy.input().expires_at_ms <= db.now
+                {
+                    return Err(SourceAttemptError::PolicyChanged.into());
+                }
+                let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
+                let analysis = repo
+                    .source_analysis
+                    .as_ref()
+                    .ok_or(SourceAttemptError::SourceRepositoryRequired)?;
+                if !analysis.is_complete() {
+                    return Err(EngineError::IncompleteAnalysis);
+                }
+                policy
+                    .validate_snapshot(&repo.current)
+                    .map_err(SourceAttemptError::from)?;
+                if policy.input().scope != *scope
+                    || policy.input().analysis_artifact != analysis.digest()
+                    || policy.input().index_generation != analysis.index_generation()
+                {
+                    return Err(SourceAttemptError::BindingMismatch.into());
+                }
+                let files = crate::snapshot::effective_workspace(&repo.current)
+                    .map_err(|_| SourceAttemptError::BindingMismatch)?;
+                for (path, rule) in &policy.input().paths {
+                    let actual = files
+                        .get(path)
+                        .map(crate::source_patch::Preimage::of)
+                        .transpose()
+                        .map_err(SourceAttemptError::from)?;
+                    if actual != rule.expected_base {
+                        return Err(SourceAttemptError::Plan(SourcePlanError::PathPreimage(
+                            path.clone(),
+                        ))
+                        .into());
+                    }
+                    if !rule.required_writes.is_subset(analysis.elements()) {
+                        return Err(SourceAttemptError::UnknownPolicyElement.into());
+                    }
+                }
+                if policy
+                    .invariants()
+                    .values()
+                    .any(|invariant| !invariant.scope.is_subset(analysis.elements()))
+                {
                     return Err(SourceAttemptError::UnknownPolicyElement.into());
                 }
-            }
-            if policy
-                .invariants()
-                .values()
-                .any(|invariant| !invariant.scope.is_subset(analysis.elements()))
-            {
-                return Err(SourceAttemptError::UnknownPolicyElement.into());
-            }
-            let digest = policy.digest();
-            let generation = repo
-                .model
-                .generation
-                .checked_add(1)
-                .ok_or(EngineError::CounterExhausted)?;
-            let next_model = analysis.model(generation);
-            db.repositories
-                .get_mut(scope)
-                .ok_or(EngineError::NotFound)?
-                .model = next_model;
-            db.source_policies.insert(scope.clone(), policy);
-            Ok(digest)
-        })
+                let digest = policy.digest();
+                let generation = repo
+                    .model
+                    .generation
+                    .checked_add(1)
+                    .ok_or(EngineError::CounterExhausted)?;
+                let next_model = analysis.model(generation);
+                db.repositories
+                    .get_mut(scope)
+                    .ok_or(EngineError::NotFound)?
+                    .model = next_model;
+                db.source_policy_records
+                    .insert((scope.clone(), digest), policy.clone());
+                db.source_policies.insert(scope.clone(), policy);
+                Ok(digest)
+            })
     }
 
     pub fn source_patch_context(
@@ -631,10 +650,12 @@ impl Engine {
         scope: &Scope,
         transaction: &TransactionId,
     ) -> Result<SourcePatchContext, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Execute)?;
-            source_context(db, scope, transaction, session.token)
-        })
+        self.store
+            .session(session, scope, Permission::Execute)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Execute)?;
+                source_context(db, scope, transaction, session.token)
+            })
     }
 
     pub fn admit_source_attempt(
@@ -661,95 +682,131 @@ impl Engine {
         options: SourceAttemptOptions,
         key: IdempotencyKey,
     ) -> Result<SourceAdmission, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Execute)?;
-            // An unauthorized caller cannot reserve another principal's attempt
-            // identity merely by submitting a malformed patch envelope.
-            if patch.binding().scope != *scope {
-                return Err(EngineError::Unauthorized);
-            }
-            let tx = db
-                .transactions
-                .get(&(scope.clone(), patch.binding().transaction.clone()))
-                .ok_or(EngineError::NotFound)?;
-            if tx.owner != session.principal {
-                return Err(EngineError::Unauthorized);
-            }
-            if tx
-                .lease
-                .as_ref()
-                .is_some_and(|lease| lease.owner != session.token)
-            {
-                return Err(EngineError::InvalidLease);
-            }
-            // Structurally invalid options reserve neither an attempt identity nor
-            // an idempotency key, like a patch rejected before construction.
-            options.validate()?;
-            let operation_key = (scope.clone(), key);
-            let request = options.request_digest(patch.id());
-            if let Some(previous) = db.source_operations.get(&operation_key) {
-                if previous.owner_capability != session.token {
+        self.store
+            .session(session, scope, Permission::Execute)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Execute)?;
+                // An unauthorized caller cannot reserve another principal's attempt
+                // identity merely by submitting a malformed patch envelope.
+                if patch.binding().scope != *scope {
                     return Err(EngineError::Unauthorized);
                 }
-                if previous.request != request {
-                    return Err(EngineError::IdempotencyConflict);
-                }
-                previous.outcome.clone()?;
-                let record = db
-                    .source_attempts
-                    .get(&(scope.clone(), previous.attempt.clone()))
+                let tx = db
+                    .transactions
+                    .get(&(scope.clone(), patch.binding().transaction.clone()))
                     .ok_or(EngineError::NotFound)?;
-                if record.owner_capability != session.token {
+                if tx.owner != session.principal {
                     return Err(EngineError::Unauthorized);
                 }
-                return Ok(record.admission.clone());
-            }
-            let binding = patch.binding().clone();
-            let identity = (scope.clone(), binding.source_attempt.clone());
-            let result = if db.source_rejections.contains_key(&identity)
-                || db.source_attempts.contains_key(&identity)
-            {
-                Err(SourceAttemptError::AttemptIdentity.into())
-            } else {
-                Self::admit_source_attempt_locked(db, session, scope, patch, options)
-            };
-            if let Err(error) = &result
-                && !db.source_attempts.contains_key(&identity)
-                && !db.source_rejections.contains_key(&identity)
-            {
-                let now = db.now;
-                db.source_rejections.insert(
-                    identity,
-                    SourceRejectionView {
-                        scope: scope.clone(),
-                        owner: session.principal.clone(),
-                        transaction: binding.transaction,
-                        transaction_attempt: binding.transaction_attempt,
-                        source_attempt: binding.source_attempt.clone(),
+                if tx
+                    .lease
+                    .as_ref()
+                    .is_some_and(|lease| lease.owner != session.token)
+                {
+                    return Err(EngineError::InvalidLease);
+                }
+                // Structurally invalid options reserve neither an attempt identity nor
+                // an idempotency key, like a patch rejected before construction.
+                options.validate()?;
+                let target_attempt = tx.attempt().number;
+                let fence = tx.lease.as_ref().map(|lease| lease.fence);
+                let lease_event_count = tx.lease_history.len() as u64;
+                let repository = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
+                let observed_analysis = repository
+                    .source_analysis
+                    .as_ref()
+                    .map(RepositoryAnalysis::digest);
+                let observed_model_generation = repository.model.generation;
+                let observed_policy = db
+                    .source_policies
+                    .get(scope)
+                    .map(SourceExecutionPolicy::digest);
+                let operation_key = (scope.clone(), key);
+                let request = options.request_digest(patch.id());
+                if let Some(previous) = db.source_operations.get(&operation_key) {
+                    if previous.owner_capability != session.token {
+                        return Err(EngineError::Unauthorized);
+                    }
+                    if previous.request != request {
+                        return Err(EngineError::IdempotencyConflict);
+                    }
+                    let admission_id = previous.outcome.clone()?;
+                    let record = db
+                        .source_attempts
+                        .get(&(scope.clone(), previous.attempt.clone()))
+                        .ok_or(EngineError::NotFound)?;
+                    if record.owner_capability != session.token {
+                        return Err(EngineError::Unauthorized);
+                    }
+                    if record.admission.id() != admission_id {
+                        return Err(SourceAttemptError::BindingMismatch.into());
+                    }
+                    return Ok(record.admission.clone());
+                }
+                let binding = patch.binding().clone();
+                let identity = (scope.clone(), binding.source_attempt.clone());
+                let result = if db.source_rejections.contains_key(&identity)
+                    || db.source_attempts.contains_key(&identity)
+                {
+                    Err(SourceAttemptError::AttemptIdentity.into())
+                } else {
+                    Self::admit_source_attempt_locked(
+                        db,
+                        session,
+                        scope,
+                        patch.clone(),
+                        options.clone(),
+                    )
+                };
+                if let Err(error) = &result
+                    && !db.source_attempts.contains_key(&identity)
+                    && !db.source_rejections.contains_key(&identity)
+                {
+                    let now = db.now;
+                    db.source_rejections.insert(
+                        identity,
+                        SourceRejectionView {
+                            scope: scope.clone(),
+                            owner: session.principal.clone(),
+                            transaction: binding.transaction,
+                            transaction_attempt: binding.transaction_attempt,
+                            source_attempt: binding.source_attempt.clone(),
+                            request,
+                            error: error.clone(),
+                            rejected_at_ms: now,
+                            events: vec![SourceAttemptEvent {
+                                sequence: 0,
+                                at_ms: now,
+                                from: SourceAttemptState::Proposed,
+                                to: SourceAttemptState::Rejected,
+                                reason: error.to_string(),
+                            }],
+                        },
+                    );
+                }
+                db.source_operations.insert(
+                    operation_key,
+                    RecordedSourceOperation {
                         request,
-                        error: error.clone(),
-                        rejected_at_ms: now,
-                        events: vec![SourceAttemptEvent {
-                            sequence: 0,
-                            at_ms: now,
-                            from: SourceAttemptState::Proposed,
-                            to: SourceAttemptState::Rejected,
-                            reason: error.to_string(),
-                        }],
+                        patch,
+                        options,
+                        target_attempt,
+                        recorded_at_ms: db.now,
+                        fence,
+                        lease_event_count,
+                        observed_analysis,
+                        observed_policy,
+                        observed_model_generation,
+                        attempt: binding.source_attempt,
+                        owner_capability: session.token,
+                        outcome: result
+                            .as_ref()
+                            .map(SourceAdmission::id)
+                            .map_err(Clone::clone),
                     },
                 );
-            }
-            db.source_operations.insert(
-                operation_key,
-                RecordedSourceOperation {
-                    request,
-                    attempt: binding.source_attempt,
-                    owner_capability: session.token,
-                    outcome: result.as_ref().map(|_| ()).map_err(Clone::clone),
-                },
-            );
-            result
-        })
+                result
+            })
     }
 
     fn admit_source_attempt_locked(
@@ -852,7 +909,7 @@ impl Engine {
                 declared_checks: tx.intent.required_checks.clone(),
                 impact_checks: impact.justified_checks,
                 invariants,
-                optional_checks: options.optional_checks,
+                optional_checks: options.optional_checks.clone(),
             },
         )
         .map_err(SourceAttemptError::from)?;
@@ -882,6 +939,9 @@ impl Engine {
             admission: admission.clone(),
             application,
             patch,
+            options,
+            admission_fence: tx.lease.as_ref().ok_or(EngineError::InvalidLease)?.fence,
+            admission_lease_event_count: tx.lease_history.len() as u64,
             state: SourceAttemptState::Admitted,
             owner_capability: session.token,
             executor_capability: None,
@@ -904,13 +964,15 @@ impl Engine {
         scope: &Scope,
         attempt: &SourceAttemptId,
     ) -> Result<SourceRejectionView, EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Read)?;
-            db.source_rejections
-                .get(&(scope.clone(), attempt.clone()))
-                .cloned()
-                .ok_or(EngineError::NotFound)
-        })
+        self.store
+            .session(session, scope, Permission::Read)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Read)?;
+                db.source_rejections
+                    .get(&(scope.clone(), attempt.clone()))
+                    .cloned()
+                    .ok_or(EngineError::NotFound)
+            })
     }
 
     pub fn source_attempt(
@@ -919,16 +981,18 @@ impl Engine {
         scope: &Scope,
         attempt: &SourceAttemptId,
     ) -> Result<SourceAttemptView, EngineError> {
-        self.store.update(|db| {
-            self.authorize(db, session, scope, Permission::Read)?;
-            let key = (scope.clone(), attempt.clone());
-            reconcile_attempt(db, &key)?;
-            Ok(db
-                .source_attempts
-                .get(&key)
-                .ok_or(EngineError::NotFound)?
-                .view(db))
-        })
+        self.store
+            .session(session, scope, Permission::Read)
+            .update(|db| {
+                self.authorize(db, session, scope, Permission::Read)?;
+                let key = (scope.clone(), attempt.clone());
+                reconcile_attempt(db, &key)?;
+                Ok(db
+                    .source_attempts
+                    .get(&key)
+                    .ok_or(EngineError::NotFound)?
+                    .view(db))
+            })
     }
 
     /// An exact retry observes the existing claim. It does not issue a second
@@ -938,27 +1002,29 @@ impl Engine {
         executor: &SourceExecutorCapability,
         admission: &SourceAdmission,
     ) -> Result<SourceAttemptView, EngineError> {
-        self.store.update(|db| {
-            validate_executor_store(self, executor)?;
-            let key = attempt_key(admission);
-            reconcile_attempt(db, &key)?;
-            validate_source_admission(db, executor, admission, false)?;
-            let now = db.now;
-            let record = db
-                .source_attempts
-                .get_mut(&key)
-                .ok_or(EngineError::NotFound)?;
-            if record.executor_capability.is_some() {
-                return Err(SourceAttemptError::AlreadyClaimed.into());
-            }
-            record.transition(
-                now,
-                SourceAttemptState::Patching,
-                "trusted executor claimed attempt",
-            )?;
-            record.executor_capability = Some(executor.token());
-            Ok(db.source_attempts[&key].view(db))
-        })
+        self.store
+            .source_executor(executor, &admission.binding().scope)
+            .update(|db| {
+                validate_executor_store(self, executor)?;
+                let key = attempt_key(admission);
+                reconcile_attempt(db, &key)?;
+                validate_source_admission(db, executor, admission, false)?;
+                let now = db.now;
+                let record = db
+                    .source_attempts
+                    .get_mut(&key)
+                    .ok_or(EngineError::NotFound)?;
+                if record.executor_capability.is_some() {
+                    return Err(SourceAttemptError::AlreadyClaimed.into());
+                }
+                record.transition(
+                    now,
+                    SourceAttemptState::Patching,
+                    "trusted executor claimed attempt",
+                )?;
+                record.executor_capability = Some(executor.token());
+                Ok(db.source_attempts[&key].view(db))
+            })
     }
 
     pub fn source_application(
@@ -966,13 +1032,15 @@ impl Engine {
         executor: &SourceExecutorCapability,
         admission: &SourceAdmission,
     ) -> Result<AppliedSourcePatch, EngineError> {
-        self.store.read(|db| {
-            validate_executor_store(self, executor)?;
-            validate_source_admission(db, executor, admission, true)?;
-            Ok(db.source_attempts[&attempt_key(admission)]
-                .application
-                .clone())
-        })
+        self.store
+            .source_executor(executor, &admission.binding().scope)
+            .read(|db| {
+                validate_executor_store(self, executor)?;
+                validate_source_admission(db, executor, admission, true)?;
+                Ok(db.source_attempts[&attempt_key(admission)]
+                    .application
+                    .clone())
+            })
     }
 
     /// Revalidate a claimed execution without cloning source bytes. Executors
@@ -982,13 +1050,15 @@ impl Engine {
         executor: &SourceExecutorCapability,
         admission: &SourceAdmission,
     ) -> Result<SourceAttemptState, EngineError> {
-        self.store.update(|db| {
-            validate_executor_store(self, executor)?;
-            let key = attempt_key(admission);
-            reconcile_attempt(db, &key)?;
-            validate_source_admission(db, executor, admission, true)?;
-            Ok(db.source_attempts[&key].state)
-        })
+        self.store
+            .source_executor(executor, &admission.binding().scope)
+            .update(|db| {
+                validate_executor_store(self, executor)?;
+                let key = attempt_key(admission);
+                reconcile_attempt(db, &key)?;
+                validate_source_admission(db, executor, admission, true)?;
+                Ok(db.source_attempts[&key].state)
+            })
     }
 
     /// Authenticated monotonic Engine clock used for receipt bindings. The
@@ -999,13 +1069,15 @@ impl Engine {
         executor: &SourceExecutorCapability,
         admission: &SourceAdmission,
     ) -> Result<u64, EngineError> {
-        self.store.update(|db| {
-            validate_executor_store(self, executor)?;
-            let key = attempt_key(admission);
-            reconcile_attempt(db, &key)?;
-            validate_source_admission(db, executor, admission, true)?;
-            Ok(db.now)
-        })
+        self.store
+            .source_executor(executor, &admission.binding().scope)
+            .update(|db| {
+                validate_executor_store(self, executor)?;
+                let key = attempt_key(admission);
+                reconcile_attempt(db, &key)?;
+                validate_source_admission(db, executor, admission, true)?;
+                Ok(db.now)
+            })
     }
 
     pub fn mark_source_patch_applied(
@@ -1060,18 +1132,21 @@ fn source_transition(
     next: SourceAttemptState,
     reason: &str,
 ) -> Result<SourceAttemptView, EngineError> {
-    engine.store.update(|db| {
-        validate_executor_store(engine, executor)?;
-        let key = attempt_key(admission);
-        reconcile_attempt(db, &key)?;
-        validate_source_admission(db, executor, admission, true)?;
-        let now = db.now;
-        db.source_attempts
-            .get_mut(&key)
-            .ok_or(EngineError::NotFound)?
-            .transition(now, next, reason)?;
-        Ok(db.source_attempts[&key].view(db))
-    })
+    engine
+        .store
+        .source_executor(executor, &admission.binding().scope)
+        .update(|db| {
+            validate_executor_store(engine, executor)?;
+            let key = attempt_key(admission);
+            reconcile_attempt(db, &key)?;
+            validate_source_admission(db, executor, admission, true)?;
+            let now = db.now;
+            db.source_attempts
+                .get_mut(&key)
+                .ok_or(EngineError::NotFound)?
+                .transition(now, next, reason)?;
+            Ok(db.source_attempts[&key].view(db))
+        })
 }
 
 pub(super) fn attempt_key(admission: &SourceAdmission) -> (Scope, SourceAttemptId) {
@@ -1286,7 +1361,7 @@ fn source_context(
     })
 }
 
-fn intent_digest(intent: &TransactionIntent) -> Digest {
+pub(super) fn intent_digest(intent: &TransactionIntent) -> Digest {
     let mut c = Canonical::default();
     c.str(&intent.objective);
     c.digest(intent.accesses.digest());
@@ -1324,7 +1399,7 @@ fn intent_digest(intent: &TransactionIntent) -> Digest {
     c.finish("celetixo/source-impact-request/v1")
 }
 
-fn impact_digest(request: Digest, impact: &RepositoryImpact) -> Digest {
+pub(super) fn impact_digest(request: Digest, impact: &RepositoryImpact) -> Digest {
     let mut c = Canonical::default();
     c.digest(request);
     c.str(impact.scope.organization.as_str());
@@ -1341,7 +1416,7 @@ fn impact_digest(request: Digest, impact: &RepositoryImpact) -> Digest {
     c.finish("celetixo/source-impact-result/v1")
 }
 
-fn authorization_digest(db: &Database, token: u64) -> Result<Digest, EngineError> {
+pub(super) fn authorization_digest(db: &Database, token: u64) -> Result<Digest, EngineError> {
     let grant = db.grants.get(&token).ok_or(EngineError::Unauthorized)?;
     let mut c = Canonical::default();
     c.u64(token);
@@ -1484,6 +1559,6 @@ pub(super) fn derive_source_impact(
     }
 }
 
-fn valid_text(value: &str) -> bool {
+pub(super) fn valid_text(value: &str) -> bool {
     !value.trim().is_empty() && value.len() <= 4096 && !value.chars().any(char::is_control)
 }

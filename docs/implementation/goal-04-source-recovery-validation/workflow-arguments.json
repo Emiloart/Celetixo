@@ -1,0 +1,34 @@
+{
+  "kind": "Static folded-workflow argument and exact reviewed public-input binding check; does not execute repository analysis",
+  "workflow_sha256": "6b48fba97a66a4edab88d1e1837867711cf5a147477c2f9c8262f79567e5ab0e",
+  "commands": [
+    {
+      "example": "inspect_repository",
+      "reviews": [
+        "crates/engine/src/engine.rs=2c3985b8772bba136a04df1201c2c811e50a6d861f09094d363c79dd5117fc2a",
+        "crates/engine/src/engine/authority/records.rs=ab6382a281a84da5968c7f1a2e6e5415349340d137b00290a42377a3c3ccaf62",
+        "crates/engine/src/engine/source_recovery.rs=c3dab277a55cf144fbaed0c5b26aab95a5e1273cf7b70ad157a7edcb914c3395",
+        "crates/postgres/src/lib.rs=cca339291bfb712753d8dd0d3f91da3a11d93bc60083f378c35dd6d7bf3994f0",
+        "docs/implementation/goal-04-registration-validation/fixture.json=7af849f6ea540693cdecf457975ba468b550ae60a3d728a520a17504c9941d92",
+        "docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce",
+        "docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067",
+        "scripts/goal04/postgres_fixture.py=1f6298b7fa3b0901ac99864cce7ab14cd2525225ae31604d74478c7bcd865d05"
+      ],
+      "folded_argv_valid": true
+    },
+    {
+      "example": "source_patch_bench",
+      "reviews": [
+        "crates/engine/src/engine.rs=2c3985b8772bba136a04df1201c2c811e50a6d861f09094d363c79dd5117fc2a",
+        "crates/engine/src/engine/authority/records.rs=ab6382a281a84da5968c7f1a2e6e5415349340d137b00290a42377a3c3ccaf62",
+        "crates/engine/src/engine/source_recovery.rs=c3dab277a55cf144fbaed0c5b26aab95a5e1273cf7b70ad157a7edcb914c3395",
+        "crates/postgres/src/lib.rs=cca339291bfb712753d8dd0d3f91da3a11d93bc60083f378c35dd6d7bf3994f0",
+        "docs/implementation/goal-04-registration-validation/fixture.json=7af849f6ea540693cdecf457975ba468b550ae60a3d728a520a17504c9941d92",
+        "docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce",
+        "docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067",
+        "scripts/goal04/postgres_fixture.py=1f6298b7fa3b0901ac99864cce7ab14cd2525225ae31604d74478c7bcd865d05"
+      ],
+      "folded_argv_valid": true
+    }
+  ]
+}

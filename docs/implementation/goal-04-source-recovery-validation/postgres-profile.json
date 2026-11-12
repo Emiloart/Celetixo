@@ -1,0 +1,23 @@
+{
+  "container_name": "celetixo-goal04-pg17-2b936b485d76",
+  "running": true,
+  "version": "PostgreSQL 17.9 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "settings": {
+    "fsync": "on",
+    "full_page_writes": "on",
+    "synchronous_commit": "on",
+    "data_checksums": "on"
+  },
+  "scram_rejects_invalid_password": true,
+  "host_socket_requires_scram": true,
+  "application_roles_are_nonprivileged": true,
+  "network_mode": "none",
+  "published_ports": [],
+  "data_bytes": 134743969,
+  "data_files": 4314,
+  "data_budget_bytes": 1073741824,
+  "backing_free_bytes": 695238656,
+  "guard_is_hard_quota": false,
+  "kind": "Selected observed dedicated test fixture settings and authentication outcomes; full operator output retained privately",
+  "raw_operator_output_sha256": "0662a27e39d97720d8ce7eece897facb8ddb5e711f366ec6f3f5b9b07c6548f7"
+}

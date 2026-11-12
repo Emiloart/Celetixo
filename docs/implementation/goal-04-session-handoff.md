@@ -5,7 +5,8 @@
 pause context; consult current [progress](goal-04-progress.md) and the
 [04.1g PostgreSQL registration adapter](goal-04-registration-authority.md) for
 subsequent work, followed by the [04.1h native SQL profile](goal-04-native-sql-authority.md)
-and [04.1i checked source codecs](goal-04-source-codecs.md). Goal 04 is not complete; preserve the entire accepted
+and [04.1i checked source codecs](goal-04-source-codecs.md), followed by
+[complete source metadata/fresh runtime recovery](goal-04-source-recovery.md). Goal 04 is not complete; preserve the entire accepted
 [seven-milestone objective](goal-04.md). Its contract SHA-256 remains
 `339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743`.
 
@@ -58,13 +59,13 @@ as complete source recovery. All remaining 04.1–04.7 requirements still apply.
 The original 04.1f-to-native integration tasks are now covered by 04.1g/04.1h.
 Continue the entire accepted goal from these remaining gates:
 
-1. Complete captured-source/model/policy/Goal 03 execution and evidence recovery
-   using checked normalized records and fresh adapter resolution. Preserve every
-   source attempt, receipt, cleanup grant, artifact registration and governed
-   provenance relation. Do not reinterpret native reference proof as source proof.
-   The 04.1i pure codecs supply checked immutable dependencies; complete source
-   AuthorityState records, fresh runtime resolution and SQL enablement still
-   require implementation and cold-process recovery proof.
+1. Integrate the [complete checked source graph](goal-04-source-recovery.md)
+   and fresh runtime boundary with an additive SQL source profile. Preserve every
+   original request/result, historical definition, source attempt/event, receipt,
+   grant and artifact association. Memory-adapter reopening now proves the Rust
+   recovery path; actual source SQL load/publish/readback, restart, independent
+   process races and faults are still required. Do not reinterpret native SQL
+   regression or metadata reconstruction as source database durability.
 2. Add exact durable administrative request identities/digests/results for grants,
    revocation, registration and model/policy mutation, plus every externally
    retriable lifecycle mutation (including reservation, renewal and cancellation).

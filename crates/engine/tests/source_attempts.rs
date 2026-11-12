@@ -1835,3 +1835,443 @@ fn oversized_optional_selection_reserves_neither_an_attempt_nor_an_idempotency_k
         admission
     );
 }
+
+mod complete_source_reconstruction {
+    use super::*;
+    use celetixo_engine::engine::authority::{AuthorityState, NativeRecordLimits, SourceRecords};
+
+    fn records(h: &Harness) -> SourceRecords {
+        h.admin
+            .inspect_source_records(&scope(), NativeRecordLimits::default())
+            .unwrap()
+    }
+    fn check(h: &Harness) -> SourceRecords {
+        let r = records(h);
+        let state =
+            AuthorityState::from_source_records(r.clone(), NativeRecordLimits::default()).unwrap();
+        assert_eq!(
+            state.source_records(NativeRecordLimits::default()).unwrap(),
+            r
+        );
+        assert!(state.native_records(NativeRecordLimits::default()).is_err());
+        r
+    }
+    fn rejects(r: SourceRecords) {
+        assert!(AuthorityState::from_source_records(r, NativeRecordLimits::default()).is_err());
+    }
+
+    #[test]
+    fn source_transaction_and_execution_states_reopen_without_synthesizing_native_patches() {
+        let h = Harness::new(false);
+        check(&h);
+        let tx = h.propose("phases", &["file:main"]);
+        check(&h);
+        h.engine.analyze(&h.owner, &scope(), &tx).unwrap();
+        check(&h);
+        h.engine.reserve(&h.owner, &scope(), &tx, 1000).unwrap();
+        check(&h);
+        h.engine.execute(&h.owner, &scope(), &tx).unwrap();
+        check(&h);
+        let patch = h.patch(&tx, "source-phases");
+        let a = h
+            .engine
+            .admit_source_attempt(
+                &h.owner,
+                &scope(),
+                patch,
+                IdempotencyKey::new("source-phases").unwrap(),
+            )
+            .unwrap();
+        check(&h);
+        h.engine.claim_source_attempt(&h.executor, &a).unwrap();
+        check(&h);
+        h.engine.mark_source_patch_applied(&h.executor, &a).unwrap();
+        check(&h);
+        h.engine.begin_source_verification(&h.executor, &a).unwrap();
+        check(&h);
+        h.engine
+            .finish_source_attempt(
+                &h.executor,
+                &a,
+                SourceAttemptState::ExecutionFailed,
+                "failed check".into(),
+            )
+            .unwrap();
+        check(&h);
+        h.engine
+            .abort(
+                &h.owner,
+                &scope(),
+                &tx,
+                "cancelled\0with binary reason".into(),
+            )
+            .unwrap();
+        check(&h);
+    }
+    #[test]
+    fn expired_unreconciled_attempt_and_same_tick_revocation_preserve_history() {
+        for revoke in [false, true] {
+            let h = Harness::new(false);
+            let tx = h.execute("history");
+            let a = h
+                .engine
+                .admit_source_attempt(
+                    &h.owner,
+                    &scope(),
+                    h.patch(&tx, "history"),
+                    IdempotencyKey::new("history").unwrap(),
+                )
+                .unwrap();
+            let initial = check(&h);
+            if revoke {
+                h.admin.revoke(&h.owner).unwrap();
+            } else {
+                h.admin.advance_time(501).unwrap();
+            }
+            let restored = check(&h);
+            assert_eq!(
+                restored.attempts[&a.binding().source_attempt].state,
+                SourceAttemptState::Admitted
+            );
+            assert_eq!(
+                restored.attempts[&a.binding().source_attempt].admission,
+                initial.attempts[&a.binding().source_attempt].admission
+            );
+            // Explicit reconciliation creates the expiry/revocation transition;
+            // importing rows must not invent that transition on its own.
+            if !revoke {
+                h.engine
+                    .source_attempt(&h.owner, &scope(), &a.binding().source_attempt)
+                    .unwrap();
+                check(&h);
+            }
+        }
+    }
+    #[test]
+    fn replaced_heads_retain_original_policy_analysis_and_exact_optional_selection() {
+        let h = Harness::new(false);
+        let tx = h.execute("historical-definitions");
+        let patch = h.patch(&tx, "old-attempt");
+        let a = h
+            .engine
+            .admit_source_attempt_with_options(
+                &h.owner,
+                &scope(),
+                patch.clone(),
+                SourceAttemptOptions {
+                    optional_checks: [check_id("invariant")].into(),
+                },
+                IdempotencyKey::new("old-operation").unwrap(),
+            )
+            .unwrap();
+        let initial = check(&h);
+        let mut input = h.policy.input().clone();
+        input.generation = 2;
+        input.retention_policy = d("second-retention");
+        let policy = SourceExecutionPolicy::new(input).unwrap();
+        h.engine
+            .install_source_policy(&h.owner, &scope(), Some(h.policy.digest()), policy.clone())
+            .unwrap();
+        let mut input = analysis_input(false);
+        input.index_generation = d("second-index");
+        let analysis = RepositoryAnalysis::new(&h.base, input).unwrap();
+        h.engine
+            .install_repository_analysis(&h.owner, &scope(), h.analysis.digest(), analysis.clone())
+            .unwrap();
+        let r = check(&h);
+        assert_eq!(r.policies.len(), 2);
+        assert_eq!(r.analyses.len(), 2);
+        assert_eq!(r.policy_head, Some(policy.digest()));
+        assert_eq!(r.analysis_head, Some(analysis.digest()));
+        assert_eq!(
+            r.attempts[&patch.binding().source_attempt],
+            initial.attempts[&patch.binding().source_attempt]
+        );
+        assert_eq!(r.attempts[&patch.binding().source_attempt].admission, a);
+        // An installed but stale policy head is valid stored state. Live source
+        // context still rejects it rather than silently rebinding old work.
+        assert!(
+            h.engine
+                .source_patch_context(&h.owner, &scope(), &tx)
+                .is_err()
+        );
+    }
+    #[test]
+    fn invalid_submitted_attempt_and_identity_collision_keep_original_requests_and_outcomes() {
+        let h = Harness::new(false);
+        let tx = h.execute("rejected-binding");
+        let valid = h.patch(&tx, "accepted");
+        let mut binding = valid.binding().clone();
+        binding.transaction_attempt = 999;
+        binding.source_attempt = SourceAttemptId::new("rejected-999").unwrap();
+        let bad =
+            SourcePatch::new(binding, valid.policy().clone(), valid.operations().to_vec()).unwrap();
+        assert!(
+            h.engine
+                .admit_source_attempt(
+                    &h.owner,
+                    &scope(),
+                    bad.clone(),
+                    IdempotencyKey::new("invalid-binding").unwrap()
+                )
+                .is_err()
+        );
+        let accepted = h
+            .engine
+            .admit_source_attempt(
+                &h.owner,
+                &scope(),
+                valid.clone(),
+                IdempotencyKey::new("accepted").unwrap(),
+            )
+            .unwrap();
+        let error = h
+            .engine
+            .admit_source_attempt(
+                &h.owner,
+                &scope(),
+                valid.clone(),
+                IdempotencyKey::new("collision").unwrap(),
+            )
+            .unwrap_err();
+        assert_eq!(
+            error,
+            EngineError::SourceAttempt(SourceAttemptError::AttemptIdentity)
+        );
+        assert_eq!(
+            h.engine.commit(
+                &h.owner,
+                &scope(),
+                &tx,
+                IdempotencyKey::new("unprepared-source").unwrap()
+            ),
+            Err(EngineError::SourceMutationUnsupported)
+        );
+        let r = check(&h);
+        let rejected = &r.operations[&IdempotencyKey::new("invalid-binding").unwrap()];
+        assert_eq!(rejected.target_attempt, 0);
+        assert_eq!(rejected.request.patch(), &bad);
+        assert_eq!(
+            r.rejections[&SourceAttemptId::new("rejected-999").unwrap()].transaction_attempt,
+            999
+        );
+        assert!(!r.rejections.contains_key(&valid.binding().source_attempt));
+        assert_eq!(r.operations.len(), 3);
+        assert_eq!(r.unprepared_commits.len(), 1);
+        assert_eq!(
+            r.attempts[&valid.binding().source_attempt].admission,
+            accepted
+        );
+    }
+    #[test]
+    fn orphaned_substituted_and_weakened_source_graphs_reject() {
+        let h = Harness::new(false);
+        let tx = h.execute("corruption");
+        let a = h
+            .engine
+            .admit_source_attempt(
+                &h.owner,
+                &scope(),
+                h.patch(&tx, "corruption"),
+                IdempotencyKey::new("corruption").unwrap(),
+            )
+            .unwrap();
+        let r = check(&h);
+        let mut bad = r.clone();
+        bad.analyses.clear();
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.policies.clear();
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.attempt_contexts.clear();
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.attempt_contexts
+            .get_mut(&(tx.clone(), 0))
+            .unwrap()
+            .policy = None;
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.attempts
+            .get_mut(&a.binding().source_attempt)
+            .unwrap()
+            .admission_fence += 1;
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.attempts
+            .get_mut(&a.binding().source_attempt)
+            .unwrap()
+            .admission_lease_event_count = 0;
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.attempts
+            .get_mut(&a.binding().source_attempt)
+            .unwrap()
+            .events[0]
+            .at_ms += 1;
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.operations.clear();
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.operations.values_mut().next().unwrap().target_attempt = 999;
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.operations.values_mut().next().unwrap().observed_policy = None;
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.base.transactions.get_mut(&tx).unwrap().state = TransactionState::Validating;
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.base.repository.as_mut().unwrap().registered.clear();
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.base.scope.repository = RepositoryId::new("other").unwrap();
+        rejects(bad);
+        let mut bad = r.clone();
+        bad.executor_counter = 0;
+        rejects(bad);
+        for limits in [
+            NativeRecordLimits {
+                entries: 1,
+                ..Default::default()
+            },
+            NativeRecordLimits {
+                total_value_bytes: 1,
+                ..Default::default()
+            },
+            NativeRecordLimits {
+                value_bytes: 1,
+                ..Default::default()
+            },
+        ] {
+            assert!(AuthorityState::from_source_records(r.clone(), limits).is_err());
+        }
+    }
+}
+
+mod source_request_persistence {
+    use super::*;
+    use celetixo_engine::persistence::{SourceRequestRecord, restore_source_request};
+    #[test]
+    fn exact_full_request_keeps_empty_operation_identity_and_optional_selection() {
+        let h = Harness::new(false);
+        let tx = h.execute("request-codec");
+        let patch = h.patch(&tx, "request-codec");
+        for selection in [
+            BTreeSet::new(),
+            [check_id("downstream"), check_id("invariant")].into(),
+        ] {
+            let options = SourceAttemptOptions {
+                optional_checks: selection,
+            };
+            let record = SourceRequestRecord::new(patch.clone(), options.clone()).unwrap();
+            let bytes = record.canonical_bytes();
+            let restored =
+                restore_source_request(&scope(), record.digest(), &bytes, Default::default())
+                    .unwrap();
+            assert_eq!(restored, record);
+            assert_eq!(restored.patch(), &patch);
+            assert_eq!(restored.options(), &options);
+            if options.optional_checks.is_empty() {
+                assert_eq!(record.request_digest(), patch.id().0);
+            } else {
+                assert_ne!(record.request_digest(), patch.id().0);
+            }
+            for end in 0..bytes.len() {
+                let prefix = &bytes[..end];
+                assert!(
+                    restore_source_request(
+                        &scope(),
+                        Digest::of(SourceRequestRecord::FORMAT, prefix),
+                        prefix,
+                        Default::default()
+                    )
+                    .is_err()
+                );
+            }
+            let mut extra = bytes.clone();
+            extra.push(0);
+            assert!(
+                restore_source_request(
+                    &scope(),
+                    Digest::of(SourceRequestRecord::FORMAT, &extra),
+                    &extra,
+                    Default::default()
+                )
+                .is_err()
+            );
+            let entries = patch.operations().len() + options.optional_checks.len();
+            assert_eq!(
+                restore_source_request(
+                    &scope(),
+                    record.digest(),
+                    &bytes,
+                    DomainDecodeLimits {
+                        collection_entries: entries - 1,
+                        ..Default::default()
+                    }
+                ),
+                Err(RestoreError::Limit)
+            );
+            assert_eq!(
+                restore_source_request(
+                    &scope(),
+                    record.digest(),
+                    &bytes,
+                    DomainDecodeLimits {
+                        collection_entries: entries,
+                        ..Default::default()
+                    }
+                )
+                .unwrap(),
+                record
+            );
+            let mut other = scope();
+            other.repository = RepositoryId::new("other").unwrap();
+            assert_eq!(
+                restore_source_request(&other, record.digest(), &bytes, Default::default()),
+                Err(RestoreError::BindingMismatch)
+            );
+        }
+    }
+}
+
+#[test]
+fn source_recovery_keeps_full_engine_rejection_diagnostics_beyond_worker_reason_limit() {
+    use celetixo_engine::engine::authority::*;
+    let h = Harness::new(false);
+    let tx = h.execute("long-rejection");
+    let original = h.patch(&tx, "long-rejection");
+    let path = "a".repeat(4096);
+    let patch = SourcePatch::new(
+        original.binding().clone(),
+        original.policy().clone(),
+        vec![PatchOperation::Create {
+            path: path.clone(),
+            entry: PatchEntry::file(b"public".to_vec(), FileMode::Regular).unwrap(),
+        }],
+    )
+    .unwrap();
+    let error = h
+        .engine
+        .admit_source_attempt(
+            &h.owner,
+            &scope(),
+            patch,
+            IdempotencyKey::new("long-rejection").unwrap(),
+        )
+        .unwrap_err();
+    assert!(error.to_string().len() > 4096);
+    let r = h
+        .admin
+        .inspect_source_records(&scope(), Default::default())
+        .unwrap();
+    assert_eq!(
+        r.rejections.values().next().unwrap().events[0].reason,
+        error.to_string()
+    );
+    let state = AuthorityState::from_source_records(r.clone(), Default::default()).unwrap();
+    assert_eq!(state.source_records(Default::default()).unwrap(), r);
+}

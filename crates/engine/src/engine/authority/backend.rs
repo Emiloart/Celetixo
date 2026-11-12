@@ -19,6 +19,14 @@ pub enum AuthorityActor {
         grant: u64,
         permission: Permission,
     },
+    SourceExecutor {
+        principal: PrincipalId,
+        grant: u64,
+    },
+    SourceCleanup {
+        principal: PrincipalId,
+        grant: u64,
+    },
     /// Held by the trusted embedding. A SQL adapter must use its separately
     /// authenticated administrative connection and record that service identity.
     EmbeddingAdministrator,

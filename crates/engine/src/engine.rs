@@ -22,6 +22,7 @@ mod runtime;
 mod source_attempts;
 mod source_cleanup;
 mod source_evidence_gate;
+mod source_recovery;
 mod state_access;
 pub use commit_request::{CommitRequest, ReservationView};
 pub use source_attempts::{
@@ -302,6 +303,11 @@ struct Attempt {
     model: EngineeringModel,
     effective: Option<AccessSet>,
     analysis: Option<crate::access::ImpactAnalysis>,
+    /// Exact historical source facts, separate from the mutable repository heads.
+    source_analysis: Option<Digest>,
+    /// Policy actually used by successful analysis; None also permits analysis
+    /// before the first source execution policy is installed.
+    source_policy: Option<Digest>,
     patch: Option<Patch>,
     candidate: Option<Snapshot>,
     evidence: BTreeMap<CheckId, EvidenceId>,
@@ -424,6 +430,9 @@ struct Database {
     next_source_executor: u64,
     source_executors: BTreeMap<u64, source_attempts::SourceExecutorGrant>,
     source_policies: BTreeMap<Scope, crate::source_execution::SourceExecutionPolicy>,
+    source_analysis_records: BTreeMap<(Scope, Digest), RepositoryAnalysis>,
+    source_policy_records:
+        BTreeMap<(Scope, Digest), crate::source_execution::SourceExecutionPolicy>,
     source_attempts: BTreeMap<(Scope, SourceAttemptId), source_attempts::SourceAttemptRecord>,
     source_operations: BTreeMap<(Scope, IdempotencyKey), source_attempts::RecordedSourceOperation>,
     source_rejections: BTreeMap<(Scope, SourceAttemptId), SourceRejectionView>,
@@ -679,6 +688,10 @@ impl Engine {
                 if db.repositories.contains_key(snapshot.scope()) {
                     return Err(EngineError::AlreadyExists);
                 }
+                db.source_analysis_records.insert(
+                    (snapshot.scope().clone(), analysis.digest()),
+                    analysis.clone(),
+                );
                 db.repositories.insert(
                     snapshot.scope().clone(),
                     Repository {
@@ -732,6 +745,8 @@ impl Engine {
                     .checked_add(1)
                     .ok_or(EngineError::CounterExhausted)?;
                 repo.model = analysis.model(generation);
+                db.source_analysis_records
+                    .insert((scope.clone(), analysis.digest()), analysis.clone());
                 repo.source_analysis = Some(analysis);
                 Ok(())
             })
@@ -915,6 +930,11 @@ impl Engine {
                         model: repo.model.clone(),
                         effective: None,
                         analysis: None,
+                        source_analysis: repo
+                            .source_analysis
+                            .as_ref()
+                            .map(RepositoryAnalysis::digest),
+                        source_policy: None,
                         patch: None,
                         candidate: None,
                         evidence: BTreeMap::new(),
@@ -1312,6 +1332,11 @@ impl Engine {
                     model: repo.model.clone(),
                     effective: None,
                     analysis: None,
+                    source_analysis: repo
+                        .source_analysis
+                        .as_ref()
+                        .map(RepositoryAnalysis::digest),
+                    source_policy: None,
                     patch: Some(patch),
                     candidate: Some(candidate),
                     evidence: BTreeMap::new(),
@@ -1572,6 +1597,10 @@ fn analyze_attempt(
     }
     tx.attempt_mut().effective = Some(effective);
     tx.attempt_mut().analysis = Some(analysis);
+    tx.attempt_mut().source_analysis = source.map(RepositoryAnalysis::digest);
+    tx.attempt_mut().source_policy = source
+        .and(policy)
+        .map(crate::source_execution::SourceExecutionPolicy::digest);
     Ok(())
 }
 

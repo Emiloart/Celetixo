@@ -160,6 +160,12 @@ impl AuthorityBackend for PostgresAuthority {
         context: &AuthorityAccess,
         evaluate: &mut dyn FnMut(&mut AuthorityState) -> Result<(), AuthorityFailure>,
     ) -> Result<(), AuthorityFailure> {
+        if matches!(
+            context.actor(),
+            AuthorityActor::SourceExecutor { .. } | AuthorityActor::SourceCleanup { .. }
+        ) {
+            return Err(AuthorityFailure::UnsupportedProfile);
+        }
         let administrative = matches!(
             context.mode(),
             AuthorityMode::AdministrativeRead | AuthorityMode::AdministrativeUpdate
@@ -458,6 +464,9 @@ fn publish_native(
         return Err(AuthorityFailure::Contention);
     }
     let (kind, principal, grant, permission) = match context.actor() {
+        AuthorityActor::SourceExecutor { .. } | AuthorityActor::SourceCleanup { .. } => {
+            return Err(AuthorityFailure::UnsupportedProfile);
+        }
         AuthorityActor::EmbeddingAdministrator => ("EmbeddingAdministrator", None, None, None),
         AuthorityActor::Session {
             principal,

@@ -516,6 +516,9 @@ impl SourceEvidence {
     pub fn provenance(&self) -> &BTreeMap<String, SourceArtifactReference> {
         &self.provenance
     }
+    pub(crate) fn diagnostics(&self) -> &[String] {
+        &self.diagnostics
+    }
     pub fn canonical_bytes(&self) -> Vec<u8> {
         let mut c = Canonical::default();
         c.str(SOURCE_EVIDENCE_FORMAT);
@@ -576,14 +579,63 @@ impl SourceEvidence {
                 return Err(SourceArtifactError::Integrity.into());
             }
         }
-        self.validate_checks(admission.plan(), admission.resulting_manifest(), reader)
+        self.validate_checks(
+            admission.plan(),
+            admission.resulting_manifest(),
+            Some(reader),
+        )
+    }
+
+    /// Recheck immutable historical metadata without asserting object availability
+    /// or current executor authority. Only the persisted-object gate above can
+    /// admit evidence; reopening records must not perform adapter I/O.
+    pub(crate) fn validate_historical_metadata(
+        &self,
+        admission: &SourceAdmission,
+        executor: &PrincipalId,
+        envelope: &SourceArtifactReference,
+        expected_provenance: &BTreeMap<String, Vec<u8>>,
+    ) -> Result<SourceEvidenceAssessment, SourceEvidenceError> {
+        if self.binding != SourceEvidenceBinding::for_admission(admission, executor.clone())
+            || self.started_at_ms < admission.admitted_at_ms()
+            || self.finished_at_ms > admission.expires_at_ms()
+            || *envelope
+                != SourceArtifactReference::for_bytes(
+                    self.binding.scope.clone(),
+                    "sealed-evidence".into(),
+                    SOURCE_EVIDENCE_MEDIA_TYPE.into(),
+                    &self.canonical_bytes(),
+                    self.binding.retention_policy,
+                )
+        {
+            return Err(SourceEvidenceError::BindingMismatch);
+        }
+        if self.provenance.len() != expected_provenance.len() {
+            return Err(SourceEvidenceError::ArtifactMismatch(
+                "provenance object set".into(),
+            ));
+        }
+        for (name, bytes) in expected_provenance {
+            let object = self
+                .provenance
+                .get(name)
+                .ok_or_else(|| SourceEvidenceError::ArtifactMismatch(name.clone()))?;
+            if object.scope != self.binding.scope
+                || object.retention_policy != self.binding.retention_policy
+                || object.bytes != bytes.len() as u64
+                || object.content != Digest::of(SOURCE_ARTIFACT_DOMAIN, bytes)
+            {
+                return Err(SourceArtifactError::Integrity.into());
+            }
+        }
+        self.validate_checks(admission.plan(), admission.resulting_manifest(), None)
     }
 
     fn validate_checks(
         &self,
         plan: &VerificationPlan,
         manifest: Digest,
-        reader: &dyn SourceArtifactReader,
+        reader: Option<&dyn SourceArtifactReader>,
     ) -> Result<SourceEvidenceAssessment, SourceEvidenceError> {
         let expected = plan
             .checks()
@@ -631,15 +683,30 @@ impl SourceEvidence {
                 total = total
                     .checked_add(object.bytes)
                     .ok_or(SourceEvidenceError::InvalidMetadata)?;
-                let bytes = read_verified_object(
-                    object,
-                    &self.binding,
-                    reader,
-                    policy.resources.artifact_bytes,
-                )?;
+                if object.scope != self.binding.scope
+                    || object.retention_policy != self.binding.retention_policy
+                {
+                    return Err(SourceEvidenceError::BindingMismatch);
+                }
+                if object.bytes > policy.resources.artifact_bytes {
+                    return Err(SourceArtifactError::Limit.into());
+                }
+                if let Some(reader) = reader {
+                    let bytes = read_verified_object(
+                        object,
+                        &self.binding,
+                        reader,
+                        policy.resources.artifact_bytes,
+                    )?;
+                    if object.name == "execution-record" && bytes != record.execution_bytes() {
+                        return Err(SourceArtifactError::Integrity.into());
+                    }
+                }
                 if object.name == "execution-record"
                     && (object.media_type != "application/vnd.celetixo.source-check-v1"
-                        || bytes != record.execution_bytes())
+                        || object.bytes != record.execution_bytes().len() as u64
+                        || object.content
+                            != Digest::of(SOURCE_ARTIFACT_DOMAIN, &record.execution_bytes()))
                 {
                     return Err(SourceArtifactError::Integrity.into());
                 }

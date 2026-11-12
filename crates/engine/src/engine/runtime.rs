@@ -6,7 +6,7 @@ use crate::source_evidence::SourceArtifactReader;
 /// Stored grant IDs alone cannot reconstruct this identity after state recovery.
 pub(super) struct StoreIdentity;
 
-pub(super) type SourceArtifactReaders = BTreeMap<u64, Arc<dyn SourceArtifactReader>>;
+pub(super) type SourceArtifactReaders = BTreeMap<(Scope, u64), Arc<dyn SourceArtifactReader>>;
 
 impl InMemoryStore {
     /// When both locks are needed, acquire state before readers. Never invoke an
@@ -22,10 +22,11 @@ impl InMemoryStore {
 
     pub(super) fn artifact_reader(
         &self,
+        scope: &Scope,
         registration: u64,
     ) -> Result<Arc<dyn SourceArtifactReader>, EngineError> {
         self.artifact_readers()?
-            .get(&registration)
+            .get(&(scope.clone(), registration))
             .cloned()
             .ok_or(EngineError::StoreUnavailable)
     }
@@ -175,7 +176,7 @@ mod tests {
             Err(EngineError::Unauthorized)
         );
         assert!(matches!(
-            copy.artifact_reader(registration),
+            copy.artifact_reader(&scope(), registration),
             Err(EngineError::StoreUnavailable)
         ));
 
@@ -193,7 +194,7 @@ mod tests {
             engine.validate_source_cleanup(&cleanup, &scope(), backend.profile),
             Ok(())
         );
-        assert!(store.artifact_reader(registration).is_ok());
+        assert!(store.artifact_reader(&scope(), registration).is_ok());
 
         // Retained capabilities and copied records do not retain runtime readers.
         drop(engine);
@@ -218,10 +219,10 @@ mod tests {
             .register_source_artifact_store(scope(), reader)
             .unwrap();
         let registration = store.lock().unwrap().next_source_artifact_store;
-        let in_flight = store.artifact_reader(registration).unwrap();
+        let in_flight = store.artifact_reader(&scope(), registration).unwrap();
         admin.revoke_source_artifact_store(&capability).unwrap();
         assert!(matches!(
-            store.artifact_reader(registration),
+            store.artifact_reader(&scope(), registration),
             Err(EngineError::StoreUnavailable)
         ));
         assert!(weak.upgrade().is_some());

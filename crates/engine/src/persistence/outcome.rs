@@ -311,7 +311,7 @@ fn check(r: &mut Reader<'_>) -> Result<CheckId, RestoreError> {
 fn transaction(r: &mut Reader<'_>) -> Result<TransactionId, RestoreError> {
     TransactionId::new(r.text()?).map_err(|_| RestoreError::Identity)
 }
-fn encode_error(c: &mut Canonical, error: &EngineError) -> Result<(), RestoreError> {
+pub(super) fn encode_error(c: &mut Canonical, error: &EngineError) -> Result<(), RestoreError> {
     use EngineError::*;
     match error {
         Unauthorized => c.str("Unauthorized"),
@@ -398,9 +398,8 @@ fn encode_error(c: &mut Canonical, error: &EngineError) -> Result<(), RestoreErr
                 encode_report(c, report)
             }
         }
-        // Infrastructure/response-loss/injection failures are not durable domain
-        // outcomes. Source families need their full checked codecs before this
-        // reconstruction profile can retain them; never fall back to strings.
+        // Source decisions have their own versioned envelope and cannot widen
+        // this native commit-outcome reconstruction profile.
         Authority(_)
         | StoreUnavailable
         | Snapshot(_)
@@ -412,7 +411,7 @@ fn encode_error(c: &mut Canonical, error: &EngineError) -> Result<(), RestoreErr
     };
     Ok(())
 }
-fn decode_error(r: &mut Reader<'_>) -> Result<EngineError, RestoreError> {
+pub(super) fn decode_error(r: &mut Reader<'_>) -> Result<EngineError, RestoreError> {
     use EngineError::*;
     Ok(match r.text()?.as_str() {
         "Unauthorized" => Unauthorized,

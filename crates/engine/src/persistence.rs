@@ -17,8 +17,10 @@ mod metadata;
 mod outcome;
 mod semantic;
 mod source_admission;
+mod source_errors;
 mod source_evidence;
 mod source_execution;
+mod source_operation;
 pub use lifecycle::{
     ImpactAnalysisRecord, NativeIntentRecord, VerificationEvidenceRecord, restore_access_set,
     restore_commit_request, restore_impact_record, restore_native_intent, restore_reference_patch,
@@ -41,6 +43,10 @@ pub use source_execution::{
     CheckSpecRecord, PatchPolicyRecord, SourceCheckDefinitionRecord, SourceExecutionPolicyRecord,
     VerificationPlanRecord, restore_check_spec, restore_patch_policy,
     restore_source_check_definition, restore_source_execution_policy, restore_verification_plan,
+};
+pub use source_operation::{
+    SourceOutcomeContext, SourceOutcomeRecord, SourceRequestRecord, restore_source_outcome,
+    restore_source_request,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -320,3 +326,10 @@ impl<'a> Reader<'a> {
         }
     }
 }
+
+// Nonallocating accounting shared by checked source authority reconstruction.
+pub(crate) use source_admission::snapshot_cost as source_snapshot_cost;
+pub(crate) use source_execution::{
+    Cost as RecoveryCost, definition_cost as source_definition_cost,
+    plan_context_cost as source_plan_context_cost,
+};

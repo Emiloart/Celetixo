@@ -9,18 +9,18 @@ use source_attempts::{attempt_key, validate_executor_store, validate_source_admi
 
 #[derive(Clone)]
 pub struct SourceArtifactStoreCapability {
-    store: Arc<StoreIdentity>,
-    token: u64,
-    scope: Scope,
+    pub(super) store: Arc<StoreIdentity>,
+    pub(super) token: u64,
+    pub(super) scope: Scope,
 }
 
 #[derive(Clone)]
 // Registration metadata only; the reader is a process-local runtime resource.
 pub(super) struct RegisteredSourceArtifactStore {
-    scope: Scope,
-    retention: Digest,
-    provenance: Digest,
-    active: bool,
+    pub(super) scope: Scope,
+    pub(super) retention: Digest,
+    pub(super) provenance: Digest,
+    pub(super) active: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -35,9 +35,9 @@ pub struct SourceEvidenceReceipt {
 
 #[derive(Clone)]
 pub(super) struct RetainedSourceEvidence {
-    evidence: SourceEvidence,
-    receipt: SourceEvidenceReceipt,
-    store_registration: u64,
+    pub(super) evidence: SourceEvidence,
+    pub(super) receipt: SourceEvidenceReceipt,
+    pub(super) store_registration: u64,
 }
 
 enum EvidencePreparation {
@@ -67,36 +67,35 @@ impl Administrator {
         reader: Arc<dyn SourceArtifactReader>,
     ) -> Result<SourceArtifactStoreCapability, EngineError> {
         let retention = reader.retention_policy();
-        let mut db = self.store.lock()?;
-        let token = db
-            .next_source_artifact_store
-            .checked_add(1)
-            .ok_or(EngineError::CounterExhausted)?;
-        // Lock order is state then runtime. Acquire both before publishing any
-        // registration so a poisoned runtime cannot leave partial state.
-        let mut readers = self.store.artifact_readers()?;
-        let mut c = Canonical::default();
-        c.u64(token);
-        c.str(scope.organization.as_str());
-        c.str(scope.workspace.as_str());
-        c.str(scope.repository.as_str());
-        c.digest(retention);
-        db.source_artifact_stores.insert(
-            token,
-            RegisteredSourceArtifactStore {
-                scope: scope.clone(),
-                retention,
-                provenance: c.finish("celetixo/source-artifact-store/v1"),
-                active: true,
-            },
-        );
-        readers.insert(token, reader);
-        db.next_source_artifact_store = token;
-        Ok(SourceArtifactStoreCapability {
-            store: self.store.identity.clone(),
-            token,
-            scope,
-        })
+        // Preflight runtime availability before the independently durable
+        // metadata boundary; no runtime lock is held across SQL publication.
+        drop(self.store.artifact_readers()?);
+        let token = self.store.administration(&scope).update(|db| {
+            let token = db
+                .next_source_artifact_store
+                .checked_add(1)
+                .ok_or(EngineError::CounterExhausted)?;
+            let mut c = Canonical::default();
+            c.u64(token);
+            c.str(scope.organization.as_str());
+            c.str(scope.workspace.as_str());
+            c.str(scope.repository.as_str());
+            c.digest(retention);
+            db.source_artifact_stores.insert(
+                token,
+                RegisteredSourceArtifactStore {
+                    scope: scope.clone(),
+                    retention,
+                    provenance: c.finish("celetixo/source-artifact-store/v1"),
+                    active: true,
+                },
+            );
+            db.next_source_artifact_store = token;
+            Ok(token)
+        })?;
+        // A metadata publication followed by failed local attachment is retained
+        // for explicit reconciliation. It is not a cross-resource transaction.
+        self.resolve_existing_source_artifact_store(&scope, token, |_, _| Ok(reader))
     }
 
     pub fn revoke_source_artifact_store(
@@ -106,9 +105,7 @@ impl Administrator {
         if !Arc::ptr_eq(&self.store.identity, &store.store) {
             return Err(EngineError::Unauthorized);
         }
-        let reader = {
-            let mut db = self.store.lock()?;
-            let mut readers = self.store.artifact_readers()?;
+        self.store.administration(&store.scope).update(|db| {
             let registered = db
                 .source_artifact_stores
                 .get_mut(&store.token)
@@ -117,8 +114,12 @@ impl Administrator {
                 return Err(EngineError::Unauthorized);
             }
             registered.active = false;
-            readers.remove(&store.token)
-        };
+            Ok(())
+        })?;
+        let reader = self
+            .store
+            .artifact_readers()?
+            .remove(&(store.scope.clone(), store.token));
         // A reader's destructor can perform I/O or reenter the embedding, too.
         drop(reader);
         Ok(())
@@ -154,83 +155,54 @@ impl Engine {
         envelope: SourceArtifactReference,
         fault: SourceEvidenceFault,
     ) -> Result<SourceEvidenceReceipt, EngineError> {
-        let preparation = self.store.read(|db| {
-            validate_executor_store(self, executor)?;
-            source_attempts::validate_executor_for_admission(db, executor, admission, true)?;
-            let registered = self
-                .source_storage(db, storage, &admission.binding().scope)?
-                .clone();
-            let record = db
-                .source_attempts
-                .get(&attempt_key(admission))
-                .ok_or(EngineError::NotFound)?;
-            if record.admission != *admission {
-                return Err(SourceEvidenceError::BindingMismatch.into());
-            }
-            if let Some(id) = record.evidence {
-                return self
-                    .existing_source_evidence(
-                        db,
-                        &admission.binding().scope,
-                        id,
-                        storage.token,
-                        &evidence,
-                        &envelope,
-                    )
-                    .map(EvidencePreparation::Existing);
-            }
-            validate_source_admission(db, executor, admission, true)?;
-            if record.state != SourceAttemptState::Verifying {
-                return Err(SourceAttemptError::InvalidState.into());
-            }
-            if evidence.finished_at_ms() > db.now {
-                return Err(SourceEvidenceError::BindingMismatch.into());
-            }
-            let base = &db.repositories[&admission.binding().scope].current;
-            let mut expected = BTreeMap::from([
-                ("source-patch".into(), record.patch.canonical_bytes()),
-                ("base-snapshot".into(), base.canonical_bytes()),
-                (
-                    "result-snapshot".into(),
-                    record.application.snapshot().canonical_bytes(),
-                ),
-                ("base-manifest".into(), base.manifest().canonical_bytes()),
-                (
-                    "result-manifest".into(),
-                    record.application.snapshot().manifest().canonical_bytes(),
-                ),
-                (
-                    "application-report".into(),
-                    record.application.report().canonical_bytes(),
-                ),
-                (
-                    "verification-plan".into(),
-                    admission.plan().canonical_bytes(),
-                ),
-                ("execution-admission".into(), admission.canonical_bytes()),
-                (
-                    "execution-policy".into(),
-                    db.source_policies[&admission.binding().scope].canonical_bytes(),
-                ),
-            ]);
-            for check in admission.plan().checks() {
-                expected.insert(
-                    format!("check-definition/{}", check.definition().id()),
-                    check.definition().canonical_bytes(),
-                );
-            }
-            let budget = db.source_policies[&admission.binding().scope]
-                .input()
-                .resource_ceiling
-                .artifact_bytes;
-            let reader = self.store.artifact_reader(storage.token)?;
-            Ok(EvidencePreparation::ReadArtifacts {
-                registration: registered,
-                reader,
-                expected_provenance: expected,
-                artifact_budget: budget,
-            })
-        })?;
+        let preparation = self
+            .store
+            .source_executor(executor, &admission.binding().scope)
+            .read(|db| {
+                validate_executor_store(self, executor)?;
+                source_attempts::validate_executor_for_admission(db, executor, admission, true)?;
+                let registered = self
+                    .source_storage(db, storage, &admission.binding().scope)?
+                    .clone();
+                let record = db
+                    .source_attempts
+                    .get(&attempt_key(admission))
+                    .ok_or(EngineError::NotFound)?;
+                if record.admission != *admission {
+                    return Err(SourceEvidenceError::BindingMismatch.into());
+                }
+                if let Some(id) = record.evidence {
+                    return self
+                        .existing_source_evidence(
+                            db,
+                            &admission.binding().scope,
+                            id,
+                            storage.token,
+                            &evidence,
+                            &envelope,
+                        )
+                        .map(EvidencePreparation::Existing);
+                }
+                validate_source_admission(db, executor, admission, true)?;
+                if record.state != SourceAttemptState::Verifying {
+                    return Err(SourceAttemptError::InvalidState.into());
+                }
+                if evidence.finished_at_ms() > db.now {
+                    return Err(SourceEvidenceError::BindingMismatch.into());
+                }
+                let expected = source_provenance(db, record);
+                let budget = db.source_policies[&admission.binding().scope]
+                    .input()
+                    .resource_ceiling
+                    .artifact_bytes;
+                let reader = self.store.artifact_reader(&storage.scope, storage.token)?;
+                Ok(EvidencePreparation::ReadArtifacts {
+                    registration: registered,
+                    reader,
+                    expected_provenance: expected,
+                    artifact_budget: budget,
+                })
+            })?;
         let (registered, reader, expected_provenance, artifact_budget) = match preparation {
             EvidencePreparation::Existing(receipt) => return Ok(receipt),
             EvidencePreparation::ReadArtifacts {
@@ -283,85 +255,89 @@ impl Engine {
                 .into(),
             );
         }
-        self.store.update(|db| {
-            validate_executor_store(self, executor)?;
-            source_attempts::validate_executor_for_admission(db, executor, admission, true)?;
-            let current_store = self.source_storage(db, storage, &admission.binding().scope)?;
-            let current_reader = self.store.artifact_reader(storage.token)?;
-            if !Arc::ptr_eq(&current_reader, &reader)
-                || current_store.retention != registered.retention
-                || current_store.provenance != registered.provenance
-            {
-                return Err(EngineError::Unauthorized);
-            }
-            let key = attempt_key(admission);
-            let record = db.source_attempts.get(&key).ok_or(EngineError::NotFound)?;
-            if let Some(id) = record.evidence {
-                return self.existing_source_evidence(
-                    db,
-                    &admission.binding().scope,
-                    id,
-                    storage.token,
-                    &evidence,
-                    &envelope,
-                );
-            }
-            validate_source_admission(db, executor, admission, true)?;
-            if record.state != SourceAttemptState::Verifying || evidence.finished_at_ms() > db.now {
-                return Err(SourceAttemptError::InvalidState.into());
-            }
-            let now = db.now;
-            let next = match assessment {
-                SourceEvidenceAssessment::Passed => SourceAttemptState::EvidenceSealed,
-                SourceEvidenceAssessment::Failed { .. } => SourceAttemptState::ExecutionFailed,
-                SourceEvidenceAssessment::Incomplete { .. } => {
-                    SourceAttemptState::EvidenceIncomplete
+        self.store
+            .source_executor(executor, &admission.binding().scope)
+            .update(|db| {
+                validate_executor_store(self, executor)?;
+                source_attempts::validate_executor_for_admission(db, executor, admission, true)?;
+                let current_store = self.source_storage(db, storage, &admission.binding().scope)?;
+                let current_reader = self.store.artifact_reader(&storage.scope, storage.token)?;
+                if !Arc::ptr_eq(&current_reader, &reader)
+                    || current_store.retention != registered.retention
+                    || current_store.provenance != registered.provenance
+                {
+                    return Err(EngineError::Unauthorized);
                 }
-            };
-            // Validate transitions on clones, then publish the transaction, source
-            // attempt and evidence together. A failed transition cannot leave a row.
-            let mut source_record = record.clone();
-            source_record.transition(
-                now,
-                next,
-                "Engine independently checked persisted execution evidence",
-            )?;
-            source_record.evidence = Some(evidence.id());
-            let transaction_key = (
-                admission.binding().scope.clone(),
-                admission.binding().transaction.clone(),
-            );
-            let mut transaction = db
-                .transactions
-                .get(&transaction_key)
-                .ok_or(EngineError::NotFound)?
-                .clone();
-            if assessment == SourceEvidenceAssessment::Passed {
-                transaction.transition(TransactionState::Validating)?;
-            }
-            let receipt = SourceEvidenceReceipt {
-                admission: admission.id(),
-                evidence: evidence.id(),
-                assessment,
-                recorded_at_ms: now,
-                envelope,
-                storage_provenance: registered.provenance,
-            };
-            db.source_evidence_records.insert(
-                (admission.binding().scope.clone(), evidence.id()),
-                RetainedSourceEvidence {
-                    evidence,
-                    receipt: receipt.clone(),
-                    store_registration: storage.token,
-                },
-            );
-            db.source_attempts.insert(key, source_record);
-            db.transactions.insert(transaction_key, transaction);
-            if fault == SourceEvidenceFault::AfterRetention {
-                return Err(EngineError::ResponseLost);
-            }
-            Ok(receipt)
-        })
+                let key = attempt_key(admission);
+                let record = db.source_attempts.get(&key).ok_or(EngineError::NotFound)?;
+                if let Some(id) = record.evidence {
+                    return self.existing_source_evidence(
+                        db,
+                        &admission.binding().scope,
+                        id,
+                        storage.token,
+                        &evidence,
+                        &envelope,
+                    );
+                }
+                validate_source_admission(db, executor, admission, true)?;
+                if record.state != SourceAttemptState::Verifying
+                    || evidence.finished_at_ms() > db.now
+                {
+                    return Err(SourceAttemptError::InvalidState.into());
+                }
+                let now = db.now;
+                let next = match assessment {
+                    SourceEvidenceAssessment::Passed => SourceAttemptState::EvidenceSealed,
+                    SourceEvidenceAssessment::Failed { .. } => SourceAttemptState::ExecutionFailed,
+                    SourceEvidenceAssessment::Incomplete { .. } => {
+                        SourceAttemptState::EvidenceIncomplete
+                    }
+                };
+                // Validate transitions on clones, then publish the transaction, source
+                // attempt and evidence together. A failed transition cannot leave a row.
+                let mut source_record = record.clone();
+                source_record.transition(
+                    now,
+                    next,
+                    "Engine independently checked persisted execution evidence",
+                )?;
+                source_record.evidence = Some(evidence.id());
+                let transaction_key = (
+                    admission.binding().scope.clone(),
+                    admission.binding().transaction.clone(),
+                );
+                let mut transaction = db
+                    .transactions
+                    .get(&transaction_key)
+                    .ok_or(EngineError::NotFound)?
+                    .clone();
+                if assessment == SourceEvidenceAssessment::Passed {
+                    transaction.transition(TransactionState::Validating)?;
+                }
+                let receipt = SourceEvidenceReceipt {
+                    admission: admission.id(),
+                    evidence: evidence.id(),
+                    assessment,
+                    recorded_at_ms: now,
+                    envelope,
+                    storage_provenance: registered.provenance,
+                };
+                db.source_evidence_records.insert(
+                    (admission.binding().scope.clone(), evidence.id()),
+                    RetainedSourceEvidence {
+                        evidence,
+                        receipt: receipt.clone(),
+                        store_registration: storage.token,
+                    },
+                );
+                db.source_attempts.insert(key, source_record);
+                db.transactions.insert(transaction_key, transaction);
+                if fault == SourceEvidenceFault::AfterRetention {
+                    return Err(EngineError::ResponseLost);
+                }
+                Ok(receipt)
+            })
     }
 
     pub fn source_evidence_record(
@@ -370,14 +346,16 @@ impl Engine {
         scope: &Scope,
         id: SourceEvidenceId,
     ) -> Result<(SourceEvidence, SourceEvidenceReceipt), EngineError> {
-        self.store.read(|db| {
-            self.authorize(db, session, scope, Permission::Read)?;
-            let record = db
-                .source_evidence_records
-                .get(&(scope.clone(), id))
-                .ok_or(EngineError::NotFound)?;
-            Ok((record.evidence.clone(), record.receipt.clone()))
-        })
+        self.store
+            .session(session, scope, Permission::Read)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Read)?;
+                let record = db
+                    .source_evidence_records
+                    .get(&(scope.clone(), id))
+                    .ok_or(EngineError::NotFound)?;
+                Ok((record.evidence.clone(), record.receipt.clone()))
+            })
     }
 
     fn existing_source_evidence(
@@ -420,4 +398,51 @@ impl Engine {
         }
         Ok(registered)
     }
+}
+
+pub(super) fn source_provenance(
+    db: &Database,
+    record: &source_attempts::SourceAttemptRecord,
+) -> BTreeMap<String, Vec<u8>> {
+    let admission = &record.admission;
+    let base = &db.transactions[&(
+        admission.binding().scope.clone(),
+        admission.binding().transaction.clone(),
+    )]
+        .attempts[admission.binding().transaction_attempt as usize]
+        .base;
+    let mut expected = BTreeMap::from([
+        ("source-patch".into(), record.patch.canonical_bytes()),
+        ("base-snapshot".into(), base.canonical_bytes()),
+        (
+            "result-snapshot".into(),
+            record.application.snapshot().canonical_bytes(),
+        ),
+        ("base-manifest".into(), base.manifest().canonical_bytes()),
+        (
+            "result-manifest".into(),
+            record.application.snapshot().manifest().canonical_bytes(),
+        ),
+        (
+            "application-report".into(),
+            record.application.report().canonical_bytes(),
+        ),
+        (
+            "verification-plan".into(),
+            admission.plan().canonical_bytes(),
+        ),
+        ("execution-admission".into(), admission.canonical_bytes()),
+        (
+            "execution-policy".into(),
+            db.source_policy_records[&(admission.binding().scope.clone(), admission.policy())]
+                .canonical_bytes(),
+        ),
+    ]);
+    for check in admission.plan().checks() {
+        expected.insert(
+            format!("check-definition/{}", check.definition().id()),
+            check.definition().canonical_bytes(),
+        );
+    }
+    expected
 }

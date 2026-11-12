@@ -69,6 +69,35 @@ impl InMemoryStore {
             actor: authority::AuthorityActor::EmbeddingAdministrator,
         }
     }
+    pub(super) fn source_executor(
+        &self,
+        executor: &SourceExecutorCapability,
+        scope: &Scope,
+    ) -> ScopedAccess<'_> {
+        ScopedAccess {
+            store: self,
+            scope: scope.clone(),
+            actor: authority::AuthorityActor::SourceExecutor {
+                principal: executor.principal().clone(),
+                grant: executor.token(),
+            },
+        }
+    }
+    pub(super) fn source_cleanup(
+        &self,
+        principal: &PrincipalId,
+        grant: u64,
+        scope: &Scope,
+    ) -> ScopedAccess<'_> {
+        ScopedAccess {
+            store: self,
+            scope: scope.clone(),
+            actor: authority::AuthorityActor::SourceCleanup {
+                principal: principal.clone(),
+                grant,
+            },
+        }
+    }
 }
 impl ScopedAccess<'_> {
     pub(super) fn read<R>(
