@@ -73,7 +73,7 @@ fn validate_snapshot(snapshot: &Snapshot) -> Result<(), StoreError> {
     Ok(())
 }
 
-fn scope_parameters(scope: &Scope) -> [&str; 3] {
+pub(crate) fn scope_parameters(scope: &Scope) -> [&str; 3] {
     [
         scope.organization.as_str(),
         scope.workspace.as_str(),
@@ -94,7 +94,7 @@ fn persist(tx: &mut impl GenericClient, snapshot: &Snapshot) -> Result<(), Store
     Ok(())
 }
 
-fn load(
+pub(crate) fn load(
     tx: &mut impl GenericClient,
     scope: &Scope,
     expected: SnapshotId,

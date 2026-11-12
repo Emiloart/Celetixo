@@ -12,12 +12,18 @@ use crate::snapshot::{
 use std::collections::{BTreeMap, BTreeSet};
 use thiserror::Error;
 
+mod semantic;
+pub use semantic::{EngineeringModelRecord, restore_model_record, restore_repository_analysis};
+
 #[derive(Debug, Clone, Copy)]
 pub struct SnapshotDecodeLimits {
     pub encoded_bytes: usize,
     pub collection_entries: usize,
     pub field_bytes: usize,
 }
+
+/// Shared domain decoding budgets; the original snapshot API remains compatible.
+pub type DomainDecodeLimits = SnapshotDecodeLimits;
 
 impl Default for SnapshotDecodeLimits {
     fn default() -> Self {
@@ -31,16 +37,22 @@ impl Default for SnapshotDecodeLimits {
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum RestoreError {
-    #[error("durable snapshot exceeds its explicit decoding budget")]
+    #[error("durable domain record exceeds its explicit decoding budget")]
     Limit,
-    #[error("durable snapshot content digest differs from its reference")]
+    #[error("durable domain record content digest differs from its reference")]
     DigestMismatch,
-    #[error("durable snapshot encoding is malformed or unsupported")]
+    #[error("durable domain record encoding is malformed or unsupported")]
     Encoding,
-    #[error("durable snapshot is not canonically encoded")]
+    #[error("durable domain record is not canonically encoded")]
     NonCanonical,
-    #[error("durable snapshot contains an invalid scoped identity")]
+    #[error("durable domain record contains an invalid scoped identity")]
     Identity,
+    #[error("durable domain record does not match its expected snapshot, scope or generation")]
+    BindingMismatch,
+    #[error(transparent)]
+    Model(#[from] crate::model::InvalidEngineeringModel),
+    #[error(transparent)]
+    RepositoryAnalysis(#[from] crate::repository::RepositoryAnalysisError),
     #[error(transparent)]
     Snapshot(#[from] SnapshotError),
 }
@@ -53,26 +65,8 @@ pub fn restore_snapshot(
     bytes: &[u8],
     limits: SnapshotDecodeLimits,
 ) -> Result<Snapshot, RestoreError> {
-    if bytes.len() > limits.encoded_bytes
-        || limits.collection_entries == 0
-        || limits.field_bytes == 0
-    {
-        return Err(RestoreError::Limit);
-    }
-    if SnapshotId(Digest::of("celetixo/snapshot/v1", bytes)) != expected {
-        return Err(RestoreError::DigestMismatch);
-    }
-    let mut r = Reader {
-        bytes,
-        offset: 0,
-        limits,
-        entries: 0,
-    };
-    let scope = Scope {
-        organization: OrganizationId::new(r.text()?).map_err(|_| RestoreError::Identity)?,
-        workspace: WorkspaceId::new(r.text()?).map_err(|_| RestoreError::Identity)?,
-        repository: RepositoryId::new(r.text()?).map_err(|_| RestoreError::Identity)?,
-    };
+    let mut r = Reader::new(expected.0, "celetixo/snapshot/v1", bytes, limits)?;
+    let scope = r.scope()?;
     let revision = Revision(r.number()?);
     let canonicalization_version = r.version()?;
     let base_commit = r.text()?;
@@ -171,6 +165,52 @@ struct Reader<'a> {
 }
 
 impl<'a> Reader<'a> {
+    fn new(
+        expected: Digest,
+        domain: &str,
+        bytes: &'a [u8],
+        limits: DomainDecodeLimits,
+    ) -> Result<Self, RestoreError> {
+        if bytes.len() > limits.encoded_bytes
+            || limits.collection_entries == 0
+            || limits.field_bytes == 0
+        {
+            return Err(RestoreError::Limit);
+        }
+        if Digest::of(domain, bytes) != expected {
+            return Err(RestoreError::DigestMismatch);
+        }
+        Ok(Self {
+            bytes,
+            offset: 0,
+            limits,
+            entries: 0,
+        })
+    }
+
+    fn scope(&mut self) -> Result<Scope, RestoreError> {
+        Ok(Scope {
+            organization: OrganizationId::new(self.text()?).map_err(|_| RestoreError::Identity)?,
+            workspace: WorkspaceId::new(self.text()?).map_err(|_| RestoreError::Identity)?,
+            repository: RepositoryId::new(self.text()?).map_err(|_| RestoreError::Identity)?,
+        })
+    }
+
+    fn digest(&mut self) -> Result<Digest, RestoreError> {
+        Ok(Digest::from_bytes(
+            self.field()?
+                .try_into()
+                .map_err(|_| RestoreError::Encoding)?,
+        ))
+    }
+
+    fn end(&self) -> Result<(), RestoreError> {
+        if self.offset != self.bytes.len() {
+            return Err(RestoreError::NonCanonical);
+        }
+        Ok(())
+    }
+
     fn field(&mut self) -> Result<&'a [u8], RestoreError> {
         let prefix_end = self.offset.checked_add(8).ok_or(RestoreError::Encoding)?;
         let prefix = self

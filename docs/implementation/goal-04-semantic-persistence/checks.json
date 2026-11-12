@@ -1,0 +1,253 @@
+{
+  "schema": "celetixo/goal04-semantic-persistence-development-validation/v1",
+  "source_parent": "19545218195a08ee239fde80ce74aaed90ec6da3",
+  "started_utc": "2026-11-11T23:11:59.669399+00:00",
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/mnt/c/dev/celetixo/target",
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC",
+    "CELETIXO_OCI_HOME": "/home/emiloart/.local/share/celetixo-goal03",
+    "CELETIXO_PG_TEST_CONFIG": "/home/emiloart/.local/share/celetixo-goal04/pg17-ci/connection.json"
+  },
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "architecture": "x86_64",
+  "source_sha256": {
+    "crates/engine/src/engine.rs": "87980a4243cf9a3b342be0e8a099d3bbcd8691813309dc91aaed71d18136ead9",
+    "crates/engine/src/model.rs": "4815844093ef915ea48b2e875cf5635285def3a01f035b085729b18f61671323",
+    "crates/engine/src/persistence.rs": "029e360e5d3b2b704d0e0d0c388476006e1a53491fdc43e0ffa52d019a34a280",
+    "crates/engine/src/persistence/semantic.rs": "83918a78c83e014946d1f063fa9fef183f13babfcb6ed4e7316d5e3037b7e819",
+    "crates/engine/src/repository.rs": "f84b9ea3b0d7d0c09ade255855727818799f2309375ba4f96636c96f44079612",
+    "crates/engine/tests/semantic_persistence.rs": "a7d64121049391c3f38238707679098d49ac4f9404db06ade5d74ed81d09007c",
+    "crates/engine/tests/fixtures/repository-analysis-v1.hex": "8ce18c2c7003ea7fdcbe067f20579acefa85c6b6a897ba3eb71e46702a0a247b",
+    "crates/engine/tests/fixtures/engineering-model-record-v1.hex": "76edc261b57564bc8699fe7ab6dae17f88cfcf30350c906ec1623edb1cd5e0fc",
+    "crates/engine/tests/fixtures/semantic-codecs.json": "3fdab2b495c5a4d1ec5624c958df860159c33ee50de460eef6afa721dfe09494",
+    "crates/postgres/src/lib.rs": "9bf9aa8ed7b6dc12f6ea883f245df820c7e35975c6ff0b9988aaa1e4ee2ea528",
+    "crates/postgres/src/snapshots.rs": "6011a9d0d8cf3822f102a9e16aaf09d265608b39f144456875586371b9333a0a",
+    "crates/postgres/src/semantic.rs": "67aeceb86a59e32ab33c9f68d4fd2268c6829fc43ca82ecc13e024c111a3abdb",
+    "crates/postgres/tests/foundation.rs": "4b82173e0eeeebd8102a6fcc6bf2ffaa89dbc0dbc1192e7ba02da57be23f1be2",
+    "crates/postgres/migrations/0001_authority.sql": "aacc58cc8cf70224b8343074b68aafbebb57350cf5d963e4ddc0de296c091647",
+    ".github/workflows/ci.yml": "f501565a0a8d689b5e64c8216eac719fd615f41fe3b49ca47c1c0b866764b375",
+    "Cargo.lock": "74efdddaa0457fc5e95edfc4fbea07d23920eb2c9b3549eba72c3283dff90b5e"
+  },
+  "tooling_sha256": {
+    "runc-1.5.2": "599f6f94ff8c5057241eff0d54c3c74f95c34935b6457b33fe545defc61e9488",
+    "celetixo-exec-init": "41cd4284dfc010dca9c2a3f95bc6b82e2d01075c16d385e34b64dabf7b2bbfe9",
+    "toolchain/gofmt": "0802a3784f7b2a924ccde5b34f6727ffe74e0193a1c0eea4cd773863fce4528a",
+    "toolchain/lib/libc.so.6": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf",
+    "toolchain/lib/ld-linux-x86-64.so.2": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+  },
+  "checks": [
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.788
+    },
+    {
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 16.792
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 121.522
+    },
+    {
+      "argv": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--examples",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.398
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-postgres",
+        "--test",
+        "foundation",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--skip",
+        "migration_crash_child",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 15.981
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-execution",
+        "--test",
+        "oci",
+        "--test",
+        "source_flow",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 99.106
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-repository",
+        "--test",
+        "lsp",
+        "--locked",
+        "--offline",
+        "--",
+        "--include-ignored"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 15.38
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/protocol/check.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.092
+    },
+    {
+      "argv": [
+        "python3",
+        "-O",
+        "scripts/protocol/test_compatibility.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.685
+    },
+    {
+      "argv": [
+        "python3",
+        ".github/scripts/check-workflows.py",
+        "--cache-dir",
+        "/home/emiloart/.local/share/celetixo-goal04/tools/workflow-lint",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.179
+    },
+    {
+      "argv": [
+        "bash",
+        ".github/scripts/test-commit-attribution.sh"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.856
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.154
+    }
+  ],
+  "finished_utc": "2026-11-11T23:16:38.589666+00:00",
+  "log_sha256": "2d20b32407486a10989940fb9948c9ca3aee3daa88fed7ec1894dd1d335925c1",
+  "counts": {
+    "workspace": {
+      "passed": 369,
+      "failed": 0,
+      "ignored": 20
+    },
+    "real_postgres": {
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0
+    },
+    "live_linux_t1": {
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0
+    },
+    "lsp_including_real_server": {
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    "attribution_fixtures": 25,
+    "protocol_tooling_groups": 4
+  },
+  "unrun": [
+    {
+      "check": "multi-process authoritative Engine commit and NATS/Temporal/S3/ClickHouse integration",
+      "reason": "These paths are not implemented by the candidate catalog; remaining Goal 04 milestones are unchanged."
+    },
+    {
+      "check": "load/capacity, power-loss durability and distributed disaster recovery",
+      "reason": "This validation establishes bounded codec/catalog behavior, not operational capacity or high availability."
+    }
+  ],
+  "postgres_fixture": {
+    "version": "PostgreSQL 17.9, linux/amd64 Alpine",
+    "image": "postgres@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609",
+    "fsync": true,
+    "full_page_writes": true,
+    "synchronous_commit": true,
+    "data_checksums": true,
+    "network_mode": "none",
+    "published_ports": [],
+    "final_state": "stopped",
+    "fixture_script_sha256": "a95f4071f97d95d0e8c4613c5aebddb90bd1c8238df9ec1fed9cd8ed6340e1e4"
+  },
+  "schema_v1_unchanged": true,
+  "schema_v1_published_source": "19545218195a08ee239fde80ce74aaed90ec6da3:crates/postgres/migrations/0001_authority.sql",
+  "public_input_review": {
+    "method": "Trusted operator review of public declarations; unchanged default Engine credential admission called on every public Git-tracked/new path. No content is printed by the audit.",
+    "default_rejections": {
+      "crates/postgres/src/lib.rs": "74be9372589b57415f9449623881e940f59bfa0a9896d060bad37e72252978c1",
+      "docs/implementation/goal-04-foundation/followup.log": "4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce",
+      "docs/implementation/goal-04-foundation/image-selection.json": "6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067",
+      "scripts/goal04/postgres_fixture.py": "1f6298b7fa3b0901ac99864cce7ab14cd2525225ae31604d74478c7bcd865d05"
+    },
+    "credential_policy_source_sha256": "223142fd1f76bcc93da0f04953b9446dbfc5fc5ce8843fe16e1a4729c3c1215c",
+    "operator_audit_source_sha256": "aa78bb20b9fcb0ae20aec3702789e17aa7d0153e87e86639b55fd573f583174d",
+    "operator_audit_source": "docs/implementation/goal-04-semantic-persistence/public-tree-audit.rs"
+  }
+}

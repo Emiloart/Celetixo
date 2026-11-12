@@ -1,7 +1,7 @@
 # Capability and Support Matrix
 
-**Status date:** 2026-11-11
-**Repository scope reviewed:** Goal 03 acceptance plus the Goal 04 foundation source manifest linked below
+**Status date:** 2026-11-12
+**Repository scope reviewed:** Goal 03 acceptance plus the Goal 04.1a–04.1c source-bound foundation records linked below
 **Evidence basis:** Goal 02 contract/validation/benchmarks and Goal 03 execution/acceptance/benchmarks and [Goal 04 foundation validation](../implementation/goal-04-progress.md). Recheck the linked records before relying on this matrix after a code change.
 
 This matrix separates four questions that must not be conflated:
@@ -78,6 +78,7 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 | Backup/restore automation | **Target only** | Local artifact store has persistence/reopen behavior; no coordinated platform backup/DR service |
 | Secrets management and credential delivery | **Target only / unsupported in T1** | Do not mount host credentials or inject secrets into the runner |
 | PostgreSQL immutable snapshot catalog | **Validated foundation (local Linux)** | Actual PostgreSQL 17.9 migration/checksum/crash rollback, exact snapshot reopen/restart and mapped-role isolation; existing Engine transactions still use in-memory authority |
+| PostgreSQL semantic candidate catalog | **Validated foundation (local Linux)** | [04.1c checks](../implementation/goal-04-semantic-persistence/checks.json): checked model/analysis reopening and actual PostgreSQL restart/isolation; candidate reads do not prove current-head freshness or confer Engine authority |
 | Protobuf TaskIntent messages / Rust intake | **Validated message foundation** | Canonical full-ADR .proto, generated Rust, strict bounded decoding, request identity and reproducible bindings; no RPC service, Go/Python bindings or authenticated Engine adapter |
 
 ## 6. Authoritative evidence

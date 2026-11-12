@@ -158,6 +158,12 @@ provisioner.
 
 ## Required Engine integration
 
+The [semantic-record catalog](goal-04-semantic-state.md) (04.1c) retains immutable
+snapshot-bound engineering models and repository-analysis facts in existing scoped
+`domain_payloads`. It checks format, version, digest, expected snapshot/generation
+and constructor invariants on reopen. It does not install current model heads or
+write lifecycle/commit state. Schema v1 and its published checksum are unchanged.
+
 An initial backend can serialize mutations by locking the scoped repository row.
 Within an explicit PostgreSQL transaction, the Engine must load and validate current
 state, invoke the same Rust semantic implementation, recheck mutable versions,

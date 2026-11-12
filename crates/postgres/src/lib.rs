@@ -1,14 +1,16 @@
-//! PostgreSQL schema and immutable snapshot persistence foundation.
+//! PostgreSQL schema and immutable engineering-record persistence foundation.
 //!
 //! This crate does not yet implement an authoritative transaction backend. No
 //! local fallback, capability deserialization, source publication or SQL-based
 //! semantic admission is exposed by this foundation.
 mod migrations;
+mod semantic;
 mod snapshots;
 
 pub use migrations::{
     MigrationReceipt, MigrationStage, migrate, migrate_with_checkpoint, validate_schema,
 };
+pub use semantic::SemanticCatalog;
 pub use snapshots::SnapshotCatalog;
 
 use postgres::{Client, NoTls};
@@ -102,9 +104,9 @@ pub enum StoreError {
     SchemaMismatch,
     #[error("migration interrupted at an explicit operator checkpoint")]
     MigrationInterrupted,
-    #[error("durable snapshot is missing or not authorized in this scope")]
+    #[error("durable record is missing or not authorized in this scope")]
     NotFound,
-    #[error("immutable durable snapshot content or binding differs")]
+    #[error("immutable durable record content or binding differs")]
     Integrity,
     #[error("repository already has a different initial snapshot")]
     AlreadyRegistered,

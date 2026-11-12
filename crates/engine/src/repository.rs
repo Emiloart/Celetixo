@@ -79,36 +79,55 @@ impl RepositoryAnalysis {
                 return Err(RepositoryAnalysisError::UnknownElement(element.clone()));
             }
         }
+        let mut record = Self {
+            scope: snapshot.scope().clone(),
+            snapshot: snapshot.id(),
+            index_generation: input.index_generation,
+            analyzer_version: input.analyzer_version,
+            configuration: input.configuration,
+            elements: input.elements,
+            dependencies: input.dependencies,
+            checks: input.checks,
+            gaps: input.gaps,
+            digest: Digest::from_bytes([0; 32]),
+        };
+        record.digest = Digest::of("celetixo/repository-analysis/v1", &record.canonical_bytes());
+        Ok(record)
+    }
+
+    /// The existing v1 content-address preimage, exposed for checked persistence.
+    /// This does not install facts or confer complete-impact/transaction authority.
+    pub fn canonical_bytes(&self) -> Vec<u8> {
         let mut encoding = Canonical::default();
-        encoding.str(snapshot.scope().organization.as_str());
-        encoding.str(snapshot.scope().workspace.as_str());
-        encoding.str(snapshot.scope().repository.as_str());
-        encoding.digest(snapshot.id().0);
-        encoding.digest(input.index_generation);
-        encoding.str(&input.analyzer_version);
-        encoding.digest(input.configuration);
-        encoding.u64(input.elements.len() as u64);
-        for element in &input.elements {
+        encoding.str(self.scope().organization.as_str());
+        encoding.str(self.scope().workspace.as_str());
+        encoding.str(self.scope().repository.as_str());
+        encoding.digest(self.snapshot().0);
+        encoding.digest(self.index_generation);
+        encoding.str(&self.analyzer_version);
+        encoding.digest(self.configuration);
+        encoding.u64(self.elements.len() as u64);
+        for element in &self.elements {
             encoding.str(element.as_str());
         }
-        encoding.u64(input.dependencies.len() as u64);
-        for (consumer, dependencies) in &input.dependencies {
+        encoding.u64(self.dependencies.len() as u64);
+        for (consumer, dependencies) in &self.dependencies {
             encoding.str(consumer.as_str());
             encoding.u64(dependencies.len() as u64);
             for dependency in dependencies {
                 encoding.str(dependency.as_str());
             }
         }
-        encoding.u64(input.checks.len() as u64);
-        for (element, checks) in &input.checks {
+        encoding.u64(self.checks.len() as u64);
+        for (element, checks) in &self.checks {
             encoding.str(element.as_str());
             encoding.u64(checks.len() as u64);
             for check in checks {
                 encoding.str(check.as_str());
             }
         }
-        encoding.u64(input.gaps.len() as u64);
-        for gap in &input.gaps {
+        encoding.u64(self.gaps.len() as u64);
+        for gap in &self.gaps {
             encoding.str(&gap.stage);
             match &gap.path {
                 Some(path) => {
@@ -119,20 +138,9 @@ impl RepositoryAnalysis {
             }
             encoding.str(&gap.detail);
         }
-        let digest = encoding.finish("celetixo/repository-analysis/v1");
-        Ok(Self {
-            scope: snapshot.scope().clone(),
-            snapshot: snapshot.id(),
-            index_generation: input.index_generation,
-            analyzer_version: input.analyzer_version,
-            configuration: input.configuration,
-            elements: input.elements,
-            dependencies: input.dependencies,
-            checks: input.checks,
-            gaps: input.gaps,
-            digest,
-        })
+        encoding.into_bytes()
     }
+
     pub fn scope(&self) -> &Scope {
         &self.scope
     }

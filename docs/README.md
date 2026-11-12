@@ -73,8 +73,9 @@ Implementation evidence can reveal that an accepted decision is flawed, but it d
 | [Goal 03 detailed contract comparison](implementation/goal-03-contract-review.md) | Validation | Full-objective cross-check, conditional capability boundaries and fresh focused/live evidence |
 | [Goals 01–03 regression audit](implementation/goals-01-03-audit.md) | Validation | Cross-goal requirement review, fresh checks, evidence integrity and reporting/history corrections |
 | [Goal 03 progress](implementation/goal-03-progress.md) | Historical / implementation | Chronological milestones; consult acceptance record for current status |
-| [Goal 04 foundation progress](implementation/goal-04-progress.md) | Implementation / validation | 04.1a schema, snapshot catalog and canonical protocol foundation; 04.1b runtime/state separation; full durable Engine and later milestones remain pending |
+| [Goal 04 foundation progress](implementation/goal-04-progress.md) | Implementation / validation | 04.1a schema/snapshot/protocol foundation, 04.1b runtime/state separation and 04.1c semantic persistence; full durable Engine and later milestones remain pending |
 | [Goal 04 PostgreSQL schema](implementation/goal-04-postgres-schema.md) | Implementation | Scoped schema and required Rust authority integration |
+| [Goal 04 semantic persistence](implementation/goal-04-semantic-state.md) | Implementation | Checked immutable model/analysis records and scoped PostgreSQL candidate catalog; current-head installation and transaction authority remain pending |
 | [Goal 04: Durable orchestration and distributed commit](implementation/goal-04.md) | Implementation | Accepted contract for durable authority, multi-instance commit, workflow/event coordination, evidence storage and recovery; implementation in progress |
 
 ## Security, operations and support references

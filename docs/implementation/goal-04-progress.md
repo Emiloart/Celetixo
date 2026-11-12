@@ -1,6 +1,6 @@
 # Goal 04 progress and foundation validation
 
-**Status:** active; 04.1a foundation and 04.1b runtime separation verified; Goal 04 and milestone 04.1 remain incomplete.
+**Status:** active; 04.1a–04.1c foundations verified; Goal 04 and milestone 04.1 remain incomplete.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -12,13 +12,69 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 
 | Milestone | Current evidence / remaining work |
 |---|---|
-| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a below supplies migrations, checked immutable snapshot storage and protocol prerequisites. 04.1b separates live capabilities/readers from engineering records. Routing the complete Engine lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
+| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a supplies migrations, checked immutable snapshots and protocol prerequisites. 04.1b separates live capabilities/readers from records. 04.1c adds checked model/analysis reconstruction and immutable candidate storage. Routing the complete Engine lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
 | 04.2 — Multi-instance atomic commit | Pending: independent Engine processes, authoritative SQL commit/CAS, complete request-bound idempotency, races and crash-ambiguity reconciliation. |
 | 04.3 — Transactional events | Schema placeholders exist. No outbox publisher, inbox consumer or real NATS integration yet. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. Existing local Goal 03 storage is unchanged. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
 | 04.7 — End-to-end operational proof | Pending: complete real-service path, multi-instance/fault/security/load tests, backup/restore drills and measured operational baselines. |
+
+## 04.1c — Checked semantic records and PostgreSQL candidate catalog
+
+The [semantic persistence contract](goal-04-semantic-state.md) defines the new
+snapshot-bound engineering-model record, unchanged repository-analysis v1 bytes,
+bounded checked decoders and scoped immutable catalog. Decoding preserves model
+completeness, dependency cycles, elements, checks and gaps. External snapshot and
+generation requirements reject substituted records; candidate storage does not
+install a current model head or authorize transactions. Schema v1 is unchanged.
+
+[Initial source-bound checks](goal-04-semantic-persistence/checks.json) and the
+[raw log](goal-04-semantic-persistence/checks.log) record:
+
+- 369 workspace tests passed, with 20 opt-in tests ignored in the ordinary run.
+- Seven real PostgreSQL groups passed, including semantic model/analysis reopening
+  after actual database process restart, separate mapped runtime logins, forged
+  content/format/version/scope/snapshot/generation rejection, immutable-conflict
+  readback, absent-snapshot rejection, unchanged repository head and zero
+  transaction rows.
+- Ten actual Linux T1 OCI/source-flow tests and 28 LSP tests including the real
+  rust-analyzer probe passed.
+- Workspace formatting, strict Clippy, example builds, protocol integrity/four
+  tooling mutation groups, workflow semantics and 25 attribution fixtures passed.
+
+Eight new pure codec test groups cover frozen formats, full unsigned model
+generation, cyclic/transitive model behavior, incomplete/complete facts, every
+truncated prefix, forged digests, invalid tags/IDs/provenance, duplicate/reordered
+collections and aggregate nested decoding budgets. The frozen analysis fixture
+uses the published v1 layout; it does not assert full language understanding.
+
+The final repository-flow test captures five trusted source files in an actual
+Git repository (TypeScript, JavaScript, Python, Go and Rust), runs the structural
+indexer and impact adapter, retains the exact analysis in PostgreSQL, closes and
+reopens the catalog, and compares every restored fact/gap. A fresh, explicitly
+administered reference Engine then installs those facts and rejects transaction
+analysis with `IncompleteAnalysis`, leaving the transaction proposed and the
+snapshot unchanged. This establishes that persistence does not erase gaps; it is
+not a supported execution harness for all five languages. The final test and its
+test-only repository dependency are bound by
+[follow-up checks](goal-04-semantic-persistence/followup.json) and
+[log](goal-04-semantic-persistence/followup.log): formatting, strict workspace
+Clippy, 369 workspace tests (21 opt-in tests ignored) and all eight actual
+PostgreSQL groups passed. Earlier source hashes and logs remain unchanged; the
+follow-up records the exact changed test/lockfile hashes and unchanged runtime
+implementation evidence.
+
+The database fixture was stopped after validation with data retained. The record
+states runtime/tool hashes and unrun distributed/capacity/recovery checks; elapsed
+development-run times are not benchmarks or SLOs. Current-head authority, durable
+request authentication, leases/fences and the full Engine lifecycle remain pending.
+
+The public PostgreSQL Rust entry point now exports the catalog and generalizes
+record-error text. Its exact CI public-input review digest was refreshed after
+reviewing these public declarations. Default credential policy is unchanged; the
+same four public paths still require exact reviews. No fixture credentials or
+private configuration were added to Git.
 
 ## 04.1b — Engineering records and live embedding resources
 

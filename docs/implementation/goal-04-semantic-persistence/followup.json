@@ -1,0 +1,119 @@
+{
+  "schema": "celetixo/goal04-semantic-persistence-followup-validation/v1",
+  "source_parent": "19545218195a08ee239fde80ce74aaed90ec6da3",
+  "started_utc": "2026-11-12T02:17:21.274954+00:00",
+  "source_sha256": {
+    "crates/engine/src/engine.rs": "87980a4243cf9a3b342be0e8a099d3bbcd8691813309dc91aaed71d18136ead9",
+    "crates/engine/src/model.rs": "4815844093ef915ea48b2e875cf5635285def3a01f035b085729b18f61671323",
+    "crates/engine/src/persistence.rs": "029e360e5d3b2b704d0e0d0c388476006e1a53491fdc43e0ffa52d019a34a280",
+    "crates/engine/src/persistence/semantic.rs": "83918a78c83e014946d1f063fa9fef183f13babfcb6ed4e7316d5e3037b7e819",
+    "crates/engine/src/repository.rs": "f84b9ea3b0d7d0c09ade255855727818799f2309375ba4f96636c96f44079612",
+    "crates/engine/tests/semantic_persistence.rs": "a7d64121049391c3f38238707679098d49ac4f9404db06ade5d74ed81d09007c",
+    "crates/engine/tests/fixtures/repository-analysis-v1.hex": "8ce18c2c7003ea7fdcbe067f20579acefa85c6b6a897ba3eb71e46702a0a247b",
+    "crates/engine/tests/fixtures/engineering-model-record-v1.hex": "76edc261b57564bc8699fe7ab6dae17f88cfcf30350c906ec1623edb1cd5e0fc",
+    "crates/engine/tests/fixtures/semantic-codecs.json": "3fdab2b495c5a4d1ec5624c958df860159c33ee50de460eef6afa721dfe09494",
+    "crates/postgres/src/lib.rs": "9bf9aa8ed7b6dc12f6ea883f245df820c7e35975c6ff0b9988aaa1e4ee2ea528",
+    "crates/postgres/src/snapshots.rs": "6011a9d0d8cf3822f102a9e16aaf09d265608b39f144456875586371b9333a0a",
+    "crates/postgres/src/semantic.rs": "67aeceb86a59e32ab33c9f68d4fd2268c6829fc43ca82ecc13e024c111a3abdb",
+    "crates/postgres/tests/foundation.rs": "7c8ef56564db73be90ecadb794a9469a57deb98602ac9fb24d63c56763bd3057",
+    "crates/postgres/migrations/0001_authority.sql": "aacc58cc8cf70224b8343074b68aafbebb57350cf5d963e4ddc0de296c091647",
+    ".github/workflows/ci.yml": "f501565a0a8d689b5e64c8216eac719fd615f41fe3b49ca47c1c0b866764b375",
+    "Cargo.lock": "ddb8002df8d344a993b19bde5e53b2060bf7183624f88efddee9d2de36ac0933",
+    "crates/postgres/Cargo.toml": "f02d954d89e33c18b613f05c287348fb54fdc79f674322c900480a9bb18b3b8b"
+  },
+  "prior_record_sha256": "b290b3b5151f79805284522fe772688463c678a8809f7ffde0d3eb6fd125524a",
+  "checks": [
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.725
+    },
+    {
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 6.73
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 37.068
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-postgres",
+        "--test",
+        "foundation",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--skip",
+        "migration_crash_child",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 13.231
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.143
+    }
+  ],
+  "finished_utc": "2026-11-12T02:18:19.184298+00:00",
+  "log_sha256": "b23d18527d58141bbb65b26990cc5a56417aa6663f01310bc5b98a426750a872",
+  "prior_public_record_sha256": "7a407f6bf86cc0caf69234c1d002a82c0ac8fe97a5963be4dd9761df5f685f37",
+  "prior_source_changes": {
+    "crates/postgres/tests/foundation.rs": {
+      "initial_sha256": "4b82173e0eeeebd8102a6fcc6bf2ffaa89dbc0dbc1192e7ba02da57be23f1be2",
+      "final_sha256": "7c8ef56564db73be90ecadb794a9469a57deb98602ac9fb24d63c56763bd3057"
+    },
+    "Cargo.lock": {
+      "initial_sha256": "74efdddaa0457fc5e95edfc4fbea07d23920eb2c9b3549eba72c3283dff90b5e",
+      "final_sha256": "ddb8002df8d344a993b19bde5e53b2060bf7183624f88efddee9d2de36ac0933"
+    }
+  },
+  "counts": {
+    "workspace": {
+      "passed": 369,
+      "failed": 0,
+      "ignored": 21
+    },
+    "real_postgres": {
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "final_fixture_state": "stopped; data preserved",
+  "limits": "This follow-up adds a test-only local repository dependency and actual five-language capture/index/catalog/Engine rejection test. It reruns affected checks. Unchanged implementation files retain the initial source-bound live T1/LSP/protocol/example evidence; distributed transaction authority remains pending."
+}

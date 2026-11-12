@@ -1294,11 +1294,9 @@ fn captured_workspace(snapshot: &Snapshot) -> bool {
 }
 
 fn validate_model(model: &EngineeringModel) -> Result<(), EngineError> {
-    if model.generation == 0 || model.analyzer.trim().is_empty() || model.version.trim().is_empty()
-    {
-        return Err(EngineError::IncompleteAnalysis);
-    }
-    Ok(())
+    model
+        .validate()
+        .map_err(|_| EngineError::IncompleteAnalysis)
 }
 
 fn validate_intent(intent: &TransactionIntent) -> Result<(), EngineError> {
