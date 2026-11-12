@@ -20,7 +20,7 @@ const MIGRATIONS: &[Migration] = &[
         sql: include_str!("../migrations/0003_native_lifecycle.sql"),
     },
 ];
-const LOCK: i64 = 0x43454c455449584f;
+pub(crate) const LOCK: i64 = 0x43454c455449584f;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MigrationReceipt {

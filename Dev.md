@@ -209,7 +209,11 @@ The reference clock/fences still do not supply distributed authority.
 
 The [04.1f reconstruction/backend boundary](docs/implementation/goal-04-authority-boundary.md)
 adds checked scoped native state, typed outcomes/metadata, fresh authentication
-resolution and explicit trusted backend routing. No SQL implementation exists yet.
+resolution and explicit trusted backend routing. The subsequent
+[04.1g adapter](docs/implementation/goal-04-registration-authority.md) implements
+bounded PostgreSQL grants and native repository/model registration. Lifecycle rows
+remain unsupported; extend that loader/publisher through the full native/source
+recovery gates before claiming durable transaction authority.
 The selected backend cannot fall back to memory and requires prepared commit
 requests. Schema v3 is additive and must remain immutable after publication.
 Preserve full source-state recovery as a remaining gate; the native profile rejects

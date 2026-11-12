@@ -1,7 +1,10 @@
 # Goal 04 fresh-session handoff
 
-**State:** paused at the user's request after committing and pushing 04.1f.
-Resume only when requested. Goal 04 is not complete; preserve the entire accepted
+**State:** resumed at the user's request on 2026-11-12 from published 04.1f
+(`f1f2b83a4193f483c79216ed6e8140a75d9ecea6`). The following preserves the original
+pause context; consult current [progress](goal-04-progress.md) and the
+[04.1g PostgreSQL registration adapter](goal-04-registration-authority.md) for
+subsequent work. Goal 04 is not complete; preserve the entire accepted
 [seven-milestone objective](goal-04.md). Its contract SHA-256 remains
 `339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743`.
 
@@ -33,8 +36,15 @@ this handoff; obtain its identity with Git. The previous published milestone was
 04.1a–04.1f establish schema/catalogs, runtime separation, checked immutable/native
 lifecycle records, explicit evaluation/publication, exact requests/fences, fresh
 session resolution, scoped backend routing and supported schema upgrades through
-v3. The adapter test double is memory-only. **There is no PostgreSQL implementation
-of `AuthorityBackend`, durable Engine lease/commit service or distributed commit.**
+v3. At the pause, the adapter test double was memory-only and there was no
+PostgreSQL `AuthorityBackend`. There is still no durable Engine lease/commit
+service or distributed commit.
+04.1g now supplies a bounded PostgreSQL `AuthorityBackend` for scoped grants and
+native repository/model registration. It explicitly rejects all lifecycle rows;
+the complete durable lease/commit backend remains pending. Its shared schema and
+repository locking, independent restricted runtime/admin logins and checked
+publication protocol are the starting point for the remaining SQL integration.
+
 The bounded native reconstruction rejects captured source state and legacy
 unbound commit records. Existing Goal 03 memory/T1 behavior remains separately
 validated. Do not silently discard unsupported rows or treat partial reconstruction

@@ -119,7 +119,7 @@ impl SemanticCatalog {
     }
 }
 
-fn put_payload(
+pub(crate) fn put_payload(
     tx: &mut impl GenericClient,
     scope: &Scope,
     id: Digest,

@@ -81,7 +81,7 @@ pub(crate) fn scope_parameters(scope: &Scope) -> [&str; 3] {
     ]
 }
 
-fn persist(tx: &mut impl GenericClient, snapshot: &Snapshot) -> Result<(), StoreError> {
+pub(crate) fn persist(tx: &mut impl GenericClient, snapshot: &Snapshot) -> Result<(), StoreError> {
     let a = scope_parameters(snapshot.scope());
     let bytes = snapshot.canonical_bytes();
     let snapshot_id = snapshot.id();

@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-12",
+  "scope": "final exact public-input policy and workflow followup; Rust/runtime/migration/test source unchanged from checks.json",
+  "changed_configuration_sha256": {
+    ".github/workflows/ci.yml": "08e06f65c8376c7ad27839143c9da7a75db6430e0b5be6cb7e162b2b0ee0707b"
+  },
+  "auditor_source_sha256": "0d7119db54572853e8d6cdd85f81b99a179ad59514f84e36c11b323724cea95d",
+  "auditor_engine_rlib_sha256": "d102bc12079d41a49648a5a394222d7bd509d0c185d48a4049870ff4bf5bc1ea",
+  "public_admission_audit": "Every changed/new public input admitted; exact reviewed bytes/path mutations rejected.",
+  "reviewed_inputs": [
+    "crates/postgres/src/lib.rs=33047077e5f9090210b7c914ca3aab3963f9c461582a2db01893ba9d86132c52",
+    "docs/implementation/goal-04-registration-validation/fixture.json=7af849f6ea540693cdecf457975ba468b550ae60a3d728a520a17504c9941d92"
+  ],
+  "checks": [
+    {
+      "command": [
+        "python3",
+        ".github/scripts/check-workflows.py",
+        "--offline"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ]
+}

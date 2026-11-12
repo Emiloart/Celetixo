@@ -1,6 +1,6 @@
 # Goal 04 progress and foundation validation
 
-**Status:** paused at the user’s request after 04.1f publication; 04.1a–04.1f prerequisites verified. Goal 04 and milestone 04.1 remain incomplete.
+**Status:** resumed at the user's request on 2026-11-12 from 04.1f (`f1f2b83`). 04.1a–04.1f prerequisites and 04.1g bounded PostgreSQL registration integration are verified. Goal 04 and milestone 04.1 remain incomplete.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -12,13 +12,47 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 
 | Milestone | Current evidence / remaining work |
 |---|---|
-| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a supplies schema/snapshot/protocol prerequisites; 04.1b separates runtime resources; 04.1c retains checked semantic candidates; 04.1d separates state evaluation/publication; 04.1e adds checked lifecycle/request contracts, reference fences and a supported schema upgrade; 04.1f adds checked scoped reconstruction, backend routing and schema v3. Routing the complete lifecycle through durable typed state, authorization, reservations/leases/fencing, process recovery and oracle equivalence is pending. |
+| 04.1 — PostgreSQL state and recovery | **Partial.** 04.1a–04.1f establish checked records, backend routing and schema v3. 04.1g routes scoped grants and native repository/model registration through PostgreSQL, with checked reopen and bounded failure tests. Durable transactions/attempts, reservations/leases/fencing, exact request/outcome recovery, complete source recovery and oracle equivalence remain pending. |
 | 04.2 — Multi-instance atomic commit | Pending: independent Engine processes, authoritative SQL commit/CAS, complete request-bound idempotency, races and crash-ambiguity reconciliation. |
 | 04.3 — Transactional events | Schema placeholders exist. No outbox publisher, inbox consumer or real NATS integration yet. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. Existing local Goal 03 storage is unchanged. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
 | 04.7 — End-to-end operational proof | Pending: complete real-service path, multi-instance/fault/security/load tests, backup/restore drills and measured operational baselines. |
+
+## 04.1g — PostgreSQL registration authority (resumed)
+
+The [registration adapter](goal-04-registration-authority.md) is the first actual
+SQL implementation of the existing Engine backend boundary. It durably publishes
+scoped native grants, registration and model updates through the same Rust
+transitions, with restricted independent runtime/admin logins, live schema fencing,
+repository locks/generation CAS, database-clock policy, checked normalized
+reconstruction/readback and confirmed publication audit. Published migrations are
+unchanged. Any lifecycle/source/policy state outside this profile rejects before
+publication; no complete transaction or distributed-commit claim is made.
+
+[Source-bound checks](goal-04-registration-validation/checks.json) and the
+[raw log](goal-04-registration-validation/checks.log) record validation. Real
+PostgreSQL coverage includes native reopen and actual database restart, process
+death before commit, separate-instance registration races, coherent readers,
+future-schema/migration fencing, scope/OID and privilege changes, publication
+rollback, an injected lost acknowledgement, model uncertainty and read purity.
+Exact registration-request idempotency and real transport loss during COMMIT are
+not established. `inspect_registration` is trusted investigation, not automatic
+uncertain-request recovery.
+
+Final verification passed: 409 ordinary workspace tests (33 opt-in tests ignored),
+all 20 real PostgreSQL groups, strict workspace Clippy, formatting, example
+builds/run, workflow semantics, protocol integrity/four mutation groups and 25
+attribution fixtures. The dedicated PostgreSQL fixture was stopped with data
+preserved. Actual T1/LSP probes and whole-repository/T0 smoke were not rerun locally
+for this bounded SQL change; earlier evidence remains separately scoped. Hosted
+CI was not confirmed through the unauthenticated Linux GitHub CLI.
+
+The full goal remains active. Next extend the normalized loader/publisher to
+transaction attempts, historical prepared requests/outcomes, evidence selection,
+leases/fencing/events, binary reasons and atomic commit/history/outbox facts.
+Complete source recovery, native oracle equivalence and all 04.2–04.7 gates remain.
 
 ## 04.1f — Checked reconstruction and trusted backend boundary
 
@@ -426,13 +460,12 @@ readiness, whole-goal completion or service-level performance claim is made.
 
 ## Next implementation boundary
 
-Use the checked scoped reconstruction/backend boundary while retaining transient
-reader/capability separation. Implement the actual PostgreSQL adapter and route
-the existing Rust transition logic through an explicit database
-transaction with normalized mutable authority, shared repository lock/version
-rules and a database clock read after lock acquisition. Preserve mutations that
-intentionally persist a rejection/revalidation outcome, keep artifact reads outside
-long transactions, and require confirmed SQL commit before acknowledgement.
+Extend the [bounded PostgreSQL registration adapter](goal-04-registration-authority.md)
+through the complete normalized native lifecycle, preserving transient
+reader/capability separation. Use its shared repository lock/version, live schema
+fence and database clock protocol. Preserve mutations that intentionally persist
+a rejection/revalidation outcome, keep artifact reads outside long transactions,
+retain exact request bodies and require confirmed SQL commit before acknowledgement.
 
 The subsequent gate is equivalence with the independently structured reference
 oracle plus process restart, grant/policy revocation, lease expiry/fencing and

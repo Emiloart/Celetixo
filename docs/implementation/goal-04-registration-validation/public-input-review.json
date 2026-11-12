@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-12",
+  "scope": "trusted CI capture policy only; default credential detection unchanged",
+  "reviewed_input": {
+    "path": "crates/postgres/src/lib.rs",
+    "content_address": "33047077e5f9090210b7c914ca3aab3963f9c461582a2db01893ba9d86132c52",
+    "sha256": "cef751358508b4f1abf876a1507a9f9426d918e04e4f6225f229ffe246beea73",
+    "review": "Rust public connection type declarations and private credential-file references, reviewed without reading private files; no live credentials"
+  },
+  "workflow_sha256": "08e06f65c8376c7ad27839143c9da7a75db6430e0b5be6cb7e162b2b0ee0707b",
+  "new_sources": "Default capture-policy regressions cover authority.rs and the database tests; no additional exception installed.",
+  "additional_reviewed_input": {
+    "path": "docs/implementation/goal-04-registration-validation/fixture.json",
+    "content_address": "7af849f6ea540693cdecf457975ba468b550ae60a3d728a520a17504c9941d92",
+    "sha256": "466b4c79ebabb71a3f4aaf5b9c157777f52fea2412f31ce237df57bef8d5f07f",
+    "review": "Reviewed operator fixture output: server version/durability settings, public SCRAM mechanism name, booleans, container name and resource counters only; no credentials or private configuration contents."
+  }
+}

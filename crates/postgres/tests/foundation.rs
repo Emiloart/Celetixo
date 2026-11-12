@@ -11,8 +11,8 @@ use celetixo_engine::persistence::NativeIntentRecord;
 use celetixo_engine::repository::{AnalysisGap, RepositoryAnalysis, RepositoryAnalysisInput};
 use celetixo_engine::snapshot::{InclusionPolicy, Snapshot, SnapshotManifest};
 use celetixo_postgres::{
-    MigrationStage, SemanticCatalog, SnapshotCatalog, StoreError, UnixConnection, migrate,
-    migrate_with_checkpoint, validate_schema,
+    AuthorityStage, MigrationStage, PostgresAuthority, SemanticCatalog, SnapshotCatalog,
+    StoreError, UnixConnection, migrate, migrate_with_checkpoint, validate_schema,
 };
 use postgres::Client;
 use serde::Deserialize;
@@ -20,6 +20,7 @@ use sha2::{Digest as _, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::process::Command;
+use std::sync::{Arc, Barrier};
 
 #[derive(Deserialize)]
 struct Role {
@@ -699,6 +700,8 @@ fn database_connection_configuration_does_not_accept_implicit_or_network_transpo
 #[test]
 #[ignore = "requires permission to restart the dedicated reviewed PostgreSQL fixture"]
 fn immutable_catalogs_survive_actual_database_process_restart() {
+    use celetixo_engine::engine::{Engine, Permission};
+    use celetixo_engine::ids::PrincipalId;
     let config = fixture();
     let selected = scope("restart");
     {
@@ -720,6 +723,24 @@ fn immutable_catalogs_survive_actual_database_process_restart() {
             ))
             .unwrap();
     }
+    let native_scope = scope("registration-restart");
+    let native_before = {
+        let mut administrator_connection = owner();
+        authorize_registration(&mut administrator_connection, &native_scope);
+        let backend = Arc::new(sql_authority());
+        let (engine, administrator) = Engine::with_authority_backend(backend.clone());
+        let session = administrator
+            .grant(
+                PrincipalId::new("restart-worker").unwrap(),
+                native_scope.clone(),
+                Permission::ALL.into_iter().collect(),
+            )
+            .unwrap();
+        engine
+            .register(&session, snapshot(native_scope.clone(), 0), native_model(1))
+            .unwrap();
+        backend.inspect_registration(&native_scope).unwrap()
+    };
     let root = config.host.parent().unwrap();
     let script =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../scripts/goal04/postgres_fixture.py");
@@ -733,6 +754,10 @@ fn immutable_catalogs_survive_actual_database_process_restart() {
         result.status.success(),
         "reviewed fixture restart failed: {}",
         String::from_utf8_lossy(&result.stderr)
+    );
+    assert_eq!(
+        sql_authority().inspect_registration(&native_scope).unwrap(),
+        native_before
     );
     let mut reopened = SnapshotCatalog::connect(&connection("runtime", None)).unwrap();
     let expected = snapshot(selected.clone(), 123);
@@ -1215,4 +1240,780 @@ fn durable_payloads_cannot_forge_content_scope_format_or_manifest() {
             "forged durable payload variant {variant}"
         );
     }
+}
+
+// Restricted application-administration is deliberately a separate login from
+// both runtime and migration owner. The reviewed list includes SELECT for
+// unsupported-state detection, never blanket access to the role map/ledger.
+fn authorize_registration(owner: &mut Client, selected: &Scope) {
+    for role in ["runtime", "runtime_other"] {
+        authorize(owner, role, selected);
+        let config = fixture();
+        let name = &config.roles[role].user;
+        let reads = "principals,grants,grant_permissions,engine_counters,engine_model_heads,reservation_fences,policies,policy_heads,artifact_store_registrations,transactions,attempts,access_provenance,transaction_outcomes,committed_changes,reservations,reservation_claims,reservation_events,operations,source_attempts,source_attempt_events,source_attempt_outcomes,source_rejections,artifact_objects,evidence,evidence_receipts,attempt_checks,reference_evidence_admissions,reference_evidence_signers,authority_publications,outbox,outbox_delivery,inbox";
+        let reads = reads
+            .split(',')
+            .map(|t| format!("celetixo.{t}"))
+            .collect::<Vec<_>>()
+            .join(",");
+        owner.batch_execute(&format!("GRANT SELECT ON {reads} TO {name}; GRANT INSERT,UPDATE ON celetixo.engine_counters,celetixo.engine_model_heads TO {name}; GRANT INSERT ON celetixo.authority_publications TO {name};")).unwrap();
+        if role == "runtime_other" {
+            owner.batch_execute(&format!("GRANT INSERT ON celetixo.principals,celetixo.grants,celetixo.grant_permissions TO {name}; GRANT UPDATE(active,generation) ON celetixo.grants TO {name};")).unwrap();
+        }
+    }
+}
+
+fn sql_authority() -> PostgresAuthority {
+    PostgresAuthority::connect(
+        connection("runtime", None),
+        connection("runtime_other", None),
+    )
+    .unwrap()
+}
+fn native_model(generation: u64) -> EngineeringModel {
+    EngineeringModel {
+        generation,
+        analyzer: "finite-reference".into(),
+        version: "sql-registration/v1".into(),
+        configuration: Digest::of("sql-registration-test/v1", b"model"),
+        dependencies: BTreeMap::new(),
+        completeness: Completeness::Complete,
+    }
+}
+fn authority_error(
+    failure: celetixo_engine::engine::authority::AuthorityFailure,
+) -> celetixo_engine::engine::EngineError {
+    celetixo_engine::engine::EngineError::Authority(failure)
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn sql_registration_reopens_exact_state_preserves_uncertainty_and_requires_fresh_sessions() {
+    use celetixo_engine::engine::{Engine, EngineError, Permission};
+    use celetixo_engine::ids::PrincipalId;
+    let mut owner = owner();
+    let selected = scope("native-registration");
+    authorize_registration(&mut owner, &selected);
+    let backend = Arc::new(sql_authority());
+    let (engine, administrator) = Engine::with_authority_backend(backend.clone());
+    let worker = administrator
+        .grant(
+            PrincipalId::new("worker").unwrap(),
+            selected.clone(),
+            Permission::ALL.into_iter().collect(),
+        )
+        .unwrap();
+    let base = snapshot(selected.clone(), 0);
+    engine
+        .register(&worker, base.clone(), native_model(1))
+        .unwrap();
+    let mut updated = native_model(2);
+    updated.completeness = Completeness::Incomplete {
+        reasons: vec!["unknown\0dependency λ".into()],
+    };
+    engine
+        .update_model(&worker, &selected, updated.clone())
+        .unwrap();
+    let before = backend.inspect_registration(&selected).unwrap();
+    assert_eq!(before.state_generation, 3);
+    assert!(before.records.clock_ms > 0);
+    assert_eq!(before.records.repository.as_ref().unwrap().model, updated);
+    for _ in 0..3 {
+        assert_eq!(engine.current(&worker, &selected).unwrap(), base);
+    }
+    assert_eq!(
+        backend.inspect_registration(&selected).unwrap(),
+        before,
+        "observations cannot publish clocks or audit rows"
+    );
+    // Private snapshot candidates never become proposal bases on reconstruction.
+    let candidate = snapshot(selected.clone(), 1);
+    SnapshotCatalog::connect(&connection("runtime", None))
+        .unwrap()
+        .put_candidate(&candidate)
+        .unwrap();
+    assert_eq!(backend.inspect_registration(&selected).unwrap(), before);
+    drop(administrator);
+    drop(engine);
+    let reopened = Arc::new(sql_authority());
+    let (engine, administrator) = Engine::with_authority_backend(reopened.clone());
+    assert_eq!(
+        engine.current(&worker, &selected),
+        Err(EngineError::Unauthorized)
+    );
+    let grant = *before.records.grants.keys().next().unwrap();
+    assert!(matches!(
+        administrator
+            .authenticate_existing_session(&selected, grant, |_, _| Err(EngineError::Unauthorized)),
+        Err(EngineError::Unauthorized)
+    ));
+    let session = administrator
+        .authenticate_existing_session(&selected, grant, |principal, scope| {
+            assert_eq!(principal, worker.principal());
+            assert_eq!(scope, &selected);
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(engine.current(&session, &selected).unwrap(), base);
+    // A domain rejection still completes the update/publication protocol.
+    assert_eq!(
+        engine.register(&session, base.clone(), native_model(1)),
+        Err(EngineError::AlreadyExists)
+    );
+    assert_eq!(
+        reopened
+            .inspect_registration(&selected)
+            .unwrap()
+            .state_generation,
+        4
+    );
+    administrator.revoke(&session).unwrap();
+    assert_eq!(
+        engine.current(&session, &selected),
+        Err(EngineError::Unauthorized)
+    );
+    let view = reopened.inspect_registration(&selected).unwrap();
+    assert!(!view.records.grants[&grant].active);
+    assert_eq!(view.state_generation, 5);
+    let runtime = connection("runtime", None).connect().unwrap();
+    drop(runtime);
+    let a = [
+        selected.organization.as_str(),
+        selected.workspace.as_str(),
+        selected.repository.as_str(),
+    ];
+    let rows=owner.query("SELECT actor_kind,authenticated_database_role::text,authenticated_database_role_oid,requested_principal_id::text FROM celetixo.authority_publications WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text ORDER BY state_generation",&[&a[0],&a[1],&a[2]]).unwrap();
+    let config = fixture();
+    assert_eq!(rows.len(), 5);
+    for (row, kind, role) in [
+        (&rows[0], "EmbeddingAdministrator", "runtime_other"),
+        (&rows[1], "Session", "runtime"),
+        (&rows[4], "EmbeddingAdministrator", "runtime_other"),
+    ] {
+        assert_eq!(row.get::<_, String>(0), kind);
+        assert_eq!(row.get::<_, String>(1), config.roles[role].user);
+        let oid: u32 = owner
+            .query_one(
+                "SELECT oid FROM pg_roles WHERE rolname=$1",
+                &[&config.roles[role].user],
+            )
+            .unwrap()
+            .get(0);
+        assert_eq!(row.get::<_, u32>(2), oid);
+    }
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn sql_registration_rolls_back_failures_and_withholds_lost_commit_acknowledgement() {
+    use celetixo_engine::engine::authority::AuthorityFailure;
+    use celetixo_engine::engine::{Engine, Permission};
+    use celetixo_engine::ids::PrincipalId;
+    let mut owner = owner();
+    let selected = scope("native-faults");
+    authorize_registration(&mut owner, &selected);
+    let backend = Arc::new(sql_authority());
+    let (engine, administrator) = Engine::with_authority_backend(backend.clone());
+    let worker = administrator
+        .grant(
+            PrincipalId::new("worker").unwrap(),
+            selected.clone(),
+            Permission::ALL.into_iter().collect(),
+        )
+        .unwrap();
+    let before = backend.inspect_registration(&selected).unwrap();
+    let fault = Arc::new(sql_authority().with_checkpoint(Arc::new(|stage| {
+        if stage == AuthorityStage::BeforeCommit {
+            Err(AuthorityFailure::Unavailable)
+        } else {
+            Ok(())
+        }
+    })));
+    let (failed, auth) = Engine::with_authority_backend(fault);
+    let grant = *before.records.grants.keys().next().unwrap();
+    let session = auth
+        .authenticate_existing_session(&selected, grant, |_, _| Ok(()))
+        .unwrap();
+    let base = snapshot(selected.clone(), 0);
+    assert_eq!(
+        failed.register(&session, base.clone(), native_model(1)),
+        Err(authority_error(AuthorityFailure::Unavailable))
+    );
+    assert_eq!(backend.inspect_registration(&selected).unwrap(), before);
+    // Failure after confirmed server commit simulates a withheld response. No
+    // callback retry or ordinary domain response is permitted by this hook.
+    let fault = Arc::new(sql_authority().with_checkpoint(Arc::new(|stage| {
+        if stage == AuthorityStage::AfterCommit {
+            Err(AuthorityFailure::Unavailable)
+        } else {
+            Ok(())
+        }
+    })));
+    let (uncertain, auth) = Engine::with_authority_backend(fault);
+    let session = auth
+        .authenticate_existing_session(&selected, grant, |_, _| Ok(()))
+        .unwrap();
+    assert_eq!(
+        uncertain.register(&session, base.clone(), native_model(1)),
+        Err(authority_error(AuthorityFailure::CommitIndeterminate))
+    );
+    let observed = backend.inspect_registration(&selected).unwrap();
+    assert_eq!(observed.state_generation, before.state_generation + 1);
+    assert_eq!(
+        observed.records.repository.as_ref().unwrap().current,
+        base.id()
+    );
+    assert_eq!(engine.current(&worker, &selected).unwrap(), base);
+    assert_eq!(observed.records.grants, before.records.grants);
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn sql_registration_rejects_unsupported_state_budget_clock_and_scope_without_publication() {
+    use celetixo_engine::engine::authority::{AuthorityFailure, NativeRecordLimits};
+    use celetixo_engine::engine::{Engine, Permission};
+    use celetixo_engine::evidence::CheckSpec;
+    use celetixo_engine::ids::{PrincipalId, TransactionId};
+    use celetixo_engine::transaction::TransactionIntent;
+    let mut owner = owner();
+    let selected = scope("native-rejects");
+    authorize_registration(&mut owner, &selected);
+    let backend = Arc::new(sql_authority());
+    let (engine, administrator) = Engine::with_authority_backend(backend.clone());
+    let worker = administrator
+        .grant(
+            PrincipalId::new("worker").unwrap(),
+            selected.clone(),
+            Permission::ALL.into_iter().collect(),
+        )
+        .unwrap();
+    let base = snapshot(selected.clone(), 0);
+    engine
+        .register(&worker, base.clone(), native_model(1))
+        .unwrap();
+    let before = backend.inspect_registration(&selected).unwrap();
+    let check = CheckSpec::new(
+        CheckId::new("check").unwrap(),
+        vec!["reference-not-executed".into()],
+        "reference/v1".into(),
+        Digest::of("sql-test/v1", b"environment"),
+        Digest::of("sql-test/v1", b"config"),
+    )
+    .unwrap();
+    assert_eq!(
+        engine.propose(
+            &worker,
+            &selected,
+            TransactionId::new("unsupported").unwrap(),
+            base.id(),
+            TransactionIntent {
+                objective: "unimplemented lifecycle must reject".into(),
+                accesses: Default::default(),
+                invariants: vec![],
+                required_checks: vec![check],
+                depends_on: BTreeSet::new()
+            }
+        ),
+        Err(authority_error(AuthorityFailure::UnsupportedProfile))
+    );
+    assert_eq!(backend.inspect_registration(&selected).unwrap(), before);
+    let foreign = scope("unmapped");
+    assert_eq!(
+        backend.inspect_registration(&foreign),
+        Err(AuthorityFailure::ScopeDenied)
+    );
+    let small = sql_authority()
+        .with_limits(NativeRecordLimits {
+            value_bytes: 1,
+            ..Default::default()
+        })
+        .unwrap();
+    assert_eq!(
+        small.inspect_registration(&selected),
+        Err(AuthorityFailure::Integrity)
+    );
+    let a = [
+        selected.organization.as_str(),
+        selected.workspace.as_str(),
+        selected.repository.as_str(),
+    ];
+    owner.execute("UPDATE celetixo.engine_counters SET last_clock_ms='18446744073709551615' WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text",&[&a[0],&a[1],&a[2]]).unwrap();
+    let future = backend.inspect_registration(&selected).unwrap();
+    assert_eq!(
+        engine.current(&worker, &selected),
+        Err(authority_error(AuthorityFailure::ClockRegression))
+    );
+    assert_eq!(
+        engine.update_model(&worker, &selected, native_model(2)),
+        Err(authority_error(AuthorityFailure::ClockRegression))
+    );
+    assert_eq!(backend.inspect_registration(&selected).unwrap(), future);
+    // Preserve the injected future-clock fixture for operator review; no ledger
+    // or clock is rewritten to disguise the explicit rejection.
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn sql_registration_serializes_independent_instances_and_bootstrap_creators() {
+    use celetixo_engine::engine::{Engine, Permission};
+    use celetixo_engine::ids::PrincipalId;
+    let mut owner = owner();
+    let selected = scope("native-races");
+    authorize_registration(&mut owner, &selected);
+    let barrier = Arc::new(Barrier::new(2));
+    let children = (0..2)
+        .map(|i| {
+            let selected = selected.clone();
+            let barrier = barrier.clone();
+            std::thread::spawn(move || {
+                let (engine, administrator) =
+                    Engine::with_authority_backend(Arc::new(sql_authority()));
+                barrier.wait();
+                let worker = administrator
+                    .grant(
+                        PrincipalId::new(format!("worker-{i}")).unwrap(),
+                        selected.clone(),
+                        Permission::ALL.into_iter().collect(),
+                    )
+                    .unwrap();
+                (engine, worker)
+            })
+        })
+        .collect::<Vec<_>>();
+    let handles = children
+        .into_iter()
+        .map(|child| child.join().unwrap())
+        .collect::<Vec<_>>();
+    let backend = sql_authority();
+    let view = backend.inspect_registration(&selected).unwrap();
+    assert_eq!(view.state_generation, 2);
+    assert_eq!(view.records.grants.len(), 2);
+    assert_eq!(view.records.session_counter, 2);
+    let base = snapshot(selected.clone(), 0);
+    let barrier = Arc::new(Barrier::new(2));
+    let children = handles
+        .into_iter()
+        .map(|(engine, worker)| {
+            let base = base.clone();
+            let barrier = barrier.clone();
+            std::thread::spawn(move || {
+                barrier.wait();
+                engine.register(&worker, base, native_model(1))
+            })
+        })
+        .collect::<Vec<_>>();
+    let results = children
+        .into_iter()
+        .map(|child| child.join().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(results.iter().filter(|r| r.is_ok()).count(), 1);
+    assert_eq!(
+        results
+            .iter()
+            .filter(|r| **r == Err(celetixo_engine::engine::EngineError::AlreadyExists))
+            .count(),
+        1
+    );
+    let view = backend.inspect_registration(&selected).unwrap();
+    assert_eq!(view.state_generation, 4);
+    assert_eq!(view.records.repository.unwrap().current, base.id());
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn sql_registration_roles_scope_revocation_and_live_schema_fencing_fail_closed() {
+    use celetixo_engine::engine::authority::AuthorityFailure;
+    use celetixo_engine::engine::{Engine, Permission};
+    use celetixo_engine::ids::PrincipalId;
+    let mut owner = owner();
+    let selected = scope("native-roles");
+    authorize_registration(&mut owner, &selected);
+    assert!(matches!(
+        PostgresAuthority::connect(
+            connection("migration", None),
+            connection("runtime_other", None)
+        ),
+        Err(AuthorityFailure::ScopeDenied)
+    ));
+    assert!(matches!(
+        PostgresAuthority::connect(connection("runtime", None), connection("runtime", None)),
+        Err(AuthorityFailure::ScopeDenied)
+    ));
+    assert!(matches!(
+        PostgresAuthority::connect(
+            connection("runtime", None),
+            connection("runtime_other", Some("another_database"))
+        ),
+        Err(AuthorityFailure::UnsupportedProfile)
+    ));
+    let backend = Arc::new(sql_authority());
+    let (engine, administrator) = Engine::with_authority_backend(backend.clone());
+    let worker = administrator
+        .grant(
+            PrincipalId::new("worker").unwrap(),
+            selected.clone(),
+            Permission::ALL.into_iter().collect(),
+        )
+        .unwrap();
+    let base = snapshot(selected.clone(), 0);
+    engine
+        .register(&worker, base.clone(), native_model(1))
+        .unwrap();
+    let config = fixture();
+    let runtime = &config.roles["runtime"].user;
+    let admin_name = &config.roles["runtime_other"].user;
+    let a = [
+        selected.organization.as_str(),
+        selected.workspace.as_str(),
+        selected.repository.as_str(),
+    ];
+    let mut service = connection("runtime", None).connect().unwrap();
+    assert!(
+        service
+            .batch_execute("UPDATE celetixo.db_role_scopes SET authorized_at=clock_timestamp()")
+            .is_err()
+    );
+    assert!(
+        service
+            .batch_execute("DELETE FROM celetixo.schema_migrations")
+            .is_err()
+    );
+    assert!(
+        service
+            .execute(
+                "UPDATE celetixo.grants SET active=false WHERE organization_id=$1::text",
+                &[&a[0]]
+            )
+            .is_err()
+    );
+    owner.execute("UPDATE celetixo.db_role_scopes SET database_role_oid=0 WHERE database_role=$1::name AND organization_id=$2::text AND workspace_id=$3::text AND repository_id=$4::text",&[runtime,&a[0],&a[1],&a[2]]).unwrap();
+    assert_eq!(
+        engine.current(&worker, &selected),
+        Err(authority_error(AuthorityFailure::ScopeDenied))
+    );
+    owner.execute("UPDATE celetixo.db_role_scopes SET database_role_oid=(SELECT oid FROM pg_roles WHERE rolname=$1) WHERE database_role=$1::name AND organization_id=$2::text AND workspace_id=$3::text AND repository_id=$4::text",&[runtime,&a[0],&a[1],&a[2]]).unwrap();
+    assert_eq!(engine.current(&worker, &selected).unwrap(), base);
+    owner
+        .batch_execute(&format!(
+            "GRANT UPDATE(active) ON celetixo.grants TO {runtime}"
+        ))
+        .unwrap();
+    let elevated = engine.current(&worker, &selected);
+    owner
+        .batch_execute(&format!(
+            "REVOKE UPDATE(active) ON celetixo.grants FROM {runtime}"
+        ))
+        .unwrap();
+    assert_eq!(
+        elevated,
+        Err(authority_error(AuthorityFailure::ScopeDenied))
+    );
+    let mut role_administrator = connection("admin", None).connect().unwrap();
+    role_administrator
+        .batch_execute(&format!("GRANT {admin_name} TO {runtime}"))
+        .unwrap();
+    let inherited = engine.current(&worker, &selected);
+    role_administrator
+        .batch_execute(&format!("REVOKE {admin_name} FROM {runtime}"))
+        .unwrap();
+    assert_eq!(
+        inherited,
+        Err(authority_error(AuthorityFailure::ScopeDenied))
+    );
+    // An existing adapter coordinates each observation with a live migrator.
+    let mut tx = owner.transaction().unwrap();
+    tx.query_one(
+        "SELECT pg_advisory_xact_lock($1)",
+        &[&0x43454c455449584fi64],
+    )
+    .unwrap();
+    let observer = backend.clone();
+    let scope_copy = selected.clone();
+    let child = std::thread::spawn(move || observer.inspect_registration(&scope_copy));
+    // A real exclusive migration lock blocks this reader before its snapshot.
+    let mut monitor = connection("migration", None).connect().unwrap();
+    let start = std::time::Instant::now();
+    loop {
+        let waiting:bool=monitor.query_one("SELECT EXISTS(SELECT 1 FROM pg_locks l JOIN pg_stat_activity a ON a.pid=l.pid WHERE l.locktype='advisory' AND NOT l.granted AND a.usename=$1)",&[admin_name]).unwrap().get(0);
+        if waiting {
+            break;
+        }
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(1),
+            "reader did not reach migration lock"
+        );
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    tx.rollback().unwrap();
+    assert!(child.join().unwrap().is_ok());
+    // Role mapping revocation is independently checked by the runtime login.
+    owner.execute("DELETE FROM celetixo.db_role_scopes WHERE database_role=$1::name AND organization_id=$2::text AND workspace_id=$3::text AND repository_id=$4::text",&[runtime,&a[0],&a[1],&a[2]]).unwrap();
+    assert_eq!(
+        engine.current(&worker, &selected),
+        Err(authority_error(AuthorityFailure::ScopeDenied))
+    );
+}
+
+fn sql_registration_crash_child() {
+    use celetixo_engine::engine::{Engine, Permission};
+    use celetixo_engine::ids::PrincipalId;
+    let selected = Scope {
+        organization: OrganizationId::new(
+            std::env::var("CELETIXO_PG_NATIVE_ORGANIZATION").unwrap(),
+        )
+        .unwrap(),
+        workspace: WorkspaceId::new("workspace").unwrap(),
+        repository: RepositoryId::new("repository").unwrap(),
+    };
+    let ready = PathBuf::from(std::env::var_os("CELETIXO_PG_NATIVE_READY").unwrap());
+    assert!(ready.is_absolute());
+    let checkpoint = Arc::new(move |stage| {
+        if stage == AuthorityStage::BeforeCommit {
+            std::fs::write(&ready, b"uncommitted authority rows staged").unwrap();
+            // Parent kills this process at a named boundary. A hard upper bound
+            // also lets the database idle-transaction deadline fail closed.
+            std::thread::sleep(std::time::Duration::from_secs(20));
+            panic!("parent did not terminate the crash child");
+        }
+        Ok(())
+    });
+    let (engine, administrator) =
+        Engine::with_authority_backend(Arc::new(sql_authority().with_checkpoint(checkpoint)));
+    let _ = engine;
+    administrator
+        .grant(
+            PrincipalId::new("crash-worker").unwrap(),
+            selected,
+            Permission::ALL.into_iter().collect(),
+        )
+        .unwrap();
+    panic!("crash child cannot acknowledge publication");
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn sql_registration_process_death_rolls_back_before_a_fresh_independent_writer() {
+    use celetixo_engine::engine::authority::AuthorityFailure;
+    use celetixo_engine::engine::{Engine, Permission};
+    use celetixo_engine::ids::PrincipalId;
+    if std::env::var_os("CELETIXO_PG_NATIVE_CHILD").is_some() {
+        sql_registration_crash_child();
+        return;
+    }
+    let mut owner = owner();
+    let selected = scope("native-process-death");
+    authorize_registration(&mut owner, &selected);
+    let dir = tempfile::tempdir().unwrap();
+    let ready = dir.path().join("ready");
+    let mut child = Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "sql_registration_process_death_rolls_back_before_a_fresh_independent_writer",
+            "--ignored",
+        ])
+        .env("CELETIXO_PG_NATIVE_CHILD", "1")
+        .env(
+            "CELETIXO_PG_NATIVE_ORGANIZATION",
+            selected.organization.as_str(),
+        )
+        .env("CELETIXO_PG_NATIVE_READY", &ready)
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .unwrap();
+    let start = std::time::Instant::now();
+    while !ready.exists() {
+        if let Some(status) = child.try_wait().unwrap() {
+            panic!("crash child exited before publication boundary: {status}");
+        }
+        if start.elapsed() > std::time::Duration::from_secs(5) {
+            child.kill().unwrap();
+            child.wait().unwrap();
+            panic!("crash child failed to reach publication boundary");
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    child.kill().unwrap();
+    assert!(!child.wait().unwrap().success());
+    let backend = Arc::new(sql_authority());
+    assert_eq!(
+        backend.inspect_registration(&selected),
+        Err(AuthorityFailure::ScopeDenied)
+    );
+    let (_, administrator) = Engine::with_authority_backend(backend.clone());
+    administrator
+        .grant(
+            PrincipalId::new("replacement").unwrap(),
+            selected.clone(),
+            Permission::ALL.into_iter().collect(),
+        )
+        .unwrap();
+    let view = backend.inspect_registration(&selected).unwrap();
+    assert_eq!(view.state_generation, 1);
+    assert_eq!(view.records.session_counter, 1);
+    assert_eq!(view.records.grants.len(), 1);
+    assert_eq!(
+        view.records
+            .grants
+            .values()
+            .next()
+            .unwrap()
+            .principal
+            .as_str(),
+        "replacement"
+    );
+    // The new operation also proves the dead process released its schema and
+    // repository locks. Neither a partial grant nor publication survived.
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn sql_registration_waiting_reader_observes_coherent_state_or_explicit_contention() {
+    use celetixo_engine::engine::authority::AuthorityFailure;
+    use celetixo_engine::engine::{Engine, Permission};
+    use celetixo_engine::ids::PrincipalId;
+    let mut owner = owner();
+    let selected = scope("native-coherent-reader");
+    authorize_registration(&mut owner, &selected);
+    let backend = Arc::new(sql_authority());
+    let (_, administrator) = Engine::with_authority_backend(backend.clone());
+    administrator
+        .grant(
+            PrincipalId::new("first").unwrap(),
+            selected.clone(),
+            Permission::ALL.into_iter().collect(),
+        )
+        .unwrap();
+    let release = Arc::new(Barrier::new(2));
+    let gate = release.clone();
+    let (send, receive) = std::sync::mpsc::sync_channel(1);
+    let writer = Arc::new(sql_authority().with_checkpoint(Arc::new(move |stage| {
+        if stage == AuthorityStage::BeforeCommit {
+            send.send(()).unwrap();
+            gate.wait();
+        }
+        Ok(())
+    })));
+    let scope_copy = selected.clone();
+    let child = std::thread::spawn(move || {
+        let (_, administrator) = Engine::with_authority_backend(writer);
+        administrator.grant(
+            PrincipalId::new("second").unwrap(),
+            scope_copy,
+            Permission::ALL.into_iter().collect(),
+        )
+    });
+    receive
+        .recv_timeout(std::time::Duration::from_secs(3))
+        .unwrap();
+    let observer = backend.clone();
+    let scope_copy = selected.clone();
+    let reader = std::thread::spawn(move || observer.inspect_registration(&scope_copy));
+    let start = std::time::Instant::now();
+    let config = fixture();
+    let login = &config.roles["runtime_other"].user;
+    loop {
+        let waiting:bool=owner.query_one("SELECT EXISTS(SELECT 1 FROM pg_locks l JOIN pg_stat_activity a ON a.pid=l.pid WHERE NOT l.granted AND a.usename=$1)",&[login]).unwrap().get(0);
+        if waiting {
+            break;
+        }
+        if start.elapsed() > std::time::Duration::from_secs(1) {
+            release.wait();
+            child.join().unwrap().unwrap();
+            panic!("reader did not wait on repository publication");
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    release.wait();
+    child.join().unwrap().unwrap();
+    match reader.join().unwrap() {
+        Ok(view) => {
+            assert_eq!(view.state_generation, 2);
+            assert_eq!(view.records.grants.len(), 2);
+        }
+        Err(error) => assert_eq!(error, AuthorityFailure::Contention),
+    }
+    let view = backend.inspect_registration(&selected).unwrap();
+    assert_eq!(view.state_generation, 2);
+    assert_eq!(view.records.grants.len(), 2);
+}
+
+#[test]
+#[ignore = "requires the reviewed authenticated PostgreSQL fixture"]
+fn sql_registration_checks_the_new_schema_after_waiting_for_a_migrator() {
+    use celetixo_engine::engine::authority::AuthorityFailure;
+    use celetixo_engine::engine::{Engine, Permission};
+    use celetixo_engine::ids::PrincipalId;
+    let database = format!("celetixo_native_schema_fence_{}", std::process::id());
+    let config = fixture();
+    let migration = &config.roles["migration"].user;
+    assert!(
+        migration
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_')
+    );
+    let mut cluster = connection("admin", None).connect().unwrap();
+    cluster
+        .batch_execute(&format!("CREATE DATABASE {database} OWNER {migration}"))
+        .unwrap();
+    let mut owner = connection("migration", Some(&database)).connect().unwrap();
+    migrate(&mut owner).unwrap();
+    let selected = scope("native-schema-fence");
+    authorize_registration(&mut owner, &selected);
+    let backend = Arc::new(
+        PostgresAuthority::connect(
+            connection("runtime", Some(&database)),
+            connection("runtime_other", Some(&database)),
+        )
+        .unwrap(),
+    );
+    let (_, administrator) = Engine::with_authority_backend(backend.clone());
+    administrator
+        .grant(
+            PrincipalId::new("worker").unwrap(),
+            selected.clone(),
+            Permission::ALL.into_iter().collect(),
+        )
+        .unwrap();
+    let before = backend.inspect_registration(&selected).unwrap();
+    let mut migration = owner.transaction().unwrap();
+    migration
+        .query_one(
+            "SELECT pg_advisory_xact_lock($1)",
+            &[&0x43454c455449584fi64],
+        )
+        .unwrap();
+    let observer = backend.clone();
+    let scope_copy = selected.clone();
+    let reader = std::thread::spawn(move || observer.inspect_registration(&scope_copy));
+    let mut monitor = connection("migration", Some(&database)).connect().unwrap();
+    let start = std::time::Instant::now();
+    loop {
+        let waiting:bool=monitor.query_one("SELECT EXISTS(SELECT 1 FROM pg_locks l JOIN pg_stat_activity a ON a.pid=l.pid WHERE l.locktype='advisory' AND NOT l.granted AND a.datname=$1)",&[&database]).unwrap().get(0);
+        if waiting {
+            break;
+        }
+        assert!(start.elapsed() < std::time::Duration::from_secs(1));
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    // Simulate a newer writer's schema ledger in a dedicated disposable database.
+    // Retain it afterward; never repair a published database's checksum history.
+    migration.execute("INSERT INTO celetixo.schema_migrations (version,migration_name,migration_sha256) VALUES (4,'unsupported-future-fixture',$1::bytea)",&[&&[0u8;32][..]]).unwrap();
+    migration.commit().unwrap();
+    assert_eq!(
+        reader.join().unwrap(),
+        Err(AuthorityFailure::SchemaMismatch)
+    );
+    assert_eq!(
+        administrator
+            .grant(
+                PrincipalId::new("blocked").unwrap(),
+                selected.clone(),
+                BTreeSet::new()
+            )
+            .err(),
+        Some(authority_error(AuthorityFailure::SchemaMismatch))
+    );
+    let generation:String=owner.query_one("SELECT state_generation::text FROM celetixo.repositories WHERE organization_id=$1::text",&[&selected.organization.as_str()]).unwrap().get(0);
+    assert_eq!(generation, before.state_generation.to_string());
 }

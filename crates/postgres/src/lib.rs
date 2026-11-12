@@ -1,12 +1,13 @@
-//! PostgreSQL schema and immutable engineering-record persistence foundation.
-//!
-//! This crate does not yet implement an authoritative transaction backend. No
-//! local fallback, capability deserialization, source publication or SQL-based
-//! semantic admission is exposed by this foundation.
+//! PostgreSQL catalogs and the bounded native registration authority adapter.
+//! Transaction lifecycle publication and source recovery remain unsupported.
+//! Rust evaluates domain transitions; there is no memory fallback or SQL
+//! semantic decision service.
+mod authority;
 mod migrations;
 mod semantic;
 mod snapshots;
 
+pub use authority::{AuthorityStage, PostgresAuthority, RegistrationView};
 pub use migrations::{
     MigrationReceipt, MigrationStage, migrate, migrate_with_checkpoint, validate_schema,
 };

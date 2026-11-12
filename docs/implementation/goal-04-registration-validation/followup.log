@@ -1,0 +1,5 @@
+Every changed/new public input admitted; exact reviewed bytes/path mutations rejected.
+COMMAND ["python3", ".github/scripts/check-workflows.py", "--offline"]
+actionlint 1.7.12, archive SHA-256 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+Workflow semantics and invalid-context regression passed
+COMMAND ["git", "diff", "--check"]

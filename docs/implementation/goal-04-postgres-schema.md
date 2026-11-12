@@ -4,6 +4,10 @@
 **Canonical SQL:** immutable [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql), additive [0002_lifecycle_reconstruction.sql](../../crates/postgres/migrations/0002_lifecycle_reconstruction.sql) and [0003_native_lifecycle.sql](../../crates/postgres/migrations/0003_native_lifecycle.sql)
 **Authority:** [Goal 04](goal-04.md), ADR-0003 and ADR-0004
 
+Subsequent integration: [04.1g](goal-04-registration-authority.md) now routes scoped
+native grants and repository/model registration through this schema. The complete
+transaction lifecycle/commit writer described below remains pending.
+
 This schema separates mutable operational authority, immutable engineering values and
 append-only outcomes. It provides database constraints and row isolation. Rust still
 owns admission, semantic conflict analysis, state transitions, invariant evaluation,

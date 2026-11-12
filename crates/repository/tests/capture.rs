@@ -1185,6 +1185,14 @@ fn public_source_literals_and_reviewed_grant_assignments_require_exact_admission
             "language_service.rs",
             include_bytes!("../src/lsp.rs").as_slice(),
         ),
+        (
+            "postgres_authority.rs",
+            include_bytes!("../../postgres/src/authority.rs").as_slice(),
+        ),
+        (
+            "postgres_authority_tests.rs",
+            include_bytes!("../../postgres/tests/foundation.rs").as_slice(),
+        ),
     ] {
         fs::write(dir.path().join(path), bytes).unwrap();
     }

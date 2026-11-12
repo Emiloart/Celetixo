@@ -4,7 +4,7 @@
 **Version:** 1.0  
 **Reviewed against:** `main` at `456bb375108532d9503c82fa8f6e7acfdfedddaf` (2026-11-11)  
 **Authority:** ADR-0001 through ADR-0004; this document consolidates security requirements and does not weaken or replace them.  
-**Implementation evidence:** Goal 01–03 acceptance and validation records, linked per control.
+**Implementation evidence:** Goal 01–03 acceptance and validation records, linked per control; subsequent [Goal 04.1g registration integration](../implementation/goal-04-registration-authority.md) adds bounded SQL registration/grant authority, without durable transaction/source recovery or production-isolation claims.
 
 This model distinguishes required security properties from controls demonstrated by the current implementation. A requirement is not implemented merely because it appears here or in an ADR. Validation status is limited to the exact scope and environment in the linked evidence.
 

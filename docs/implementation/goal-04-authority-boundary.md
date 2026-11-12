@@ -1,8 +1,10 @@
 # Goal 04 checked authority reconstruction and backend boundary
 
 **Status:** 04.1f prerequisite. The native reference lifecycle has checked
-reconstruction and a trusted backend interface. No PostgreSQL implementation of
-that interface exists. Milestone 04.1 and Goal 04 remain incomplete.
+reconstruction and a trusted backend interface. At this milestone there was no
+PostgreSQL implementation. The subsequent [04.1g integration](goal-04-registration-authority.md)
+now supplies bounded SQL registration/grant authority; complete lifecycle recovery,
+milestone 04.1 and Goal 04 remain incomplete.
 
 **Authority:** [Goal 04](goal-04.md), ADR-0003, the
 [identity contract](../spec/engineering-identity.md),
