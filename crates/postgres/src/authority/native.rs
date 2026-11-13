@@ -33,6 +33,7 @@ pub(super) fn final_commit_gate(
     if now < after.clock_ms {
         return Err(AuthorityFailure::ClockRegression);
     }
+    final_lease_gate(now, before, after)?;
     let first = before.repository.as_ref().map_or(0, |r| r.history.len());
     if let Some(repo) = &after.repository {
         for change in repo.history.iter().skip(first) {
@@ -58,6 +59,96 @@ pub(super) fn final_commit_gate(
                 .ok_or(AuthorityFailure::Integrity)?;
             if !committed.lease_history.iter().skip(original.lease_history.len()).any(|event|event.fence==lease.fence && event.authorization_grant==lease.owner_grant && matches!(&event.kind,LeaseEventKind::Released { reason } if reason=="committed")) {
                 return Err(AuthorityFailure::Integrity);
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Historical results carry no current authority. Newly published acquisitions
+/// and renewals require a live grant and unexpired authority at this final
+/// database-time check. In particular, a delayed renewal cannot revive a lease
+/// that expired while the callback was running.
+pub(super) fn final_lease_gate(
+    now: u64,
+    before: &NativeRecords,
+    after: &NativeRecords,
+) -> SqlResult<()> {
+    for (id, transaction) in &after.transactions {
+        let previous_transaction = before.transactions.get(id);
+        // Check actual native attempt effects for both entry points. Exact
+        // journal replay changes neither a patch nor an attempt and grants no
+        // renewed authority. Evidence admission does not require an owner lease.
+        let native_effect = transaction.attempts.last().filter(|attempt| {
+            attempt.patch.is_some()
+                && previous_transaction
+                    .and_then(|tx| tx.attempts.iter().find(|old| old.number == attempt.number))
+                    .is_none_or(|old| {
+                        old.patch != attempt.patch || old.candidate != attempt.candidate
+                    })
+        });
+        let permission = if native_effect.is_some() {
+            Some(
+                if previous_transaction
+                    .is_some_and(|old| old.attempts.len() < transaction.attempts.len())
+                {
+                    Permission::Analyze
+                } else {
+                    Permission::Execute
+                },
+            )
+        } else if transaction.state == TransactionState::Executing
+            && previous_transaction.is_none_or(|t| t.state != TransactionState::Executing)
+        {
+            Some(Permission::Execute)
+        } else {
+            None
+        };
+        if let Some(permission) = permission {
+            let lease = transaction
+                .lease
+                .as_ref()
+                .ok_or(AuthorityFailure::Integrity)?;
+            let grant = after
+                .grants
+                .get(&lease.owner_grant)
+                .ok_or(AuthorityFailure::Integrity)?;
+            if lease.expires_at <= now
+                || !grant.active
+                || grant.principal != transaction.owner
+                || !grant.permissions.contains(&permission)
+            {
+                return Err(AuthorityFailure::Contention);
+            }
+        }
+        let previous = before
+            .transactions
+            .get(id)
+            .map_or(0, |t| t.lease_history.len());
+        for event in transaction.lease_history.iter().skip(previous) {
+            let expiry = match event.kind {
+                LeaseEventKind::Acquired { expires_at } => expires_at,
+                LeaseEventKind::Renewed {
+                    previous_expiry,
+                    expires_at,
+                } => {
+                    if previous_expiry <= now {
+                        return Err(AuthorityFailure::Contention);
+                    }
+                    expires_at
+                }
+                _ => continue,
+            };
+            let grant = after
+                .grants
+                .get(&event.authorization_grant)
+                .ok_or(AuthorityFailure::Integrity)?;
+            if expiry <= now
+                || !grant.active
+                || grant.principal != transaction.owner
+                || !grant.permissions.contains(&Permission::Reserve)
+            {
+                return Err(AuthorityFailure::Contention);
             }
         }
     }
@@ -316,7 +407,7 @@ pub(super) fn optional_number(row: &Row, column: usize) -> SqlResult<Option<u64>
 fn transaction_id(row: &Row, column: usize) -> SqlResult<TransactionId> {
     TransactionId::new(row.get::<_, String>(column)).map_err(|_| AuthorityFailure::Integrity)
 }
-fn state_name(state: TransactionState) -> &'static str {
+pub(super) fn state_name(state: TransactionState) -> &'static str {
     match state {
         TransactionState::Proposed => "Proposed",
         TransactionState::Analyzed => "Analyzed",

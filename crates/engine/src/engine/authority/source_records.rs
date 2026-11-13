@@ -146,6 +146,7 @@ impl AuthorityState {
         let scope = records.base.scope.clone();
         let mut db = records::restore_base(records.base.clone(), Some(&records))?;
         install_source_graph(&mut db, &records)?;
+        mutation::restore(&mut db, &scope, records.base.mutations.clone())?;
         let state = Self { scope, db };
         // Import never changes lazy expiry/reconciliation states. Exact readback
         // also ensures that no unsupported or orphaned supplied fact was dropped.
@@ -1363,6 +1364,15 @@ impl SourceBudget {
             c.text(id)?;
         }
         self.value(c)?;
+        self.entries(r.mutations.len())?;
+        for (key, record) in &r.mutations {
+            let size = mutation::recovery_size(&r.scope, key, record)?;
+            self.value(Cost {
+                entries: size.entries,
+                bytes: size.bytes,
+                max_field: size.bytes,
+            })?;
+        }
         self.entries(r.grants.len())?;
         for g in r.grants.values() {
             let mut c = Cost::default();
@@ -1531,46 +1541,7 @@ fn plan_cost(p: &VerificationPlan) -> Result<Cost, RestoreError> {
     Ok(c)
 }
 fn policy_cost(p: &SourceExecutionPolicy) -> Result<Cost, RestoreError> {
-    let mut c = crate::persistence::source_plan_context_cost(p, &PlanRequirements::default())?;
-    let i = p.input();
-    for id in [
-        i.scope.organization.as_str(),
-        i.scope.workspace.as_str(),
-        i.scope.repository.as_str(),
-    ] {
-        c.text(id)?;
-    }
-    c.count(i.paths.len())?;
-    for (path, rule) in &i.paths {
-        c.text(path)?;
-        c.count(rule.required_writes.len())?;
-        for id in &rule.required_writes {
-            c.text(id.as_str())?;
-        }
-        c.count(rule.allowed_operations.len())?;
-        c.bytes(256)?;
-    }
-    c.count(i.credentials.reviewed_public_inputs.len())?;
-    for (path, digests) in &i.credentials.reviewed_public_inputs {
-        c.text(path)?;
-        c.count(digests.len())?;
-        for _ in digests {
-            c.digest()?;
-        }
-    }
-    c.count(i.approved_backends.len())?;
-    for _ in &i.approved_backends {
-        c.digest()?;
-    }
-    c.count(i.approved_credential_references.len())?;
-    for s in &i.approved_credential_references {
-        c.text(s)?;
-    }
-    c.count(i.capture.gaps.len())?;
-    for s in &i.capture.gaps {
-        c.text(s)?;
-    }
-    Ok(c)
+    crate::persistence::source_policy_cost(p)
 }
 fn artifact_cost(
     c: &mut Cost,
@@ -1681,6 +1652,16 @@ fn error_cost(c: &mut Cost, e: &EngineError) -> Result<(), RestoreError> {
     }
     c.bytes(1024)
 }
+pub(crate) fn error_recovery_size(
+    error: &EngineError,
+) -> Result<crate::persistence::RecoverySize, RestoreError> {
+    let mut cost = Cost::default();
+    error_cost(&mut cost, error)?;
+    Ok(crate::persistence::RecoverySize {
+        entries: cost.entries,
+        bytes: cost.bytes,
+    })
+}
 fn plan_error_cost(
     c: &mut Cost,
     e: &crate::source_execution::SourcePlanError,
@@ -1779,6 +1760,16 @@ fn check_database_budget(
     limits: NativeRecordLimits,
 ) -> Result<(), RestoreError> {
     let mut b = SourceBudget::new(limits)?;
+    for ((stored, key), record) in &db.mutations {
+        if stored == scope {
+            let size = mutation::recovery_size(scope, key, record)?;
+            b.value(Cost {
+                entries: size.entries,
+                bytes: size.bytes,
+                max_field: size.bytes,
+            })?;
+        }
+    }
     for g in db.grants.values().filter(|g| g.scope == *scope) {
         let mut c = Cost::default();
         c.text(g.principal.as_str())?;
@@ -2035,6 +2026,7 @@ fn ensure_scope(db: &Database, scope: &Scope) -> Result<(), RestoreError> {
         || db.evidence.keys().any(|(s, _)| s != scope)
         || db.evidence_sources.keys().any(|(s, _)| s != scope)
         || db.operations.keys().any(|(s, _)| s != scope)
+        || db.mutations.keys().any(|(s, _)| s != scope)
         || db.reservation_fences.keys().any(|s| s != scope)
         || db.source_executors.values().any(|g| g.scope != *scope)
         || db.source_cleanup_grants.values().any(|g| g.scope != *scope)

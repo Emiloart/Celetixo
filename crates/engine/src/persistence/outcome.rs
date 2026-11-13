@@ -104,40 +104,7 @@ impl CommitOutcomeRecord {
                 return Err(RestoreError::BindingMismatch);
             }
             Err(EngineError::Conflict(reports)) => {
-                if reports.is_empty() {
-                    return Err(RestoreError::InvalidDomainValue);
-                }
-                for report in reports {
-                    if report.contender != transaction
-                        || report.contender_attempt != attempt
-                        || report.committed_revision.0 == 0
-                        || report.conflicts.is_empty()
-                    {
-                        return Err(RestoreError::BindingMismatch);
-                    }
-                    validate_provenance(&report.contender_provenance)?;
-                    validate_provenance(&report.committed_provenance)?;
-                    // Full dependency validation also needs each transaction's
-                    // invariant definitions; provenance alone cannot recover
-                    // the distinction between declared scopes and invariant
-                    // reads. The scoped state loader must check those facts.
-                    if report.conflicts.windows(2).any(|pair| pair[0] >= pair[1]) {
-                        return Err(RestoreError::InvalidDomainValue);
-                    }
-                    for conflict in &report.conflicts {
-                        match (conflict.kind, &conflict.predicate) {
-                            (
-                                ConflictKind::PredicateWrite | ConflictKind::WritePredicate,
-                                Some(predicate),
-                            ) if predicate.matches(&conflict.element) => {}
-                            (ConflictKind::PredicateWrite | ConflictKind::WritePredicate, _) => {
-                                return Err(RestoreError::InvalidDomainValue);
-                            }
-                            (_, None) => {}
-                            (_, Some(_)) => return Err(RestoreError::InvalidDomainValue),
-                        }
-                    }
-                }
+                validate_conflict_reports(&transaction, attempt, reports)?;
             }
             _ => {}
         }
@@ -268,7 +235,7 @@ fn decode_provenance(r: &mut Reader<'_>) -> Result<AccessProvenance, RestoreErro
     validate_provenance(&p)?;
     Ok(p)
 }
-fn encode_state(c: &mut Canonical, state: TransactionState) {
+pub(super) fn encode_state(c: &mut Canonical, state: TransactionState) {
     c.str(match state {
         TransactionState::Proposed => "Proposed",
         TransactionState::Analyzed => "Analyzed",
@@ -280,16 +247,16 @@ fn encode_state(c: &mut Canonical, state: TransactionState) {
         TransactionState::Aborted => "Aborted",
     });
 }
-fn decode_state(r: &mut Reader<'_>) -> Result<TransactionState, RestoreError> {
-    Ok(match r.text()?.as_str() {
-        "Proposed" => TransactionState::Proposed,
-        "Analyzed" => TransactionState::Analyzed,
-        "Reserved" => TransactionState::Reserved,
-        "Executing" => TransactionState::Executing,
-        "Validating" => TransactionState::Validating,
-        "RevalidationRequired" => TransactionState::RevalidationRequired,
-        "Committed" => TransactionState::Committed,
-        "Aborted" => TransactionState::Aborted,
+pub(super) fn decode_state(r: &mut Reader<'_>) -> Result<TransactionState, RestoreError> {
+    Ok(match r.field()? {
+        b"Proposed" => TransactionState::Proposed,
+        b"Analyzed" => TransactionState::Analyzed,
+        b"Reserved" => TransactionState::Reserved,
+        b"Executing" => TransactionState::Executing,
+        b"Validating" => TransactionState::Validating,
+        b"RevalidationRequired" => TransactionState::RevalidationRequired,
+        b"Committed" => TransactionState::Committed,
+        b"Aborted" => TransactionState::Aborted,
         _ => return Err(RestoreError::Encoding),
     })
 }
@@ -311,6 +278,46 @@ fn check(r: &mut Reader<'_>) -> Result<CheckId, RestoreError> {
 fn transaction(r: &mut Reader<'_>) -> Result<TransactionId, RestoreError> {
     TransactionId::new(r.text()?).map_err(|_| RestoreError::Identity)
 }
+pub(crate) fn validate_conflict_reports(
+    transaction: &TransactionId,
+    attempt: u64,
+    reports: &[ConflictReport],
+) -> Result<(), RestoreError> {
+    if reports.is_empty() {
+        return Err(RestoreError::InvalidDomainValue);
+    }
+    for report in reports {
+        if &report.contender != transaction
+            || report.contender_attempt != attempt
+            || report.committed_revision.0 == 0
+            || report.conflicts.is_empty()
+        {
+            return Err(RestoreError::BindingMismatch);
+        }
+        validate_provenance(&report.contender_provenance)?;
+        validate_provenance(&report.committed_provenance)?;
+        // Full dependency validation also needs each transaction's
+        // invariant definitions; provenance alone cannot recover
+        // the distinction between declared scopes and invariant
+        // reads. The scoped state loader must check those facts.
+        if report.conflicts.windows(2).any(|pair| pair[0] >= pair[1]) {
+            return Err(RestoreError::InvalidDomainValue);
+        }
+        for conflict in &report.conflicts {
+            match (conflict.kind, &conflict.predicate) {
+                (ConflictKind::PredicateWrite | ConflictKind::WritePredicate, Some(predicate))
+                    if predicate.matches(&conflict.element) => {}
+                (ConflictKind::PredicateWrite | ConflictKind::WritePredicate, _) => {
+                    return Err(RestoreError::InvalidDomainValue);
+                }
+                (_, None) => {}
+                (_, Some(_)) => return Err(RestoreError::InvalidDomainValue),
+            }
+        }
+    }
+    Ok(())
+}
+
 pub(super) fn encode_error(c: &mut Canonical, error: &EngineError) -> Result<(), RestoreError> {
     use EngineError::*;
     match error {

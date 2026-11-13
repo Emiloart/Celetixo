@@ -36,6 +36,11 @@ storage registration at final database time. Historical replay does not grant
 another launch. Cancellation, timeout and revalidation reconciliation can remove
 authority after expiry. A stored expired or revoked definition remains history.
 
+The subsequent [original mutation journal](goal-04-mutation-recovery.md) adds
+exact transaction/repository/administrative replies and schema v5. The validation
+below remains evidence for its original source lifecycle scope; use the newer
+record for mutation recovery results and remaining executor-transition work.
+
 ## Immutable graph and additive migration
 
 Migration `0004_source_lifecycle.sql` leaves published migrations 0001–0003

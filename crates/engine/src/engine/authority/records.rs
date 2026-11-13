@@ -14,6 +14,7 @@ pub struct BaseRecords {
     pub transactions: BTreeMap<TransactionId, TransactionRecord>,
     pub evidence: BTreeMap<EvidenceId, AdmittedEvidenceRecord>,
     pub operations: BTreeMap<IdempotencyKey, CommitOperationRecord>,
+    pub mutations: BTreeMap<MutationKey, MutationRecord>,
 }
 /// Compatibility name for the strictly native entry point. Base rows alone
 /// never select a source profile; source reconstruction needs SourceRecords.
@@ -30,6 +31,7 @@ impl BaseRecords {
             transactions: BTreeMap::new(),
             evidence: BTreeMap::new(),
             operations: BTreeMap::new(),
+            mutations: BTreeMap::new(),
         }
     }
 }
@@ -123,6 +125,11 @@ pub(super) fn export_base(
     records.clock_ms = db.now;
     records.session_counter = db.next_token;
     records.reservation_fence = db.reservation_fences.get(scope).copied().unwrap_or(0);
+    for ((stored, key), record) in &db.mutations {
+        if stored == scope {
+            records.mutations.insert(key.clone(), record.clone());
+        }
+    }
     for (id, grant) in &db.grants {
         if grant.scope == *scope {
             records.grants.insert(
@@ -292,6 +299,9 @@ pub(super) fn restore_base(
             || records.reservation_fence != 0
         {
             return Err(RestoreError::BindingMismatch);
+        }
+        if source.is_none() {
+            mutation::restore(&mut db, &scope, records.mutations)?;
         }
         return Ok(db);
     };
@@ -720,6 +730,9 @@ pub(super) fn restore_base(
     }
     if accepted != committed {
         return Err(RestoreError::BindingMismatch);
+    }
+    if source.is_none() {
+        mutation::restore(&mut db, &scope, records.mutations)?;
     }
     Ok(db)
 }

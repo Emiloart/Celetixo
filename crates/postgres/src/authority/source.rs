@@ -126,6 +126,30 @@ fn final_gate(
     if now < after.base.clock_ms {
         return Err(AuthorityFailure::ClockRegression);
     }
+    native::final_lease_gate(now, &before.base, &after.base)?;
+    // Newly issued execution/cleanup grants must still be live at publication.
+    // Historical allocation replies introduce no grant and cannot renew expiry.
+    for (id, grant) in &after.executors {
+        if !before.executors.contains_key(id) && grant.expires_at_ms <= now {
+            return Err(AuthorityFailure::Contention);
+        }
+    }
+    for (id, grant) in &after.cleanup {
+        if !before.cleanup.contains_key(id) && grant.expires_at_ms <= now {
+            return Err(AuthorityFailure::Contention);
+        }
+    }
+    if before.policy_head != after.policy_head
+        && let Some(head) = after.policy_head
+    {
+        let policy = after
+            .policies
+            .get(&head)
+            .ok_or(AuthorityFailure::Integrity)?;
+        if policy.input().expires_at_ms <= now {
+            return Err(AuthorityFailure::Contention);
+        }
+    }
     for (id, a) in &after.attempts {
         let old = before.attempts.get(id);
         // Exact historical replay is not a new side effect. Any new admission,

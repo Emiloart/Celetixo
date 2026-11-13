@@ -286,6 +286,7 @@ fn load_base(
         load_operations(tx, loader, &mut records)?;
     }
     load_terminal_and_outbox(tx, loader, &records)?;
+    super::super::mutations::load(tx, loader, &mut records)?;
     if counters.is_empty()
         && (!records.grants.is_empty()
             || records.repository.is_some()

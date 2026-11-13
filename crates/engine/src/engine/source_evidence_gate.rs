@@ -109,25 +109,10 @@ impl Administrator {
         // Preflight runtime availability before the independently durable
         // metadata boundary; no runtime lock is held across SQL publication.
         drop(self.store.artifact_readers()?);
-        let token = self.store.administration(&scope).update(|db| {
-            let token = db
-                .next_source_artifact_store
-                .checked_add(1)
-                .ok_or(EngineError::CounterExhausted)?;
-            let provenance = artifact_store_provenance(&scope, token, retention, adapter.as_ref());
-            db.source_artifact_stores.insert(
-                token,
-                RegisteredSourceArtifactStore {
-                    scope: scope.clone(),
-                    adapter,
-                    retention,
-                    provenance,
-                    active: true,
-                },
-            );
-            db.next_source_artifact_store = token;
-            Ok(token)
-        })?;
+        let token = self
+            .store
+            .administration(&scope)
+            .update(|db| administration::register_store(db, &scope, adapter, retention))?;
         // A metadata publication followed by failed local attachment is retained
         // for explicit reconciliation. It is not a cross-resource transaction.
         self.resolve_existing_source_artifact_store(&scope, token, |_, _| Ok(reader))
@@ -140,17 +125,9 @@ impl Administrator {
         if !Arc::ptr_eq(&self.store.identity, &store.store) {
             return Err(EngineError::Unauthorized);
         }
-        self.store.administration(&store.scope).update(|db| {
-            let registered = db
-                .source_artifact_stores
-                .get_mut(&store.token)
-                .ok_or(EngineError::Unauthorized)?;
-            if registered.scope != store.scope {
-                return Err(EngineError::Unauthorized);
-            }
-            registered.active = false;
-            Ok(())
-        })?;
+        self.store
+            .administration(&store.scope)
+            .update(|db| administration::revoke_store(db, &store.scope, store.token))?;
         let reader = self
             .store
             .artifact_readers()?

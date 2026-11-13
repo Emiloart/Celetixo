@@ -108,36 +108,7 @@ impl NativeIntentRecord {
     }
     pub fn canonical_bytes(&self) -> Vec<u8> {
         let mut c = context(&self.scope, self.snapshot);
-        c.str(&self.intent.objective);
-        self.intent.accesses.encode(&mut c);
-        c.u64(self.intent.invariants.len() as u64);
-        for invariant in &self.intent.invariants {
-            c.str(invariant.id.as_str());
-            match &invariant.condition {
-                Condition::Equals { element, value } => {
-                    c.u64(0);
-                    c.str(element.as_str());
-                    c.i64(*value);
-                }
-                Condition::Present(element) => {
-                    c.u64(1);
-                    c.str(element.as_str());
-                }
-                Condition::SumAtMost { elements, maximum } => {
-                    c.u64(2);
-                    encode_elements(&mut c, elements);
-                    c.i64(*maximum);
-                }
-            }
-        }
-        c.u64(self.intent.required_checks.len() as u64);
-        for check in &self.intent.required_checks {
-            encode_check(&mut c, check);
-        }
-        c.u64(self.intent.depends_on.len() as u64);
-        for id in &self.intent.depends_on {
-            c.str(id.as_str());
-        }
+        encode_intent(&mut c, &self.intent);
         c.into_bytes()
     }
 }
@@ -150,19 +121,61 @@ pub fn restore_native_intent(
 ) -> Result<NativeIntentRecord, RestoreError> {
     let mut r = Reader::new(expected, NativeIntentRecord::FORMAT, bytes, limits)?;
     validate_context(&mut r, snapshot)?;
+    let intent = decode_intent(&mut r)?;
+    r.end()?;
+    let record = NativeIntentRecord::new(snapshot, intent)?;
+    canonical(record.digest(), expected, &record.canonical_bytes(), bytes)?;
+    Ok(record)
+}
+
+/// Structural intent encoding shared with original, possibly rejected inputs.
+/// Admission remains the Engine's responsibility; decoding never installs intent.
+pub(crate) fn encode_intent(c: &mut Canonical, intent: &TransactionIntent) {
+    c.str(&intent.objective);
+    intent.accesses.encode(c);
+    c.u64(intent.invariants.len() as u64);
+    for invariant in &intent.invariants {
+        c.str(invariant.id.as_str());
+        match &invariant.condition {
+            Condition::Equals { element, value } => {
+                c.u64(0);
+                c.str(element.as_str());
+                c.i64(*value);
+            }
+            Condition::Present(element) => {
+                c.u64(1);
+                c.str(element.as_str());
+            }
+            Condition::SumAtMost { elements, maximum } => {
+                c.u64(2);
+                encode_elements(c, elements);
+                c.i64(*maximum);
+            }
+        }
+    }
+    c.u64(intent.required_checks.len() as u64);
+    for check in &intent.required_checks {
+        encode_check(c, check);
+    }
+    c.u64(intent.depends_on.len() as u64);
+    for id in &intent.depends_on {
+        c.str(id.as_str());
+    }
+}
+pub(super) fn decode_intent(r: &mut Reader<'_>) -> Result<TransactionIntent, RestoreError> {
     let objective = r.text()?;
-    let accesses = decode_access(&mut r)?;
+    let accesses = decode_access(r)?;
     let mut invariants = Vec::new();
     for _ in 0..r.count()? {
         let id = InvariantId::new(r.text()?).map_err(|_| RestoreError::Identity)?;
         let condition = match r.number()? {
             0 => Condition::Equals {
-                element: element(&mut r)?,
+                element: element(r)?,
                 value: r.signed()?,
             },
-            1 => Condition::Present(element(&mut r)?),
+            1 => Condition::Present(element(r)?),
             2 => Condition::SumAtMost {
-                elements: decode_elements(&mut r)?,
+                elements: decode_elements(r)?,
                 maximum: r.signed()?,
             },
             _ => return Err(RestoreError::Encoding),
@@ -171,7 +184,7 @@ pub fn restore_native_intent(
     }
     let mut required_checks = Vec::new();
     for _ in 0..r.count()? {
-        required_checks.push(decode_check(&mut r)?);
+        required_checks.push(decode_check(r)?);
     }
     let mut depends_on = BTreeSet::new();
     for _ in 0..r.count()? {
@@ -179,19 +192,13 @@ pub fn restore_native_intent(
             return Err(RestoreError::NonCanonical);
         }
     }
-    r.end()?;
-    let record = NativeIntentRecord::new(
-        snapshot,
-        TransactionIntent {
-            objective,
-            accesses,
-            invariants,
-            required_checks,
-            depends_on,
-        },
-    )?;
-    canonical(record.digest(), expected, &record.canonical_bytes(), bytes)?;
-    Ok(record)
+    Ok(TransactionIntent {
+        objective,
+        accesses,
+        invariants,
+        required_checks,
+        depends_on,
+    })
 }
 
 pub fn restore_access_set(
@@ -213,24 +220,31 @@ pub fn restore_reference_patch(
     limits: DomainDecodeLimits,
 ) -> Result<Patch, RestoreError> {
     let mut r = Reader::new(expected.0, "celetixo/patch/v1", bytes, limits)?;
-    if SnapshotId(r.digest()?) != snapshot.id() {
+    let patch = decode_patch(&mut r)?;
+    r.end()?;
+    if patch.base_snapshot() != snapshot.id() {
         return Err(RestoreError::BindingMismatch);
     }
+    canonical(patch.id().0, expected.0, &patch.canonical_bytes(), bytes)?;
+    Ok(patch)
+}
+
+/// Structural parsing preserves a rejected patch's own original base selector.
+/// The admitted constructor above still binds it to the supplied exact snapshot.
+pub(super) fn decode_patch(r: &mut Reader<'_>) -> Result<Patch, RestoreError> {
+    let base = SnapshotId(r.digest()?);
     let mut changes = BTreeMap::new();
     for _ in 0..r.count()? {
-        let id = element(&mut r)?;
+        let id = element(r)?;
         let change = Change {
-            expected: optional_value(&mut r)?,
-            value: optional_value(&mut r)?,
+            expected: optional_value(r)?,
+            value: optional_value(r)?,
         };
         if changes.insert(id, change).is_some() {
             return Err(RestoreError::NonCanonical);
         }
     }
-    r.end()?;
-    let patch = Patch::new(snapshot.id(), changes)?;
-    canonical(patch.id().0, expected.0, &patch.canonical_bytes(), bytes)?;
-    Ok(patch)
+    Patch::new(base, changes).map_err(Into::into)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -353,43 +367,7 @@ impl VerificationEvidenceRecord {
     }
     pub fn canonical_bytes(&self) -> Vec<u8> {
         let mut c = context(&self.scope, self.snapshot);
-        let bindings = self.evidence.bindings();
-        c.str(bindings.transaction.as_str());
-        c.u64(bindings.attempt);
-        c.digest(bindings.candidate_snapshot.0);
-        c.digest(bindings.patch.0);
-        c.digest(bindings.analysis);
-        encode_check(&mut c, self.evidence.check());
-        match self.evidence.result() {
-            CheckResult::Passed { exit_code } => {
-                c.u64(0);
-                c.i64(i64::from(*exit_code));
-            }
-            CheckResult::Failed { exit_code } => {
-                c.u64(1);
-                c.i64(i64::from(*exit_code));
-            }
-            CheckResult::Incomplete { reason } => {
-                c.u64(2);
-                c.str(reason);
-            }
-        }
-        let p = self.evidence.provenance();
-        c.str(p.verifier.as_str());
-        c.str(&p.runner);
-        c.str(&p.run_id);
-        c.u64(p.started_at);
-        c.u64(p.finished_at);
-        c.u64(self.evidence.diagnostics().len() as u64);
-        for diagnostic in self.evidence.diagnostics() {
-            c.str(diagnostic);
-        }
-        c.u64(self.evidence.artifacts().len() as u64);
-        for artifact in self.evidence.artifacts() {
-            c.str(artifact.name());
-            c.str(artifact.media_type());
-            c.bytes(artifact.content());
-        }
+        encode_verification_fields(&mut c, &self.evidence);
         c.into_bytes()
     }
 }
@@ -403,21 +381,75 @@ pub fn restore_verification_record(
 ) -> Result<VerificationEvidenceRecord, RestoreError> {
     let mut r = Reader::new(expected, VerificationEvidenceRecord::FORMAT, bytes, limits)?;
     validate_context(&mut r, snapshot)?;
+    let evidence = decode_verification_fields(&mut r, snapshot.id())?;
+    r.end()?;
+    if evidence.id() != expected_evidence {
+        return Err(RestoreError::BindingMismatch);
+    }
+    let record = VerificationEvidenceRecord::new(snapshot, evidence)?;
+    canonical(record.digest(), expected, &record.canonical_bytes(), bytes)?;
+    Ok(record)
+}
+
+/// Original evidence fields, without lookup or admission against current state.
+pub(crate) fn encode_verification_fields(c: &mut Canonical, evidence: &VerificationEvidence) {
+    let bindings = evidence.bindings();
+    c.str(bindings.transaction.as_str());
+    c.u64(bindings.attempt);
+    c.digest(bindings.candidate_snapshot.0);
+    c.digest(bindings.patch.0);
+    c.digest(bindings.analysis);
+    encode_check(c, evidence.check());
+    match evidence.result() {
+        CheckResult::Passed { exit_code } => {
+            c.u64(0);
+            c.i64(i64::from(*exit_code));
+        }
+        CheckResult::Failed { exit_code } => {
+            c.u64(1);
+            c.i64(i64::from(*exit_code));
+        }
+        CheckResult::Incomplete { reason } => {
+            c.u64(2);
+            c.str(reason);
+        }
+    }
+    let p = evidence.provenance();
+    c.str(p.verifier.as_str());
+    c.str(&p.runner);
+    c.str(&p.run_id);
+    c.u64(p.started_at);
+    c.u64(p.finished_at);
+    c.u64(evidence.diagnostics().len() as u64);
+    for diagnostic in evidence.diagnostics() {
+        c.str(diagnostic);
+    }
+    c.u64(evidence.artifacts().len() as u64);
+    for artifact in evidence.artifacts() {
+        c.str(artifact.name());
+        c.str(artifact.media_type());
+        c.bytes(artifact.content());
+    }
+}
+pub(super) fn decode_verification_fields(
+    r: &mut Reader<'_>,
+    base_snapshot: SnapshotId,
+) -> Result<VerificationEvidence, RestoreError> {
     let bindings = EvidenceBindings {
         transaction: TransactionId::new(r.text()?).map_err(|_| RestoreError::Identity)?,
         attempt: r.number()?,
-        base_snapshot: snapshot.id(),
+        base_snapshot,
         candidate_snapshot: SnapshotId(r.digest()?),
         patch: PatchId(r.digest()?),
         analysis: r.digest()?,
     };
-    let check = decode_check(&mut r)?;
+    let check = decode_check(r)?;
     let result = match r.number()? {
         0 => CheckResult::Passed {
-            exit_code: signed_exit(&mut r)?,
+            exit_code: signed_exit(r)?,
         },
         1 => CheckResult::Failed {
-            exit_code: signed_exit(&mut r)?,
+            exit_code: signed_exit(r)?,
         },
         2 => CheckResult::Incomplete { reason: r.text()? },
         _ => return Err(RestoreError::Encoding),
@@ -437,15 +469,8 @@ pub fn restore_verification_record(
     for _ in 0..r.count()? {
         artifacts.push(Artifact::new(r.text()?, r.text()?, r.field()?.to_vec())?);
     }
-    r.end()?;
-    let evidence =
-        VerificationEvidence::new(bindings, check, result, provenance, diagnostics, artifacts)?;
-    if evidence.id() != expected_evidence {
-        return Err(RestoreError::BindingMismatch);
-    }
-    let record = VerificationEvidenceRecord::new(snapshot, evidence)?;
-    canonical(record.digest(), expected, &record.canonical_bytes(), bytes)?;
-    Ok(record)
+    VerificationEvidence::new(bindings, check, result, provenance, diagnostics, artifacts)
+        .map_err(Into::into)
 }
 
 fn context(scope: &Scope, snapshot: SnapshotId) -> Canonical {
@@ -521,7 +546,7 @@ fn encode_check(c: &mut Canonical, check: &CheckSpec) {
     c.digest(check.environment());
     c.digest(check.configuration());
 }
-fn decode_check(r: &mut Reader<'_>) -> Result<CheckSpec, RestoreError> {
+pub(super) fn decode_check(r: &mut Reader<'_>) -> Result<CheckSpec, RestoreError> {
     let id = CheckId::new(r.text()?).map_err(|_| RestoreError::Identity)?;
     let mut command = Vec::new();
     for _ in 0..r.count()? {

@@ -110,7 +110,7 @@ pub struct EvidenceBindings {
     pub analysis: Digest,
 }
 impl EvidenceBindings {
-    fn encode(&self, out: &mut Canonical) {
+    pub(crate) fn encode(&self, out: &mut Canonical) {
         out.str(self.transaction.as_str());
         out.u64(self.attempt);
         out.digest(self.base_snapshot.0);

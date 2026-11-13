@@ -118,7 +118,8 @@ pub(in crate::authority) fn publish(
     before: &NativeRecords,
     after: &NativeRecords,
 ) -> SqlResult<()> {
-    publish_base(tx, generation, before, after, LoadProfile::Native)
+    publish_base(tx, generation, before, after, LoadProfile::Native)?;
+    super::super::mutations::publish(tx, before, after)
 }
 pub(in crate::authority) fn publish_source_base(
     tx: &mut Transaction<'_>,
@@ -137,7 +138,8 @@ pub(in crate::authority) fn publish_source_base(
     {
         return Err(AuthorityFailure::Protocol);
     }
-    publish_base(tx, generation, before, after, LoadProfile::Source)
+    publish_base(tx, generation, before, after, LoadProfile::Source)?;
+    Ok(())
 }
 fn publish_base(
     tx: &mut Transaction<'_>,

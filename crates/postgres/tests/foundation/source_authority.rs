@@ -30,6 +30,19 @@ pub(super) fn prepare_database_restart()
     h.engine
         .record_source_evidence(&h.executor, &admission, &h.storage, evidence, envelope)
         .unwrap();
+    let reply = h
+        .engine
+        .mutate(
+            &h.owner,
+            h.scope(),
+            IdempotencyKey::new("restart-renew").unwrap(),
+            MutationRequest::Renew {
+                transaction: admission.binding().transaction.clone(),
+                ttl_ms: 300_000,
+            },
+        )
+        .unwrap();
+    assert!(reply.outcome.is_ok());
     (
         h.scope().clone(),
         h.authority.inspect_source(h.scope()).unwrap(),
@@ -50,6 +63,15 @@ pub(super) fn assert_database_restart(
     let owner = admin
         .authenticate_existing_session(scope, 1, |_, _| Ok(()))
         .unwrap();
+    assert_eq!(before.records.base.mutations.len(), 1);
+    for (key, record) in &before.records.base.mutations {
+        let actual = engine
+            .mutate(&owner, scope, key.key.clone(), record.request.clone())
+            .unwrap();
+        assert!(actual.replayed);
+        assert_eq!(actual.outcome, record.outcome);
+        assert_eq!(actual.recorded_at_ms, record.recorded_at_ms);
+    }
     let executor = admin
         .authenticate_existing_source_executor(scope, 1, |_, _| Ok(()))
         .unwrap();

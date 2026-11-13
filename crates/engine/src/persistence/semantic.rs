@@ -52,22 +52,26 @@ impl EngineeringModelRecord {
         c.str(self.scope.workspace.as_str());
         c.str(self.scope.repository.as_str());
         c.digest(self.snapshot.0);
-        c.u64(self.model.generation);
-        c.str(&self.model.analyzer);
-        c.str(&self.model.version);
-        c.digest(self.model.configuration);
-        encode_dependencies(&mut c, &self.model.dependencies);
-        match &self.model.completeness {
-            Completeness::Complete => c.u64(0),
-            Completeness::Incomplete { reasons } => {
-                c.u64(1);
-                c.u64(reasons.len() as u64);
-                for reason in reasons {
-                    c.str(reason);
-                }
+        encode_model_fields(&mut c, &self.model);
+        c.into_bytes()
+    }
+}
+
+pub(crate) fn encode_model_fields(c: &mut Canonical, model: &EngineeringModel) {
+    c.u64(model.generation);
+    c.str(&model.analyzer);
+    c.str(&model.version);
+    c.digest(model.configuration);
+    encode_dependencies(c, &model.dependencies);
+    match &model.completeness {
+        Completeness::Complete => c.u64(0),
+        Completeness::Incomplete { reasons } => {
+            c.u64(1);
+            c.u64(reasons.len() as u64);
+            for reason in reasons {
+                c.str(reason);
             }
         }
-        c.into_bytes()
     }
 }
 
@@ -84,10 +88,29 @@ pub fn restore_model_record(
     if generation != expected_generation {
         return Err(RestoreError::BindingMismatch);
     }
+    let model = decode_model_after_generation(&mut r, generation)?;
+    r.end()?;
+    let record = EngineeringModelRecord::new(snapshot, model)?;
+    if record.digest() != expected || record.canonical_bytes() != bytes {
+        return Err(RestoreError::NonCanonical);
+    }
+    Ok(record)
+}
+
+/// Structural fields may describe an invalid original request. The admitted
+/// model-record constructor above still enforces all model invariants.
+pub(super) fn decode_model_fields(r: &mut Reader<'_>) -> Result<EngineeringModel, RestoreError> {
+    let generation = r.number()?;
+    decode_model_after_generation(r, generation)
+}
+fn decode_model_after_generation(
+    r: &mut Reader<'_>,
+    generation: u64,
+) -> Result<EngineeringModel, RestoreError> {
     let analyzer = r.text()?;
     let version = r.text()?;
     let configuration = r.digest()?;
-    let dependencies = decode_dependencies(&mut r)?;
+    let dependencies = decode_dependencies(r)?;
     let completeness = match r.number()? {
         0 => Completeness::Complete,
         1 => {
@@ -99,22 +122,14 @@ pub fn restore_model_record(
         }
         _ => return Err(RestoreError::Encoding),
     };
-    r.end()?;
-    let record = EngineeringModelRecord::new(
-        snapshot,
-        EngineeringModel {
-            generation,
-            analyzer,
-            version,
-            configuration,
-            dependencies,
-            completeness,
-        },
-    )?;
-    if record.digest() != expected || record.canonical_bytes() != bytes {
-        return Err(RestoreError::NonCanonical);
-    }
-    Ok(record)
+    Ok(EngineeringModel {
+        generation,
+        analyzer,
+        version,
+        configuration,
+        dependencies,
+        completeness,
+    })
 }
 
 /// Decode the unchanged repository-analysis v1 digest preimage. The caller must
@@ -132,13 +147,42 @@ pub fn restore_repository_analysis(
     if index_generation != expected_index {
         return Err(RestoreError::BindingMismatch);
     }
+    let analysis = decode_analysis_fields(
+        &mut r,
+        snapshot.scope().clone(),
+        snapshot.id(),
+        index_generation,
+    )?;
+    r.end()?;
+    analysis
+        .validate(snapshot, expected_index)
+        .map_err(|_| RestoreError::BindingMismatch)?;
+    if analysis.digest() != expected || analysis.canonical_bytes() != bytes {
+        return Err(RestoreError::NonCanonical);
+    }
+    Ok(analysis)
+}
+pub(super) fn decode_original_analysis(
+    r: &mut Reader<'_>,
+) -> Result<RepositoryAnalysis, RestoreError> {
+    let scope = r.scope()?;
+    let snapshot = SnapshotId(r.digest()?);
+    let index_generation = r.digest()?;
+    decode_analysis_fields(r, scope, snapshot, index_generation)
+}
+fn decode_analysis_fields(
+    r: &mut Reader<'_>,
+    scope: Scope,
+    snapshot: SnapshotId,
+    index_generation: Digest,
+) -> Result<RepositoryAnalysis, RestoreError> {
     let analyzer_version = r.text()?;
     let configuration = r.digest()?;
-    let elements = decode_elements(&mut r)?;
-    let dependencies = decode_dependencies(&mut r)?;
+    let elements = decode_elements(r)?;
+    let dependencies = decode_dependencies(r)?;
     let mut checks = BTreeMap::new();
     for _ in 0..r.count()? {
-        let element = element(&mut r)?;
+        let element = element(r)?;
         let mut required = BTreeSet::new();
         for _ in 0..r.count()? {
             let check = CheckId::new(r.text()?).map_err(|_| RestoreError::Identity)?;
@@ -167,8 +211,8 @@ pub fn restore_repository_analysis(
             return Err(RestoreError::NonCanonical);
         }
     }
-    r.end()?;
-    let analysis = RepositoryAnalysis::new(
+    let analysis = RepositoryAnalysis::from_original_binding(
+        scope,
         snapshot,
         RepositoryAnalysisInput {
             index_generation,
@@ -180,9 +224,6 @@ pub fn restore_repository_analysis(
             gaps,
         },
     )?;
-    if analysis.digest() != expected || analysis.canonical_bytes() != bytes {
-        return Err(RestoreError::NonCanonical);
-    }
     Ok(analysis)
 }
 

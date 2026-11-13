@@ -44,11 +44,12 @@ No success response precedes confirmed COMMIT. COMMIT errors return
 `CommitIndeterminate`; a fresh authenticated embedding resubmits the **original
 prepared request**, whose retained body/result determines recovery. Re-preparing
 from a later attempt or evidence selection is not equivalent. Legacy unprepared
-`commit` is rejected in this backend profile. Administrative grant/bootstrap/model
-and other non-commit mutation requests still lack exact durable request identities. Lifecycle state and lease history are
-recoverable, but their diagnostic views do not automatically resolve a lost
-mutation response. Do not blindly retry reservation/renewal/cancellation or grant
-creation. Mutation-specific request/reconciliation contracts remain required.
+`commit` is rejected in this backend profile. At this original milestone, non-commit mutation requests lacked exact durable
+identities; diagnostic views alone could not resolve a lost response. The later
+[original mutation journal](goal-04-mutation-recovery.md) adds typed keyed
+transaction, repository and administrative outcomes. Callers must use that
+explicit keyed API to reconcile its retained original request; blindly retrying
+an ordinary unkeyed operation remains insufficient.
 
 ## Normalized recovery coverage
 

@@ -22,6 +22,7 @@ pub(in crate::authority) fn publish(
     definitions::catalogs(tx, before, after)?;
     definitions::heads(tx, next, before, after)?;
     execution::publish(tx, before, after)?;
+    super::super::mutations::publish(tx, &before.base, &after.base)?;
     publish_envelope(tx, context, login, generation, next, &after.base, true)?;
     one(execute(
         tx,

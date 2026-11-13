@@ -134,10 +134,40 @@ impl ScopedAccess<'_> {
         };
         self.durable(mode, operation)
     }
+    /// A journal and its domain transition publish together. An outer failure
+    /// aborts evaluation; an intentional domain rejection belongs in the value.
+    pub(super) fn atomic<R>(
+        &self,
+        operation: impl FnOnce(&mut Database) -> Result<R, authority::AuthorityFailure>,
+    ) -> Result<R, EngineError> {
+        if self.store.authority.is_none() {
+            let mut current = self.store.lock()?;
+            let mut staged = current.clone();
+            let outcome = operation(&mut staged)?;
+            *current = staged;
+            return Ok(outcome);
+        }
+        let mode = if matches!(
+            self.actor,
+            authority::AuthorityActor::EmbeddingAdministrator
+        ) {
+            authority::AuthorityMode::AdministrativeUpdate
+        } else {
+            authority::AuthorityMode::Update
+        };
+        self.durable_transaction(mode, operation)
+    }
     fn durable<R>(
         &self,
         mode: authority::AuthorityMode,
         operation: impl FnOnce(&mut Database) -> Result<R, EngineError>,
+    ) -> Result<R, EngineError> {
+        self.durable_transaction(mode, |db| Ok(operation(db)))?
+    }
+    fn durable_transaction<R>(
+        &self,
+        mode: authority::AuthorityMode,
+        operation: impl FnOnce(&mut Database) -> Result<R, authority::AuthorityFailure>,
     ) -> Result<R, EngineError> {
         use authority::{AuthorityAccess, AuthorityFailure};
         let backend = self
@@ -159,14 +189,14 @@ impl ScopedAccess<'_> {
                 return Err(AuthorityFailure::Integrity);
             }
             let operation = operation.take().ok_or(AuthorityFailure::Protocol)?;
-            outcome = Some(operation(&mut state.db));
+            outcome = Some(operation(&mut state.db)?);
             Ok(())
         })?;
         if let Some(failure) = violation {
             return Err(EngineError::Authority(failure));
         }
         // Storage Ok without one evaluation cannot acknowledge any domain result.
-        outcome.ok_or(EngineError::Authority(AuthorityFailure::Protocol))?
+        outcome.ok_or(EngineError::Authority(AuthorityFailure::Protocol))
     }
 }
 
@@ -174,6 +204,33 @@ impl ScopedAccess<'_> {
 mod tests {
     use super::*;
     use std::panic::{AssertUnwindSafe, catch_unwind};
+
+    #[test]
+    fn journal_stage_failure_cannot_publish_a_partial_domain_transition() {
+        let (store, _) = InMemoryStore::new();
+        let scope = Scope {
+            organization: OrganizationId::new("organization").unwrap(),
+            workspace: WorkspaceId::new("workspace").unwrap(),
+            repository: RepositoryId::new("repository").unwrap(),
+        };
+        let result = store.administration(&scope).atomic::<()>(|db| {
+            db.now = 77;
+            Err(authority::AuthorityFailure::Integrity)
+        });
+        assert_eq!(
+            result,
+            Err(EngineError::Authority(
+                authority::AuthorityFailure::Integrity
+            ))
+        );
+        assert_eq!(store.read(|db| Ok(db.now)), Ok(0));
+        let result = store.administration(&scope).atomic(|db| {
+            db.now = 88;
+            Ok(Err::<(), EngineError>(EngineError::InvalidTime))
+        });
+        assert_eq!(result, Ok(Err(EngineError::InvalidTime)));
+        assert_eq!(store.read(|db| Ok(db.now)), Ok(88));
+    }
 
     #[test]
     fn rejected_outcomes_can_retain_state_and_publication_precedes_acknowledgement() {

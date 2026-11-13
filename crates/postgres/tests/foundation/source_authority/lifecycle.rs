@@ -8,6 +8,9 @@ use celetixo_engine::source_patch::*;
 use celetixo_engine::transaction::{TransactionIntent, TransactionState};
 use celetixo_execution::artifacts::{ArtifactStoreLimits, LocalSourceArtifactStore};
 
+#[path = "mutations.rs"]
+mod mutations;
+
 fn element() -> ElementId {
     ElementId::new("symbol:main").unwrap()
 }

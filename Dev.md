@@ -228,10 +228,20 @@ The [04.1i source codecs](docs/implementation/goal-04-source-codecs.md) preserve
 existing policy/plan/admission/evidence identities with explicit checked
 dependencies and aggregate decoding budgets. Use them when implementing complete
 historical source records. The [complete source graph and fresh runtime boundary](docs/implementation/goal-04-source-recovery.md)
-now support checked source recovery through a normalized memory adapter. Integrate
-that whole graph with SQL; preserve the distinction between restored records and
-fresh authenticated capabilities. Metadata alone cannot establish current object
+originally established checked source recovery through a normalized memory
+adapter. The [source SQL lifecycle](docs/implementation/goal-04-source-sql-authority.md)
+now integrates the whole graph through receipts. Preserve the distinction between
+restored records and fresh authenticated capabilities. Metadata alone cannot establish current object
 availability or enable source publication.
+
+The [original mutation journal](docs/implementation/goal-04-mutation-recovery.md)
+provides typed keyed transaction, repository/model/policy and administrative
+outcomes. Reconcile a lost response with the same scoped actor, key and full
+original request; a diagnostic state view or a new request body is insufficient.
+Historical replies do not renew authority. Keyed executor transitions, source
+prepared commit/revalidation and remaining Goal 04 acceptance gates stay pending.
+Published schema migrations, including v5 after publication, are immutable;
+subsequent executor support requires an additive migration.
 
 ### Phase 7 — Real worker integration and evaluation
 

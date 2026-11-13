@@ -61,6 +61,15 @@ impl RepositoryAnalysis {
         snapshot: &Snapshot,
         input: RepositoryAnalysisInput,
     ) -> Result<Self, RepositoryAnalysisError> {
+        Self::from_original_binding(snapshot.scope().clone(), snapshot.id(), input)
+    }
+    /// Checked structural value construction. This binds the value to its own
+    /// immutable original selectors; installation still requires validate().
+    pub(crate) fn from_original_binding(
+        scope: Scope,
+        snapshot: SnapshotId,
+        input: RepositoryAnalysisInput,
+    ) -> Result<Self, RepositoryAnalysisError> {
         if input.analyzer_version.trim().is_empty()
             || input
                 .gaps
@@ -80,8 +89,8 @@ impl RepositoryAnalysis {
             }
         }
         let mut record = Self {
-            scope: snapshot.scope().clone(),
-            snapshot: snapshot.id(),
+            scope,
+            snapshot,
             index_generation: input.index_generation,
             analyzer_version: input.analyzer_version,
             configuration: input.configuration,

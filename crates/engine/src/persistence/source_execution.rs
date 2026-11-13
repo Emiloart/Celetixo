@@ -238,9 +238,24 @@ pub fn restore_source_check_definition(
     limits: DomainDecodeLimits,
 ) -> Result<SourceCheckDefinitionRecord, RestoreError> {
     let mut r = Reader::new(expected, SourceCheckDefinitionRecord::FORMAT, bytes, limits)?;
+    let definition = decode_definition_fields(&mut r, check, bytes.len())?;
+    exact(
+        definition.digest(),
+        expected,
+        &definition.canonical_bytes(),
+        bytes,
+    )?;
+    Ok(SourceCheckDefinitionRecord::new(definition))
+}
+
+pub(super) fn decode_definition_fields(
+    r: &mut Reader<'_>,
+    check: &CheckSpec,
+    encoded_bytes: usize,
+) -> Result<SourceCheckDefinition, RestoreError> {
     let mut cost = Cost::default();
     cost.spec(check)?;
-    charge(&mut r, bytes.len(), cost)?;
+    charge(r, encoded_bytes, cost)?;
     if r.digest()? != check.digest() {
         return Err(RestoreError::BindingMismatch);
     }
@@ -249,8 +264,8 @@ pub fn restore_source_check_definition(
         1 => WorkingDirectory::Relative(r.text()?),
         _ => return Err(RestoreError::Encoding),
     };
-    let inputs = digest_map(&mut r)?;
-    let outputs = strings(&mut r)?;
+    let inputs = digest_map(r)?;
+    let outputs = strings(r)?;
     let toolchain = ToolchainIdentity {
         executable: r.text()?,
         executable_digest: r.digest()?,
@@ -259,7 +274,7 @@ pub fn restore_source_check_definition(
         platform: r.text()?,
         architecture: r.text()?,
     };
-    let dependency_inputs = digest_map(&mut r)?;
+    let dependency_inputs = digest_map(r)?;
     let mut environment = BTreeMap::new();
     for _ in 0..r.count()? {
         let name = r.text()?;
@@ -270,14 +285,14 @@ pub fn restore_source_check_definition(
         };
         unique(environment.insert(name, value).is_none())?;
     }
-    let tier = tier(&mut r)?;
+    let tier = tier(r)?;
     let backend = BackendIdentity {
         name: r.text()?,
         version: r.text()?,
         image: r.digest()?,
         profile: r.digest()?,
     };
-    let resources = resources(&mut r)?;
+    let resources = resources(r)?;
     let network = match r.number()? {
         0 => NetworkPolicy::DenyAll,
         1 => {
@@ -295,17 +310,17 @@ pub fn restore_source_check_definition(
         }
         _ => return Err(RestoreError::Encoding),
     };
-    let credential_references = strings(&mut r)?;
+    let credential_references = strings(r)?;
     let mut expected_artifacts = Vec::new();
     for _ in 0..r.count()? {
         expected_artifacts.push(ArtifactRequirement {
             name: r.text()?,
             media_type: r.text()?,
             max_bytes: r.number()?,
-            required: boolean(&mut r)?,
+            required: boolean(r)?,
         });
     }
-    let depends_on = checks(&mut r)?;
+    let depends_on = checks(r)?;
     let failure_policy = match r.number()? {
         0 => FailurePolicy::FailAttempt,
         1 => FailurePolicy::RecordOptionalFailure,
@@ -329,13 +344,7 @@ pub fn restore_source_check_definition(
         depends_on,
         failure_policy,
     })?;
-    exact(
-        definition.digest(),
-        expected,
-        &definition.canonical_bytes(),
-        bytes,
-    )?;
-    Ok(SourceCheckDefinitionRecord::new(definition))
+    Ok(definition)
 }
 
 /// Restore references through the supplied checked catalog. A policy payload
@@ -352,6 +361,28 @@ pub fn restore_source_execution_policy(
     limits: DomainDecodeLimits,
 ) -> Result<SourceExecutionPolicyRecord, RestoreError> {
     let mut r = Reader::new(expected, SourceExecutionPolicyRecord::FORMAT, bytes, limits)?;
+    let policy = decode_policy_fields(
+        &mut r,
+        Some((snapshot, analysis)),
+        expected_generation,
+        patch_policy,
+        definitions,
+        bytes.len(),
+    )?;
+    exact(policy.digest(), expected, &policy.canonical_bytes(), bytes)?;
+    SourceExecutionPolicyRecord::new(snapshot, analysis, policy)
+}
+
+/// Structural original policy parsing; contextual admission stays in the public
+/// record decoder and the Engine installation callback.
+pub(super) fn decode_policy_fields(
+    r: &mut Reader<'_>,
+    context: Option<(&Snapshot, &RepositoryAnalysis)>,
+    expected_generation: u64,
+    patch_policy: &PatchPolicy,
+    definitions: &BTreeMap<Digest, SourceCheckDefinition>,
+    encoded_bytes: usize,
+) -> Result<SourceExecutionPolicy, RestoreError> {
     let version = r.version()?;
     let generation = r.number()?;
     if generation != expected_generation {
@@ -361,10 +392,11 @@ pub fn restore_source_execution_policy(
     let snapshot_id = SnapshotId(r.digest()?);
     let analysis_artifact = r.digest()?;
     let index_generation = r.digest()?;
-    if &scope != snapshot.scope()
-        || snapshot_id != snapshot.id()
-        || analysis_artifact != analysis.digest()
-        || index_generation != analysis.index_generation()
+    if let Some((snapshot, analysis)) = context
+        && (&scope != snapshot.scope()
+            || snapshot_id != snapshot.id()
+            || analysis_artifact != analysis.digest()
+            || index_generation != analysis.index_generation())
     {
         return Err(RestoreError::BindingMismatch);
     }
@@ -379,14 +411,14 @@ pub fn restore_source_execution_policy(
             2 => SourceCaptureConsistency::LiveObserved,
             _ => return Err(RestoreError::Encoding),
         },
-        gaps: strings(&mut r)?,
+        gaps: strings(r)?,
     };
     if r.digest()? != patch_policy.digest() {
         return Err(RestoreError::BindingMismatch);
     }
     // The nested credential format shares the parent's entry budget, including
     // every digest in a reviewed path's set. It is already part of parent bytes.
-    let credentials = credentials(&mut r)?;
+    let credentials = credentials(r)?;
     let mut paths = BTreeMap::new();
     for _ in 0..r.count()? {
         let path = r.text()?;
@@ -402,7 +434,7 @@ pub fn restore_source_execution_policy(
             };
             unique(allowed_operations.insert(operation))?;
         }
-        let required_writes = elements(&mut r)?;
+        let required_writes = elements(r)?;
         let expected_base = match r.number()? {
             0 => None,
             1 => Some(Preimage {
@@ -437,7 +469,7 @@ pub fn restore_source_execution_policy(
         )?;
     }
     let mut configured_checks = Vec::new();
-    let mut total_bytes = bytes.len();
+    let mut total_bytes = encoded_bytes;
     for _ in 0..r.count()? {
         let id = r.digest()?;
         let definition = definitions.get(&id).ok_or(RestoreError::BindingMismatch)?;
@@ -445,30 +477,30 @@ pub fn restore_source_execution_policy(
             return Err(RestoreError::BindingMismatch);
         }
         let cost = definition_cost(definition)?;
-        total_bytes = charge(&mut r, total_bytes, cost)?;
+        total_bytes = charge(r, total_bytes, cost)?;
         configured_checks.push(definition.clone());
     }
     let mut invariants = Vec::new();
     for _ in 0..r.count()? {
         invariants.push(SourceInvariantSpec {
             id: InvariantId::new(r.text()?).map_err(|_| RestoreError::Identity)?,
-            scope: elements(&mut r)?,
+            scope: elements(r)?,
             contract_digest: r.digest()?,
-            required_checks: checks(&mut r)?,
+            required_checks: checks(r)?,
         });
     }
-    let always_required = checks(&mut r)?;
+    let always_required = checks(r)?;
     let mut approved_tiers = BTreeSet::new();
     for _ in 0..r.count()? {
-        unique(approved_tiers.insert(tier(&mut r)?))?;
+        unique(approved_tiers.insert(tier(r)?))?;
     }
     let mut approved_backends = BTreeSet::new();
     for _ in 0..r.count()? {
         unique(approved_backends.insert(r.digest()?))?;
     }
-    let resource_ceiling = resources(&mut r)?;
-    let network_allowed = boolean(&mut r)?;
-    let approved_credential_references = strings(&mut r)?;
+    let resource_ceiling = resources(r)?;
+    let network_allowed = boolean(r)?;
+    let approved_credential_references = strings(r)?;
     let expires_at_ms = r.number()?;
     let retention_policy = r.digest()?;
     r.end()?;
@@ -494,8 +526,7 @@ pub fn restore_source_execution_policy(
         expires_at_ms,
         retention_policy,
     })?;
-    exact(policy.digest(), expected, &policy.canonical_bytes(), bytes)?;
-    SourceExecutionPolicyRecord::new(snapshot, analysis, policy)
+    Ok(policy)
 }
 
 /// Re-resolve against caller-supplied Engine-derived requirements. Decoding a
@@ -643,7 +674,7 @@ fn digest_map(r: &mut Reader<'_>) -> Result<BTreeMap<String, Digest>, RestoreErr
     }
     Ok(values)
 }
-fn tier(r: &mut Reader<'_>) -> Result<ExecutionTier, RestoreError> {
+pub(super) fn tier(r: &mut Reader<'_>) -> Result<ExecutionTier, RestoreError> {
     match r.number()? {
         0 => Ok(ExecutionTier::T0),
         1 => Ok(ExecutionTier::T1),
@@ -652,7 +683,7 @@ fn tier(r: &mut Reader<'_>) -> Result<ExecutionTier, RestoreError> {
         _ => Err(RestoreError::Encoding),
     }
 }
-fn resources(r: &mut Reader<'_>) -> Result<ResourceLimits, RestoreError> {
+pub(super) fn resources(r: &mut Reader<'_>) -> Result<ResourceLimits, RestoreError> {
     Ok(ResourceLimits {
         wall_time_ms: r.number()?,
         cpu_time_ms: r.number()?,
@@ -893,6 +924,49 @@ pub(crate) fn plan_context_cost(
     c.count(requirements.optional_checks.len())?;
     for id in &requirements.optional_checks {
         c.text(id.as_str())?;
+    }
+    Ok(c)
+}
+
+pub(crate) fn policy_cost(p: &SourceExecutionPolicy) -> Result<Cost, RestoreError> {
+    let mut c = plan_context_cost(p, &PlanRequirements::default())?;
+    let i = p.input();
+    for id in [
+        i.scope.organization.as_str(),
+        i.scope.workspace.as_str(),
+        i.scope.repository.as_str(),
+    ] {
+        c.text(id)?;
+    }
+    c.count(i.paths.len())?;
+    for (path, rule) in &i.paths {
+        c.text(path)?;
+        c.count(rule.required_writes.len())?;
+        for id in &rule.required_writes {
+            c.text(id.as_str())?;
+        }
+        c.count(rule.allowed_operations.len())?;
+        c.bytes(256)?;
+    }
+    c.count(i.credentials.reviewed_public_inputs.len())?;
+    for (path, digests) in &i.credentials.reviewed_public_inputs {
+        c.text(path)?;
+        c.count(digests.len())?;
+        for _ in digests {
+            c.digest()?;
+        }
+    }
+    c.count(i.approved_backends.len())?;
+    for _ in &i.approved_backends {
+        c.digest()?;
+    }
+    c.count(i.approved_credential_references.len())?;
+    for s in &i.approved_credential_references {
+        c.text(s)?;
+    }
+    c.count(i.capture.gaps.len())?;
+    for s in &i.capture.gaps {
+        c.text(s)?;
     }
     Ok(c)
 }

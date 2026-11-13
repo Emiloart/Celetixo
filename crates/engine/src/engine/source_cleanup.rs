@@ -38,24 +38,13 @@ impl Administrator {
         expires_at_ms: u64,
     ) -> Result<SourceCleanupCapability, EngineError> {
         self.store.administration(&scope).update(|db| {
-            if expires_at_ms <= db.now {
-                return Err(EngineError::InvalidTime);
-            }
-            let token = db
-                .next_source_cleanup
-                .checked_add(1)
-                .ok_or(EngineError::CounterExhausted)?;
-            db.next_source_cleanup = token;
-            db.source_cleanup_grants.insert(
-                token,
-                SourceCleanupGrant {
-                    principal: principal.clone(),
-                    scope: scope.clone(),
-                    backend,
-                    expires_at_ms,
-                    active: true,
-                },
-            );
+            let token = administration::grant_cleanup(
+                db,
+                principal.clone(),
+                &scope,
+                backend,
+                expires_at_ms,
+            )?;
             Ok(SourceCleanupCapability {
                 store: self.store.identity.clone(),
                 token,
@@ -74,18 +63,13 @@ impl Administrator {
             return Err(EngineError::Unauthorized);
         }
         self.store.administration(&capability.scope).update(|db| {
-            let grant = db
-                .source_cleanup_grants
-                .get_mut(&capability.token)
-                .ok_or(EngineError::Unauthorized)?;
-            if grant.scope != capability.scope
-                || grant.principal != capability.principal
-                || grant.backend != capability.backend
-            {
-                return Err(EngineError::Unauthorized);
-            }
-            grant.active = false;
-            Ok(())
+            administration::revoke_cleanup(
+                db,
+                &capability.scope,
+                capability.token,
+                &capability.principal,
+                capability.backend,
+            )
         })
     }
 }

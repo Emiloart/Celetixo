@@ -1,5 +1,5 @@
-//! Scoped PostgreSQL authority for the checked native Engine lifecycle.
-//! Captured-source and policy state fail closed until their full recovery exists.
+//! Scoped PostgreSQL authority for checked native and captured-source lifecycles.
+//! Profile selection is explicit; source revision commits remain unsupported.
 use crate::{StoreError, UnixConnection, migrations, semantic, snapshots, validate_schema};
 use celetixo_engine::engine::Permission;
 use celetixo_engine::engine::authority::{
@@ -16,6 +16,7 @@ const FILTER: &str =
     "organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text";
 const PROFILE: &str = "native-reference-v1";
 
+mod mutations;
 mod native;
 mod source;
 
@@ -52,8 +53,9 @@ struct Login {
 
 /// Trusted embedding adapter with independently authenticated, restricted runtime
 /// and administration logins. Fresh connections hold no authoritative cache.
-/// Native transactions, attempts, leases, reference evidence and exact prepared
-/// commit outcomes survive reopen. Captured-source and policy state fail closed.
+/// Native transactions, attempts, leases, reference evidence and prepared commit
+/// outcomes survive reopen. The source profile also restores analysis, policy,
+/// execution and evidence receipts; runtime capabilities require fresh resolution.
 pub struct PostgresAuthority {
     runtime: Login,
     administration: Login,
@@ -350,6 +352,10 @@ impl Login {
                 "principals",
                 "grants",
                 "grant_permissions",
+                "source_executor_definitions",
+                "source_executor_tiers",
+                "source_cleanup_definitions",
+                "artifact_store_registrations",
             ][..]
         } {
             let relation = format!("celetixo.{table}");

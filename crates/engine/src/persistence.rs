@@ -13,9 +13,16 @@ use std::collections::{BTreeMap, BTreeSet};
 use thiserror::Error;
 
 mod lifecycle;
+pub(crate) use lifecycle::{encode_intent, encode_verification_fields};
+mod administrative_mutation;
 mod metadata;
+mod mutation;
+mod original_policy;
+pub(crate) use original_policy::encode_original_policy;
 mod outcome;
+pub(crate) use outcome::validate_conflict_reports;
 mod semantic;
+pub(crate) use semantic::encode_model_fields;
 mod source_admission;
 mod source_artifacts;
 mod source_authority;
@@ -32,6 +39,7 @@ pub use lifecycle::{
 pub use metadata::{
     LeaseEventRecord, TransactionReasonRecord, restore_lease_event, restore_transaction_reason,
 };
+pub use mutation::{MutationOutcomeRecord, restore_mutation_outcome, restore_mutation_request};
 pub use outcome::{
     AccessProvenanceRecord, CommitOutcomeRecord, restore_access_provenance, restore_commit_outcome,
 };
@@ -135,6 +143,15 @@ pub fn restore_snapshot(
     limits: SnapshotDecodeLimits,
 ) -> Result<Snapshot, RestoreError> {
     let mut r = Reader::new(expected.0, "celetixo/snapshot/v1", bytes, limits)?;
+    let snapshot = decode_snapshot_fields(&mut r)?;
+    r.end()?;
+    if snapshot.id() != expected || snapshot.canonical_bytes() != bytes {
+        return Err(RestoreError::NonCanonical);
+    }
+    Ok(snapshot)
+}
+
+fn decode_snapshot_fields(r: &mut Reader<'_>) -> Result<Snapshot, RestoreError> {
     let scope = r.scope()?;
     let revision = Revision(r.number()?);
     let canonicalization_version = r.version()?;
@@ -200,9 +217,6 @@ pub fn restore_snapshot(
             return Err(RestoreError::NonCanonical);
         }
     }
-    if r.offset != bytes.len() {
-        return Err(RestoreError::NonCanonical);
-    }
     let snapshot = Snapshot::new(
         scope,
         revision,
@@ -220,9 +234,6 @@ pub fn restore_snapshot(
         },
         state,
     )?;
-    if snapshot.id() != expected || snapshot.canonical_bytes() != bytes {
-        return Err(RestoreError::NonCanonical);
-    }
     Ok(snapshot)
 }
 
@@ -350,5 +361,5 @@ impl<'a> Reader<'a> {
 pub(crate) use source_admission::snapshot_cost as source_snapshot_cost;
 pub(crate) use source_execution::{
     Cost as RecoveryCost, definition_cost as source_definition_cost,
-    plan_context_cost as source_plan_context_cost,
+    policy_cost as source_policy_cost,
 };

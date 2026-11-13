@@ -1,0 +1,19 @@
+{
+  "class": "workflow-only change after the full frozen-source verification sequence",
+  "reason": "Expanded serial actual PostgreSQL suite measured 1930.158 seconds, exceeding the previous 30-minute job allowance.",
+  "changes": [
+    "postgres-foundation job timeout:30 to45 minutes; execution/security/SQL deadlines and assertions unchanged",
+    "Skip the standalone source crash helper; its parent tests still invoke it with explicit context, matching the measured test command."
+  ],
+  "before_sha256": "3dedaf9c345ae0cad606522fe9bce726edcd6a940d09f96ddd9e856771f54e92",
+  "after_sha256": "e5435694d62fd8a72c266843caf4cd71dfee4c95bc940b1c99a122ad3fe74574",
+  "command": [
+    "python3",
+    ".github/scripts/check-workflows.py",
+    "--offline"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.164,
+  "output": "actionlint 1.7.12, archive SHA-256 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8\nWorkflow semantics and invalid-context regression passed\n",
+  "hosted_ci_result": "not established"
+}

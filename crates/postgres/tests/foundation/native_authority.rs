@@ -9,6 +9,9 @@ use celetixo_engine::patch::{Change, Patch};
 use celetixo_engine::transaction::{TransactionIntent, TransactionState};
 use std::time::{Duration, Instant};
 
+#[path = "native_authority/mutations.rs"]
+mod mutations;
+
 fn e(name: &str) -> ElementId {
     ElementId::new(name).unwrap()
 }
@@ -924,6 +927,35 @@ pub(super) fn prepare_database_restart() -> (Scope, celetixo_postgres::Registrat
         .unwrap();
     h.commit(h.request("committed", "restart-operation"))
         .unwrap();
+    let reply = h
+        .engine
+        .mutate(
+            &h.worker,
+            h.scope(),
+            key("restart-renew"),
+            MutationRequest::Renew {
+                transaction: id("pending"),
+                ttl_ms: 300_000,
+            },
+        )
+        .unwrap();
+    assert!(reply.outcome.is_ok());
+    let rejected = h
+        .engine
+        .mutate(
+            &h.worker,
+            h.scope(),
+            key("restart-rejected"),
+            MutationRequest::Reserve {
+                transaction: id("committed"),
+                ttl_ms: 0,
+            },
+        )
+        .unwrap();
+    assert!(matches!(
+        rejected.outcome,
+        Err(EngineError::IllegalTransition { .. })
+    ));
     (
         h.scope().clone(),
         h.backend.inspect_registration(h.scope()).unwrap(),
@@ -940,6 +972,15 @@ pub(super) fn assert_database_restart(
     let worker = admin
         .authenticate_existing_session(selected, 1, |_, _| Ok(()))
         .unwrap();
+    assert_eq!(expected.records.mutations.len(), 2);
+    for (key, record) in &expected.records.mutations {
+        let actual = engine
+            .mutate(&worker, selected, key.key.clone(), record.request.clone())
+            .unwrap();
+        assert!(actual.replayed);
+        assert_eq!(actual.outcome, record.outcome);
+        assert_eq!(actual.recorded_at_ms, record.recorded_at_ms);
+    }
     let operation = &expected.records.operations[&key("restart-operation")];
     assert_eq!(
         engine.commit_prepared(&worker, selected, operation.request.clone()),

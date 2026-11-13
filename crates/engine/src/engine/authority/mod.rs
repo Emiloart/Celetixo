@@ -10,6 +10,7 @@ use crate::persistence::{
 };
 pub use backend::*;
 pub use records::*;
+pub(crate) use source_records::error_recovery_size;
 pub use source_records::*;
 
 /// Opaque evaluation state supplied by a trusted authority backend. Normalized
@@ -44,6 +45,7 @@ impl AuthorityState {
                 .any(|(stored, _)| stored != scope)
             || self.db.evidence.keys().any(|(stored, _)| stored != scope)
             || self.db.operations.keys().any(|(stored, _)| stored != scope)
+            || self.db.mutations.keys().any(|(stored, _)| stored != scope)
             || self
                 .db
                 .reservation_fences
@@ -51,6 +53,19 @@ impl AuthorityState {
                 .any(|stored| stored != scope)
         {
             return Err(RestoreError::BindingMismatch);
+        }
+        // Bound the new owned journal before export clones its requests/results.
+        let mut journal_budget = Budget {
+            limits,
+            entries: 0,
+            bytes: 0,
+        };
+        for ((stored, key), record) in &self.db.mutations {
+            if stored == scope {
+                let size = mutation::recovery_size(scope, key, record)?;
+                journal_budget.entries(size.entries)?;
+                journal_budget.bytes(size.bytes)?;
+            }
         }
         let records = records::export(&self.db, scope)?;
         check_budget(&records, limits)?;
@@ -172,6 +187,12 @@ fn check_budget(records: &NativeRecords, limits: NativeRecordLimits) -> Result<(
     budget.entries(records.transactions.len())?;
     budget.entries(records.evidence.len())?;
     budget.entries(records.operations.len())?;
+    budget.entries(records.mutations.len())?;
+    for (key, record) in &records.mutations {
+        let size = mutation::recovery_size(&records.scope, key, record)?;
+        budget.entries(size.entries)?;
+        budget.bytes(size.bytes)?;
+    }
     for grant in records.grants.values() {
         budget.entries(grant.permissions.len())?;
         budget.bytes(grant.principal.as_str().len())?;

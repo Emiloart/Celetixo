@@ -7,7 +7,8 @@ pause context; consult current [progress](goal-04-progress.md) and the
 subsequent work, followed by the [04.1h native SQL profile](goal-04-native-sql-authority.md)
 and [04.1i checked source codecs](goal-04-source-codecs.md), followed by
 [complete source metadata/fresh runtime recovery](goal-04-source-recovery.md) and
-[source SQL lifecycle through receipts](goal-04-source-sql-authority.md). Goal 04 is not complete; preserve the entire accepted
+[source SQL lifecycle through receipts](goal-04-source-sql-authority.md) and
+[original transaction/repository/admin outcomes](goal-04-mutation-recovery.md). Goal 04 is not complete; preserve the entire accepted
 [seven-milestone objective](goal-04.md). Its contract SHA-256 remains
 `339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743`.
 
@@ -46,7 +47,8 @@ library added later does not establish a production service deployment.
 native repository/model registration. It explicitly rejects all lifecycle rows;
 that restriction describes the historical 04.1g profile. 04.1h adds normalized
 native lifecycle/commit recovery. The source SQL profile now implements captured
-source lifecycle through evidence receipts with schema v4; source revision commit
+source lifecycle through evidence receipts; the [mutation journal](goal-04-mutation-recovery.md)
+adds original transaction/repository/admin outcomes with schema v5. Source revision commit
 and complete mutation reconciliation remain pending. Its shared schema and
 repository locking, independent restricted runtime/admin logins and checked
 publication protocol are the starting point for the remaining SQL integration.
@@ -67,10 +69,13 @@ Continue the entire accepted goal from these remaining gates:
    grant and artifact association. The source integration checks, rather than
    native-only regressions or memory reconstruction, establish its bounded SQL
    behavior. Neither a source receipt nor private candidate advances revision.
-2. Add exact durable administrative request identities/digests/results for grants,
-   revocation, registration and model/policy mutation, plus every externally
-   retriable lifecycle mutation (including reservation, renewal and cancellation).
-   Diagnostic state/generation does not resolve an uncertain request automatically.
+2. Continue the [original mutation journal](goal-04-mutation-recovery.md) through
+   keyed executor claim, patch-applied, verification-start and finish transitions.
+   Transaction, repository/model/policy and administrative families now have typed
+   original-outcome paths. Preserve current executor validation, exact original
+   admission bindings and independent launch/workspace recovery; an old claim
+   result cannot authorize another launch. Use a new migration after published
+   schema v5; never edit an applied or published checksum.
 3. Extend multi-instance source commit, authorization/index/policy/evidence/fence
    rechecks and fault recovery; retain atomic history/head/outcome/outbox and exact
    original requests. Expand independent generated histories and shrinking against

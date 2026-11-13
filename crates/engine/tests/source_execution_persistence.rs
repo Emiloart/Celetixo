@@ -8,6 +8,9 @@ use celetixo_engine::source_execution::*;
 use celetixo_engine::source_patch::*;
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "source_execution_persistence/mutation_policy.rs"]
+mod mutation_policy;
+
 fn d(label: &str) -> Digest {
     Digest::of("source-execution-persistence-test/v1", label.as_bytes())
 }
