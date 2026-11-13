@@ -10,11 +10,13 @@ use crate::materialize::{
     CleanupOutcome, MaterializationError, MaterializationReport, PrivateWorkspace,
 };
 use crate::workspaces::{WorkspaceError, WorkspaceRegistry};
+use celetixo_engine::engine::authority::AuthorityFailure;
 use celetixo_engine::engine::{
-    Administrator, Engine, EngineError, SourceAdmission, SourceArtifactStoreCapability,
-    SourceAttemptState, SourceEvidenceFault, SourceEvidenceReceipt, SourceExecutorCapability,
+    Administrator, Engine, EngineError, MutationValue, SourceAdmission,
+    SourceArtifactStoreCapability, SourceAttemptError, SourceAttemptState, SourceEvidenceFault,
+    SourceEvidenceReceipt, SourceExecutorAction, SourceExecutorCapability, SourceExecutorMutation,
 };
-use celetixo_engine::ids::CheckId;
+use celetixo_engine::ids::{CheckId, IdempotencyKey};
 use celetixo_engine::snapshot::Snapshot;
 use celetixo_engine::source_evidence::{
     SOURCE_EVIDENCE_MEDIA_TYPE, SourceArtifactError, SourceArtifactReader, SourceArtifactReference,
@@ -200,7 +202,7 @@ impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
                     "required application/json isolation record",
                 ));
             }
-            self.engine.claim_source_attempt(self.executor, admission)?;
+            self.transition(admission, SourceExecutorAction::Claim)?;
             Ok(())
         })();
         preflight.map_err(|cause| SourceRunFailure {
@@ -249,10 +251,8 @@ impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
                 ));
             }
             poll_guard(guard)?;
-            self.engine
-                .mark_source_patch_applied(self.executor, admission)?;
-            self.engine
-                .begin_source_verification(self.executor, admission)?;
+            self.transition(admission, SourceExecutorAction::PatchApplied)?;
+            self.transition(admission, SourceExecutorAction::BeginVerification)?;
             self.run_checks(
                 admission,
                 &mut workspace,
@@ -571,6 +571,56 @@ impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
         Ok(())
     }
 
+    fn transition(
+        &self,
+        admission: &SourceAdmission,
+        action: SourceExecutorAction,
+    ) -> Result<(), EngineError> {
+        let key = IdempotencyKey::new(format!(
+            "source-executor:{}:{}",
+            admission.id().0,
+            action.kind()
+        ))
+        .map_err(|_| EngineError::Authority(AuthorityFailure::Protocol))?;
+        let claim = action == SourceExecutorAction::Claim;
+        let expected = match &action {
+            SourceExecutorAction::Claim => SourceAttemptState::Patching,
+            SourceExecutorAction::PatchApplied => SourceAttemptState::PatchApplied,
+            SourceExecutorAction::BeginVerification => SourceAttemptState::Verifying,
+            SourceExecutorAction::Finish { outcome, .. } => *outcome,
+        };
+        let request = SourceExecutorMutation::new(admission, action);
+        let apply = || {
+            self.engine.mutate_source_executor(
+                self.executor,
+                &admission.binding().scope,
+                key.clone(),
+                request.clone(),
+            )
+        };
+        let reply = match apply() {
+            // This invocation already owns its private workspace. Recover only
+            // metadata by the exact key, once; subsequent effects still perform
+            // fresh validation. A claim is never recovered into launch authority.
+            Err(EngineError::Authority(AuthorityFailure::CommitIndeterminate)) if !claim => apply(),
+            reply => reply,
+        }?;
+        if claim && reply.replayed {
+            return Err(SourceAttemptError::AlreadyClaimed.into());
+        }
+        match reply.outcome? {
+            MutationValue::SourceAttempt(value)
+                if value.admission == admission.id()
+                    && value.binding == *admission.binding()
+                    && value.state == expected
+                    && value.executor.as_ref() == Some(self.executor.principal()) =>
+            {
+                Ok(())
+            }
+            _ => Err(EngineError::Authority(AuthorityFailure::Protocol)),
+        }
+    }
+
     fn failure(
         &self,
         admission: &SourceAdmission,
@@ -584,11 +634,12 @@ impl<B: VerificationBackend> SourceRunCoordinator<'_, B> {
             SourceRunError::Stopped(GuardDecision::Expired) => SourceAttemptState::TimedOut,
             _ => SourceAttemptState::ExecutionFailed,
         };
-        let recording = self.engine.finish_source_attempt(
-            self.executor,
+        let recording = self.transition(
             admission,
-            outcome,
-            format!("{stage:?}: {cause}"),
+            SourceExecutorAction::Finish {
+                outcome,
+                reason: format!("{stage:?}: {cause}"),
+            },
         );
         SourceRunFailure {
             stage,

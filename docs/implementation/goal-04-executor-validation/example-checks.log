@@ -1,0 +1,11 @@
+COMMAND ["cargo", "build", "--workspace", "--examples", "--locked", "--offline"]
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.35s
+COMMAND ["cargo", "run", "--locked", "--offline", "-p", "celetixo-engine", "--example", "concurrent_transactions"]
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running `/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/examples/concurrent_transactions`
+Compatible: A committed revision 1.
+Compatible: B requires revalidation after A's commit.
+Compatible: B committed revision 2 with fresh evidence; final x=10, y=20.
+Incompatible: B's read of x conflicts with incompatible:a at revision 1; revalidation rejected.
+Incompatible: B aborted; final x=10, y=2.
+All reference-engine assertions passed. Storage is in memory.

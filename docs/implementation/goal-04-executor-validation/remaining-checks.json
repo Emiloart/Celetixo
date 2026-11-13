@@ -1,0 +1,57 @@
+{
+  "kind": "Remaining checks without Cargo compilation while database restart is blocked by the physical reserve guard",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        ".github/scripts/check-workflows.py",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.193
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/protocol/check.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.078
+    },
+    {
+      "command": [
+        "python3",
+        "-O",
+        "scripts/protocol/test_compatibility.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.536
+    },
+    {
+      "command": [
+        "bash",
+        ".github/scripts/test-commit-attribution.sh"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.885
+    },
+    {
+      "command": [
+        "python3",
+        ".github/scripts/test-goal03-benchmark-summary.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 10.506
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.171
+    }
+  ],
+  "raw_log_sha256": "619c99d7910115ef988f39a1f392962d1eeb785d16897df87f1839064f5d5aab"
+}

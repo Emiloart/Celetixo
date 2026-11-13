@@ -1,0 +1,45 @@
+COMMAND ["python3", ".github/scripts/check-workflows.py", "--offline"]
+actionlint 1.7.12, archive SHA-256 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+Workflow semantics and invalid-context regression passed
+COMMAND ["python3", "scripts/protocol/check.py"]
+protocol integrity and compatibility passed (10 canonical messages)
+COMMAND ["python3", "-O", "scripts/protocol/test_compatibility.py"]
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.041s
+
+OK
+COMMAND ["bash", ".github/scripts/test-commit-attribution.sh"]
+PASS: CI permits human author, committer, and co-author
+PASS: CI permits ordinary AI and [bot] body mentions
+PASS: CI does not match automation substrings inside human words
+PASS: CI rejects automated author name
+PASS: CI rejects automated author address
+PASS: CI rejects automated committer name
+PASS: CI rejects automated committer address
+PASS: CI rejects automated co-author
+PASS: CI rejects compact case-insensitive attribution
+PASS: CI fails an invalid revision range
+PASS: CI rejects option injection as a range
+PASS: CI accepts an empty valid revision range
+PASS: CI checks raw author identity despite mailmap
+PASS: CI checks raw committer identity despite mailmap
+PASS: CI rejects automated co-author in a large message
+PASS: actual hook permits human attribution and AI body discussion
+PASS: actual hook rejects --author override
+PASS: actual hook rejects author environment address
+PASS: actual hook rejects committer environment
+PASS: actual hook rejects automated co-author
+PASS: actual hook rejects compact automated co-author
+PASS: actual hook rejects a large automated co-author message
+PASS: actual hook permits a human --author override
+PASS: CI accepts actual-hook human override commit
+PASS: hook fails when its message file is missing
+Commit attribution regression fixtures passed: 25 checks.
+COMMAND ["python3", ".github/scripts/test-goal03-benchmark-summary.py"]
+..
+----------------------------------------------------------------------
+Ran 2 tests in 10.438s
+
+OK
+COMMAND ["git", "diff", "--check"]

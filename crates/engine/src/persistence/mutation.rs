@@ -57,6 +57,18 @@ pub fn restore_mutation_request(
         return Err(RestoreError::BindingMismatch);
     }
     let kind = text(&mut r, 64)?;
+    if source_mutation::is_kind(kind) {
+        let request =
+            MutationRequest::SourceExecutor(Box::new(source_mutation::request(&mut r, kind)?));
+        r.end()?;
+        lifecycle::canonical(
+            request.digest(expected_scope, expected_actor),
+            expected,
+            &request.canonical_bytes(expected_scope, expected_actor),
+            bytes,
+        )?;
+        return Ok(request);
+    }
     if administrative_mutation::is_kind(kind) {
         let request = MutationRequest::Administrative(Box::new(administrative_mutation::decode(
             &mut r, kind,
@@ -240,7 +252,15 @@ impl MutationOutcomeRecord {
                 Some(true) => 2,
             });
         }
+        if let Some(context) = &self.record.source_execution {
+            source_mutation::encode_context(&mut c, context);
+        }
         match &self.record.outcome {
+            Ok(MutationValue::SourceAttempt(value)) => {
+                c.str("Accepted");
+                c.str("SourceAttempt");
+                source_mutation::encode_result(&mut c, value);
+            }
             Ok(MutationValue::Allocation { resource, id })
             | Ok(MutationValue::Revocation { resource, id }) => {
                 c.str("Accepted");
@@ -389,8 +409,16 @@ pub fn restore_mutation_outcome(
     } else {
         None
     };
+    let source_execution = if matches!(request, MutationRequest::SourceExecutor(_)) {
+        Some(source_mutation::context(&mut r)?)
+    } else {
+        None
+    };
     let outcome = match text(&mut r, 64)? {
         "Accepted" => Ok(match text(&mut r, 64)? {
+            "SourceAttempt" => {
+                MutationValue::SourceAttempt(Box::new(source_mutation::result(&mut r)?))
+            }
             "Allocation" => MutationValue::Allocation {
                 resource: administrative_mutation::resource(&mut r)?,
                 id: r.number()?,
@@ -442,6 +470,7 @@ pub fn restore_mutation_outcome(
             state_before,
             lease_events_before,
             administration,
+            source_execution,
             outcome,
         },
     )?;

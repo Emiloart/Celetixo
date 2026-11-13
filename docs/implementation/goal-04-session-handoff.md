@@ -8,7 +8,8 @@ subsequent work, followed by the [04.1h native SQL profile](goal-04-native-sql-a
 and [04.1i checked source codecs](goal-04-source-codecs.md), followed by
 [complete source metadata/fresh runtime recovery](goal-04-source-recovery.md) and
 [source SQL lifecycle through receipts](goal-04-source-sql-authority.md) and
-[original transaction/repository/admin outcomes](goal-04-mutation-recovery.md). Goal 04 is not complete; preserve the entire accepted
+[original transaction/repository/admin outcomes](goal-04-mutation-recovery.md) and
+[original executor transitions](goal-04-executor-recovery.md). Goal 04 is not complete; preserve the entire accepted
 [seven-milestone objective](goal-04.md). Its contract SHA-256 remains
 `339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743`.
 
@@ -48,8 +49,10 @@ native repository/model registration. It explicitly rejects all lifecycle rows;
 that restriction describes the historical 04.1g profile. 04.1h adds normalized
 native lifecycle/commit recovery. The source SQL profile now implements captured
 source lifecycle through evidence receipts; the [mutation journal](goal-04-mutation-recovery.md)
-adds original transaction/repository/admin outcomes with schema v5. Source revision commit
-and complete mutation reconciliation remain pending. Its shared schema and
+adds original transaction/repository/admin outcomes with schema v5. The
+[executor extension](goal-04-executor-recovery.md) adds all four keyed executor
+transitions with schema v6. Source revision commit/revalidation and full Goal 04
+acceptance remain pending. Its shared schema and
 repository locking, independent restricted runtime/admin logins and checked
 publication protocol are the starting point for the remaining SQL integration.
 
@@ -69,13 +72,12 @@ Continue the entire accepted goal from these remaining gates:
    grant and artifact association. The source integration checks, rather than
    native-only regressions or memory reconstruction, establish its bounded SQL
    behavior. Neither a source receipt nor private candidate advances revision.
-2. Continue the [original mutation journal](goal-04-mutation-recovery.md) through
-   keyed executor claim, patch-applied, verification-start and finish transitions.
-   Transaction, repository/model/policy and administrative families now have typed
-   original-outcome paths. Preserve current executor validation, exact original
-   admission bindings and independent launch/workspace recovery; an old claim
-   result cannot authorize another launch. Use a new migration after published
-   schema v5; never edit an applied or published checksum.
+2. Preserve the [original mutation journal](goal-04-mutation-recovery.md) and its
+   [executor extension](goal-04-executor-recovery.md). Transaction, repository,
+   administrative and all four executor transitions now have typed original-outcome
+   paths. Preserve fresh executor validation and independent launch/workspace
+   recovery; an old claim result cannot authorize another launch. Use a new
+   migration after published schema v6; never edit an applied or published checksum.
 3. Extend multi-instance source commit, authorization/index/policy/evidence/fence
    rechecks and fault recovery; retain atomic history/head/outcome/outbox and exact
    original requests. Expand independent generated histories and shrinking against

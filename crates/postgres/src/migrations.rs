@@ -27,6 +27,10 @@ const MIGRATIONS: &[Migration] = &[
         name: "0005_mutation_recovery",
         sql: include_str!("../migrations/0005_mutation_recovery.sql"),
     },
+    Migration {
+        name: "0006_source_executor_mutations",
+        sql: include_str!("../migrations/0006_source_executor_mutations.sql"),
+    },
 ];
 pub(crate) const LOCK: i64 = 0x43454c455449584f;
 

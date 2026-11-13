@@ -1,0 +1,46 @@
+{
+  "kind": "Independent bounded SQL NULL-mask predicate review; not PostgreSQL integration, FK, RLS, migration, durability or launch proof",
+  "migration_sha256": "18128aba1e1bed29e48f949ca3a8aa3b567f7af4a775217bc2b5880d2e5db561",
+  "checker_sha256": "69ff48d284cf7fd6d58516590798de0c0d2acaf436c5c391e93527fbf6879abd",
+  "sqlite_version": "3.45.1",
+  "predicate_names": [
+    "mutation_actor_kind",
+    "mutation_grant_kind",
+    "mutation_request_kind",
+    "mutation_result_kind",
+    "mutation_actor_shape",
+    "mutation_source_actor_request",
+    "mutation_source_context_shape",
+    "mutation_outcome_shape"
+  ],
+  "per_action": [
+    {
+      "action": "ClaimSourceAttempt",
+      "mandatory_source_fields": 12,
+      "nonnull_baseline_admitted": true,
+      "nonempty_null_masks_rejected": 4095
+    },
+    {
+      "action": "SourcePatchApplied",
+      "mandatory_source_fields": 13,
+      "nonnull_baseline_admitted": true,
+      "nonempty_null_masks_rejected": 8191
+    },
+    {
+      "action": "BeginSourceVerification",
+      "mandatory_source_fields": 13,
+      "nonnull_baseline_admitted": true,
+      "nonempty_null_masks_rejected": 8191
+    },
+    {
+      "action": "FinishSourceAttempt",
+      "mandatory_source_fields": 13,
+      "nonnull_baseline_admitted": true,
+      "nonempty_null_masks_rejected": 8191
+    }
+  ],
+  "null_masks_rejected": 28668,
+  "valid_original_rejection_contexts": 2,
+  "elapsed_seconds": 12.372,
+  "exit_code": 0
+}

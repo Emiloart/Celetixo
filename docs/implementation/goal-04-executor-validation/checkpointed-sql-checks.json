@@ -1,0 +1,1776 @@
+{
+  "kind": "Complete serial actual PostgreSQL parent cases in separate processes with durable per-case receipts",
+  "runner_sha256": "ab6b707a941c3fec068ffb22d27264b92dbc6ac43fac9e7f04b7db1d5c1994ee",
+  "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+  "source_sha256": {
+    ".github/scripts/check-commit-attribution.sh": "a61a5d77bb0d6c4ceb5c81212ed210616d3031064d4203f445aba9708ac17325",
+    ".github/scripts/check-workflows.py": "3424bc85c8ce0013650ded776cd64bd6c1c2e97576a842ee4861ff9b01b394fd",
+    ".github/scripts/test-commit-attribution.sh": "c88137849458218894ccb2300c6c9187c6d85ea314b0f980fd6c548159c016b2",
+    ".github/scripts/test-goal03-benchmark-summary.py": "61ea43ce58f5c28099c6cb292b8fc5c729d647911c06b58e8804aa0d4d7df5ab",
+    ".github/workflows/ci.yml": "a7555097eedc62a8bb6692f56f355ea73dd662f86c5d4d9d7bcbdbb9c7a4182b",
+    "Cargo.lock": "f62068e608f2a6b6b3be459a34ef627f8cd3b2094661ac320d3bfa93231894aa",
+    "Cargo.toml": "d00a97aeeb4e0d32ed489df2a28f34a4e1ee4a27aa83a0ad975d647bfdb237b4",
+    "crates/engine/Cargo.toml": "b1454aa43ae128f263a90693d2b2df326092ef2319cf0a257556bfdc4f6fd37f",
+    "crates/engine/examples/concurrent_transactions.rs": "b9bb705d9306ed8fa1cbb63b2c88a2a0514490780f28e537cffdad938c72a15e",
+    "crates/engine/src/access.rs": "2f40a776eff09612f4eb29661accae55832028e464010e40f171ff9e08984305",
+    "crates/engine/src/engine.rs": "191fee0f5458090b585d31e150eb032ac6618e3e7350b343591263e8b65ba161",
+    "crates/engine/src/engine/administration.rs": "f621303d4dc031b6254432bc8cd5f0bb825b38283b0a38dcb5b42a10e998c724",
+    "crates/engine/src/engine/authority/backend.rs": "a45fac213db96feba4785721d6450d5b2fd50afbaf317e47f5361b00ea81288d",
+    "crates/engine/src/engine/authority/mod.rs": "1d315e7fd5b51ff879df85b8fba86fa8561264ede1528d4445279f4e6a5619ef",
+    "crates/engine/src/engine/authority/records.rs": "767a8f34d83700d821525a5dd1ff5c80ff4f9f6382b57cccac07a7a546c86f84",
+    "crates/engine/src/engine/authority/source_records.rs": "2ceb5a5d593a9028e9b074b69620e26713fd97a5c63bc72831650be0a2fa285a",
+    "crates/engine/src/engine/authority/tests.rs": "61340893dea31d391b0335e5ee3230a23d764b9d1fd58573095ef14e96998156",
+    "crates/engine/src/engine/commit_request.rs": "187749b975edee37940516584c07c086d25cbaa54863bab473ed9b9c34a2b728",
+    "crates/engine/src/engine/lifecycle.rs": "97b9f035d0dd2ec1e6cb6b7bb962fef64e4bb887919c225b3121f45e4d5dc347",
+    "crates/engine/src/engine/mutation.rs": "abf78ff5691179d5bdce6936a44f69327bc376cc012a1376065a57e0a8393eb2",
+    "crates/engine/src/engine/mutation/administrative.rs": "094bb1dbd8fa73500494cdc846f1342390b4ecf773d6bf03ec50962e91960caf",
+    "crates/engine/src/engine/mutation/execution.rs": "8e60c2059f236ef3d365f580cfbabaddc1cd17e649a32b7a8d84c9298ed5c700",
+    "crates/engine/src/engine/mutation/repository.rs": "ca14b312799f6a476d0b8a15fdcc6049c367cfbcfd70ab778d00392a676f0408",
+    "crates/engine/src/engine/mutation/source_executor.rs": "9a650d94a829d5462e7df708139df5cf9ae972ded59c4187d5c2f5838b347612",
+    "crates/engine/src/engine/reservation.rs": "4ec58a6afac0a5218fb34f5e96613adc276cb4031351d767b348f18d9c42e9a9",
+    "crates/engine/src/engine/runtime.rs": "dbd1aeccab2d76789ab5742ca1d8c4229729aa2c8a66c4abd866e27a97ecaf3d",
+    "crates/engine/src/engine/source_attempts.rs": "9db0a8b2cf9c97233a55db66a022b14487eec408f52bfd2c492e7a494137e6c7",
+    "crates/engine/src/engine/source_cleanup.rs": "8618ce91f80ecefbd7e527591a07c0cd6b46be8618c3d491632870ef1c9a2a23",
+    "crates/engine/src/engine/source_evidence_gate.rs": "ed9277130e5533ca795d1bb96a73b8ffcd144b4c32905640f3156ef191f8069b",
+    "crates/engine/src/engine/source_policy.rs": "e69f412eff92ca6472dbca2954b2fa123d18313ad008fae726266e55af7b81ae",
+    "crates/engine/src/engine/source_recovery.rs": "34ca8d23988bb5394b37323f54c32d52884b37ab88fec80c20d41957e5cb9a44",
+    "crates/engine/src/engine/state_access.rs": "4eeef4e09e1b3f665d097310af7770518242ad2923f867258dcd9aa5ceabb56a",
+    "crates/engine/src/evidence.rs": "399d0514aec4a148574c15286e948e4043dbb1d63d6760f5044f0f2073973a33",
+    "crates/engine/src/ids.rs": "909302e6b129bee8479600a05877a06617f0c6a3f12af735d994e0e10d25687f",
+    "crates/engine/src/input_admission.rs": "223142fd1f76bcc93da0f04953b9446dbfc5fc5ce8843fe16e1a4729c3c1215c",
+    "crates/engine/src/lib.rs": "b55c0290749d9dfa3bc50af4249eb92132f4e6187c4657a29362bdad64c3c40f",
+    "crates/engine/src/model.rs": "4815844093ef915ea48b2e875cf5635285def3a01f035b085729b18f61671323",
+    "crates/engine/src/patch.rs": "87785b99c37bc62ebdc72e8ac0c557eb677b4c336750d52a89de01063179c2c4",
+    "crates/engine/src/persistence.rs": "05950c97340020ff732b4f969949fd341f488539f42d6f91e720c269cd694a0e",
+    "crates/engine/src/persistence/administrative_mutation.rs": "42feafde3f376d92d27dd4ffa58bbe0f12740db535057136489f6fc8c84a2e59",
+    "crates/engine/src/persistence/lifecycle.rs": "b1247dc91ab45fae716dc79cb02c4309d32b2f432c5df4bd441048ad097c6db4",
+    "crates/engine/src/persistence/metadata.rs": "5a47d3296f0f5f41fc4578cf66441d3d08611d6a5c46df5b6c052cde950b8881",
+    "crates/engine/src/persistence/mutation.rs": "5093ea9ae86e680059d9301c11a8e9f4a5eedabb76b1b75bbe53057d7c1c4063",
+    "crates/engine/src/persistence/original_policy.rs": "ad5a2c499fb680bb62ac9d6018dbb790723f62edfd2654192d05e1725c7df796",
+    "crates/engine/src/persistence/outcome.rs": "4687d80896a58770fc687437ca17a9a4bb67cf510fb49ca477ad0ce2f6fb945c",
+    "crates/engine/src/persistence/semantic.rs": "17a86459c88273228a891ef0687d4104c6337f070f8d42ef9074d996025f484e",
+    "crates/engine/src/persistence/source_admission.rs": "bb15ad1dbc103bb34249ef3105575aeb10be64d429853509f38b8f6327f962aa",
+    "crates/engine/src/persistence/source_artifacts.rs": "e83edaa5625673327edcb5917df4f90d16ed47cace66072b735c7fd0655b2192",
+    "crates/engine/src/persistence/source_authority.rs": "dc3b751137992fb623ef78dc3a9b466bbaebf12f8d00a12e224241ba53b8e8d6",
+    "crates/engine/src/persistence/source_errors.rs": "866893f79bdd5f34822755cbd3d209fa0dc94911d759373b41f02e35c5371527",
+    "crates/engine/src/persistence/source_event.rs": "608e183e4aaeced1b9f5b04e8704a72d3074f199d22e3f5ccd7dca0b7f96827d",
+    "crates/engine/src/persistence/source_evidence.rs": "731cb208de9e49a73553e252d654671eb4c10fcfbb604e441d8da583fd50810e",
+    "crates/engine/src/persistence/source_execution.rs": "5f53a08e1e4ce6718cc188e5b7a6a0295c2fd9098c4933829f2acf8dcb9ca78c",
+    "crates/engine/src/persistence/source_mutation.rs": "b3a8ae0eaeb530ba5baa139e6b327f30996e427996e92167d1ccc3e28a579919",
+    "crates/engine/src/persistence/source_operation.rs": "c763e1faea0edf11419162be98cf84023e13bda6e7e1f0204250bd508b5d70ea",
+    "crates/engine/src/repository.rs": "c9ae3deccc0a0fdb0859956fdcc453e1109a1eb797b6d3f9474399f7ff948946",
+    "crates/engine/src/snapshot.rs": "1550c771034a2f7d1f13d57a6c827e7b42c857629a32d70fbc32317f764ccddb",
+    "crates/engine/src/source_evidence.rs": "8c97d68eb71e21821c31c39b477666a68aa0a337bd61d9b246fbc5722fe6def2",
+    "crates/engine/src/source_execution.rs": "fc6abf256165af998a10aaae27829fe1fbb4aada5f5109bdc126aec5398a0cae",
+    "crates/engine/src/source_patch.rs": "22a1a01dc759a585845c1acc94bdc5397e9688a46644bb1af88e2e75793f2dfc",
+    "crates/engine/src/transaction.rs": "4bda2d53f64500d6fb77270bfac7b8af5923fd3abbb2f20d6fed54f233f8008c",
+    "crates/engine/tests/administrative_recovery.rs": "54e310c1060ab18aa0aedc4c00f1c5f9ae1807a37fffac4921cf872071b6a509",
+    "crates/engine/tests/adversarial.rs": "8686991056c2a651e8b8ec717fdcfe80666c76470a8252d96e3e2cc91858110e",
+    "crates/engine/tests/engine_transactions.rs": "b01071ad450bf38af46c6d315d1f36dd8158136133ae9413a04245e9233511de",
+    "crates/engine/tests/fixtures/access-provenance-record-v1.hex": "b1b02c3d874833f8b024b1a6e10174e6eb75f636023ff06b13c735266ceb8eb2",
+    "crates/engine/tests/fixtures/commit-outcome-accepted-v1.hex": "342ead90047e38ca31a8875f28a3255aa968eab594a1e79d930882ad9d23d0c2",
+    "crates/engine/tests/fixtures/commit-outcome-rejected-v1.hex": "bd530a5453ade048ec3f4202c12ef325360e82144107e8547aa6008b2be691cc",
+    "crates/engine/tests/fixtures/commit-request-v1.hex": "90b7e788a895f762831a0650819d81962b294cc32a23eb9cbef2d268a548d5f4",
+    "crates/engine/tests/fixtures/engineering-model-record-v1.hex": "76edc261b57564bc8699fe7ab6dae17f88cfcf30350c906ec1623edb1cd5e0fc",
+    "crates/engine/tests/fixtures/impact-analysis-record-v1.hex": "986e2e2aa8bec4c20f83b018ec99fac0eac3dcb53e0ae5c0073e9db9c89ef438",
+    "crates/engine/tests/fixtures/lease-event-record-v1.hex": "993c987483f5d0a27e0dd01ae39b77802092375411a6bcdf0487bc9e618afa42",
+    "crates/engine/tests/fixtures/lifecycle-codecs.json": "feeee996058da2761afb1c81bcdbe2a61023593358d26d3572e46707ff9fbd17",
+    "crates/engine/tests/fixtures/metadata-codecs.json": "092785ec785f50702f22c6f8b77790317db76ca543ac8d79775bdba70d93ae39",
+    "crates/engine/tests/fixtures/native-intent-record-v1.hex": "a952c8751abcdaaf3051b40d571dd62bc23e70a5374230dbb50040090f78115a",
+    "crates/engine/tests/fixtures/outcome-codecs.json": "8796af9c84f958cf046c3146b33d699dc88425b1806b729b4f2b8dbf8ccc58f5",
+    "crates/engine/tests/fixtures/repository-analysis-v1.hex": "8ce18c2c7003ea7fdcbe067f20579acefa85c6b6a897ba3eb71e46702a0a247b",
+    "crates/engine/tests/fixtures/semantic-codecs.json": "3fdab2b495c5a4d1ec5624c958df860159c33ee50de460eef6afa721dfe09494",
+    "crates/engine/tests/fixtures/transaction-reason-record-v1.hex": "ca5700a688008d798a9478421c99d6acff71be24c5c410e4d191a485403a9792",
+    "crates/engine/tests/fixtures/verification-evidence-record-v1.hex": "75021c8bfd1930a246beb1505b68e903aa0af99f52814a73b80c78a226541cdb",
+    "crates/engine/tests/input_admission.rs": "d41c07ddbea3162dd85da20d1df1d24d5cb9bb6aedb746e3907c48cb36593627",
+    "crates/engine/tests/lifecycle_persistence.rs": "cbf355e4ab7e575afaaf5b776feecdbf33eedbd41c7bed6b967ecd5c32976ec2",
+    "crates/engine/tests/model_histories.rs": "e1b74060bd4c19f53589ebc69c4d319d1ae494594d636f87f8439b34e31002cb",
+    "crates/engine/tests/mutation_persistence.rs": "37d3e8c7808ec2bf965c9a5547a239138902cedd5e86fd98730a521bd05b35c6",
+    "crates/engine/tests/mutation_persistence/administrative.rs": "21c8563f7c3cf34c19351b68b4617ed32cbc3347ac6c508e29c1c4d0ac5da656",
+    "crates/engine/tests/mutation_persistence/native_effects.rs": "714c09be4e9782638c2d84a4e12d74046b23fb37909eb853acc18024dd176724",
+    "crates/engine/tests/mutation_persistence/repository.rs": "67eb6b0fc4032a07e439c95e72d1a7b37b29b0aa5aa4d507f6ac734aa3603fd9",
+    "crates/engine/tests/mutation_recovery.rs": "331f714d1ceb546b645d840e1586e4b21835105f8647ae12b14db2de72683628",
+    "crates/engine/tests/mutation_recovery/native_effects.rs": "63018d11491768bad79cf240dfe65cdd45827a715ccb0723e3c99b5e29b7bc06",
+    "crates/engine/tests/mutation_recovery/repository.rs": "301971e70b63a2f997e461f8a168d227c19994d6cdb4f56db61417fa87e52f2c",
+    "crates/engine/tests/persistence.rs": "0f4349dd5b2f6831ef172baa1afbcc93d12415c32564c29c1479ae6dce6aed28",
+    "crates/engine/tests/prepared_commits.rs": "319211e085f1928d8caa26061db4cce7026706dcaff91d5387dd8dbc4b671ff1",
+    "crates/engine/tests/repository.rs": "394ba64f90677b4203d2a919215415f144064bd68b7217ec0e918937e65e15f0",
+    "crates/engine/tests/semantic_persistence.rs": "a7d64121049391c3f38238707679098d49ac4f9404db06ade5d74ed81d09007c",
+    "crates/engine/tests/snapshots.rs": "8ff4b28b1ff7a66f7b2fb8d51a945a41b75916f1eb3b36b3fd80300706b64ed1",
+    "crates/engine/tests/source_artifact_persistence.rs": "0cf33a8eae84b10908a19015209af76dea56dcb17aa1afcdc2e63837087b3455",
+    "crates/engine/tests/source_attempts.rs": "4ae0768072bddf325bad8684ceaa4361a0742c6fc31e1bee583b9eb5d6c2e79c",
+    "crates/engine/tests/source_attempts/mutation_layout.rs": "a764ceefdab358dcff67fe039514c590eec1dfed335463346512be087b40009f",
+    "crates/engine/tests/source_attempts/mutation_recovery.rs": "8ceec0a1ca5407566b51e240476635a6697b9db8b1c81987a36976b0b3c0adb7",
+    "crates/engine/tests/source_event_persistence.rs": "c043534bfd6149a2fe010eb8e667dad77b794775510af1de5e0f1fc28e778b81",
+    "crates/engine/tests/source_evidence.rs": "eeee398eb731c410610d4d5a91835cb3414fa17612915a01d45b54d400bee78a",
+    "crates/engine/tests/source_evidence_persistence.rs": "9a13c4d7de70e3981deedf1c4833e74c2bb3428711c70c70888afaa313763ad5",
+    "crates/engine/tests/source_execution_persistence.rs": "2f701c7297f0f4d71ae07a19446dc662c33d34b03e37dc7afc6dadeba79bbfad",
+    "crates/engine/tests/source_execution_persistence/mutation_policy.rs": "a0081d67fb4ed0e222ea53f4b90d5b76d03549c628f1b4f61fe5170ed9c19f04",
+    "crates/engine/tests/source_execution_plans.rs": "3410327cb08d2f25cb6226f80e0b7b6fd7dc3cd567a726ff0bfaf38c3556b5a1",
+    "crates/engine/tests/source_outcome_persistence.rs": "0530004d28919f7c78cd7fb44574c5ba12f0288db62e6b23942e8b3e909844d9",
+    "crates/engine/tests/source_patches.rs": "a1de409f0778960f9758993f41579c8fd13948149976fac12a07e3d235c9b518",
+    "crates/engine/tests/source_registration_persistence.rs": "f27b36528baa17fe2cb1d730f780d1eeaab8692139487311a4f8bdcc118fcbce",
+    "crates/execution/Cargo.toml": "703839fbfd715b27947f8cae05be663728b2116805907b9dd972aede95e046e8",
+    "crates/execution/examples/bench_support/execution_recovery.rs": "4425e3ce20cdc941bf24a6dc6d9c50ea5a7ad8358597ea176566f85dbc0a01a6",
+    "crates/execution/examples/bench_support/mod.rs": "d0909fcf536e44387bfb0b7773065fd0e0bf39915f1f857d8221d3f9ebd76f41",
+    "crates/execution/examples/source_execution_bench.rs": "f8c434d1659b8b80ee7424f1519fd9c0698d2f8a8bb1b5e88178e4a1b7865d85",
+    "crates/execution/examples/source_patch_bench.rs": "decf27c3fee8bb137517a8863689e1b896a5d65dea279df1e1c94137087d6208",
+    "crates/execution/src/artifacts.rs": "2b7479eff0be7ed1fd24361887f7a877bd2c3d6443106734f8d94e1d4633c995",
+    "crates/execution/src/backend.rs": "9512cf70d94a3bfe49282294b290fb5ad02ca019d009812467c5c30a0c2e2e8d",
+    "crates/execution/src/bin/celetixo-exec-init.rs": "4968b38fab4ccb49bbe48d911cedeac18ee91e13045500721308f1207fdf2778",
+    "crates/execution/src/coordinator.rs": "887b0311464197014fe73e51143826a712224353517511338b278886ccd50ecd",
+    "crates/execution/src/coordinator_tests.rs": "d4a4359f34714ca41d265fa81254c45632332eb4ef835af650d304b86852197d",
+    "crates/execution/src/coordinator_tests/mutation_recovery.rs": "543b1b16ebf0529d637868310e265c21c6acc73304b70496a8d89cc36c667fc1",
+    "crates/execution/src/lib.rs": "10e4f4d3f416c14b6999a0511b0968b69c8ba6884d13f3c4437b1e2993aef179",
+    "crates/execution/src/materialize.rs": "5b4a94f8d4552be37447ccdc36c2a526c394cc8117bf18e35a370537ca516a81",
+    "crates/execution/src/oci.rs": "3a227e8e5f57786c47a083b7f3ce072e800590e743c54b1c6f3f5411dcd1a26b",
+    "crates/execution/src/oci_adapter.rs": "e75c6c999f429455fec1f624de6d93ff4fe8e64e39b2f48cbb63b11c83e246a9",
+    "crates/execution/src/workspaces.rs": "4b47314583fbb17d7517330b17beb8a04a9ca2f74ba4e4b675baa87b2dd62b8d",
+    "crates/execution/tests/artifacts.rs": "5cc99727a986282d2f959d78d7b1d750e7021a5123b600cd3ffb3960ae120c0d",
+    "crates/execution/tests/materialize.rs": "e66b0e33158036a7a0fc10c939f639fbeb610ed1a8ca1963397c1b0e20ed3d60",
+    "crates/execution/tests/oci.rs": "fc04dd035bbcb7f2d3cf0838bda63043bc5f71552967380698338ee5a0d30a81",
+    "crates/execution/tests/source_flow.rs": "77eafb5820544dacf4364f0921fa0528dc0a0db2b504201b603b44fb46b35d69",
+    "crates/execution/tests/support/mod.rs": "53ccec026c333df4d7f24b445fcb9e549c6151ea3a2cfbe1377f05a5fd214039",
+    "crates/postgres/Cargo.toml": "89dc150e73343bb690d106e88f5e9dc54b95d8980ef8503d5e995a80509127c4",
+    "crates/postgres/migrations/0001_authority.sql": "aacc58cc8cf70224b8343074b68aafbebb57350cf5d963e4ddc0de296c091647",
+    "crates/postgres/migrations/0002_lifecycle_reconstruction.sql": "99789c46e55a38cd2f54e7433f58c7c5d12351a6a724e0dd9482b38d646a5d8e",
+    "crates/postgres/migrations/0003_native_lifecycle.sql": "607423e4399f40bcc95161983e64e1ca7922880e49277216eebde62033d99640",
+    "crates/postgres/migrations/0004_source_lifecycle.sql": "27f8a7f8824ca3b87e978810dcf1af9dd6bdda3a0a5029491644e72789a1ed27",
+    "crates/postgres/migrations/0005_mutation_recovery.sql": "cb36137693cf89d37b9ba13bad09cd28e667a69005348eae414fceb7e22cb60e",
+    "crates/postgres/migrations/0006_source_executor_mutations.sql": "18128aba1e1bed29e48f949ca3a8aa3b567f7af4a775217bc2b5880d2e5db561",
+    "crates/postgres/src/authority.rs": "47282119602d553afa74322aeb8b67d8caa529373eade61868645efb537de474",
+    "crates/postgres/src/authority/mutations.rs": "e856aa950154f0af13cb5b11a6875130fc9a3612af226320eb96729e40cf0ce8",
+    "crates/postgres/src/authority/mutations/source_executor.rs": "4ab30032ad9a84fbc9bd307a4315abe72779161913aae1f2391cff0458634c9a",
+    "crates/postgres/src/authority/native.rs": "7571306ff7b37ddcf3a0cb6a5ed1f7a5c2558a681525101f68d6bffe6d10139a",
+    "crates/postgres/src/authority/native/load.rs": "1d11c1fe8a97ee487179291c0c4812afdb84129a8ec567a10cc26560733c05c1",
+    "crates/postgres/src/authority/native/publish.rs": "e196896041fa583aa49ecae1360ad6492d28b02e731c5281ccc56f888500674f",
+    "crates/postgres/src/authority/source.rs": "85116d8a9a5d5dfdc4aadc6aea03621fd6ef740f3471aa4f5e67644e8a6372c7",
+    "crates/postgres/src/authority/source/definitions.rs": "be919fec448b6a54c2bb37fc21870e8bf1fb821b888125289862de462e2daf57",
+    "crates/postgres/src/authority/source/load.rs": "31bfd77d2abc2e85e332b66241061fcdec4b6aeb0a713871ccf59e99f7eb8376",
+    "crates/postgres/src/authority/source/publish.rs": "f2a6641986558d6574b5f17d107f8ab6ebed098e5f213efff8025823461adb81",
+    "crates/postgres/src/authority/source/publish/definitions.rs": "c400d8402b94b1688bc340b2e14233166af02830aa1ee39ba5f92a9464d013fa",
+    "crates/postgres/src/authority/source/publish/execution.rs": "8713b883dfcb3403bc54a2bb873cf277db5e52c3db1e522bb0fa1d92e152bf77",
+    "crates/postgres/src/lib.rs": "edf97cdfff16baba2a305565dff24deeefbf0f804045ad5fee3ba8c0dd5a479b",
+    "crates/postgres/src/migrations.rs": "af5c9045c5d0ba878d633dcaeca005758b9e7b5a50bfc6cab2808e91f2a15904",
+    "crates/postgres/src/semantic.rs": "a287edc27005eff48064b6aa4e46cea467933048bfd4c94825d9e2093e122ecf",
+    "crates/postgres/src/snapshots.rs": "ea3170973faf9cd9faf97b0cf7ac82d3c9fad0c5cc9393ce5ec6c10e27f0443f",
+    "crates/postgres/tests/foundation.rs": "8f9b17a299a2503e76182830f6d241ae73751f2c7fb678a69e5dbbbdc6073383",
+    "crates/postgres/tests/foundation/commit_transport.rs": "a2246c88849a0e1b796401ab69d349d84edb52f5a7af1a91684bf8109ae23798",
+    "crates/postgres/tests/foundation/native_authority.rs": "7f4614e7cb0a3f81e982b75bb80f39258dfdb3b53d8c536d61db8ffe6f86bb1e",
+    "crates/postgres/tests/foundation/native_authority/mutations.rs": "ddff6f77d64985aedcd712c95df690abfbc66832fea61689ae48006a9e33a0d5",
+    "crates/postgres/tests/foundation/native_authority/mutations/native_effects.rs": "efcdfa3d931189f765faec02afe375d7108c3c0afec9a1ba0cc47a1f46ed99f0",
+    "crates/postgres/tests/foundation/native_authority/mutations/repository.rs": "173207a895c31072175e55d9e4eb7f1119808f1fdb0336fac5d3792dd9ca428c",
+    "crates/postgres/tests/foundation/native_authority/mutations/upgrade.rs": "ef81054ab0b1d731b91dd6ead4c202369959c710c56a077d0290d6bac00a07b0",
+    "crates/postgres/tests/foundation/source_authority.rs": "85ce3515c994343ae9ebb3c29a0c7f02bb499ab91c1fc893b4de56a8bd8a86ae",
+    "crates/postgres/tests/foundation/source_authority/guards.rs": "bc34cf43e4943658bd2ac52eebaf7b30b5b2465896f5723214c3b6db0393b091",
+    "crates/postgres/tests/foundation/source_authority/isolation.rs": "0b2df2d0780aa27af3aaa2ddaefed2a8f94dd1235702fc539b34f7eede3b0984",
+    "crates/postgres/tests/foundation/source_authority/lifecycle.rs": "0a1b24570535e52e18578d7ea6510afbf26c6149fcc03a349ab34b3850b60416",
+    "crates/postgres/tests/foundation/source_authority/migration.rs": "b5374e00ff97bb016b1694b85d3b0cf46b732d3832553ac6ed21976fcb32116d",
+    "crates/postgres/tests/foundation/source_authority/mutations.rs": "a987057a69e89b37e66138d118642b9e2e15c129161b9294c37344c8162bc700",
+    "crates/postgres/tests/foundation/source_authority/mutations/administrative.rs": "5f6b19b1505515b2e89f5803bd9df94e695ef08ce2260fa0b53a129b9df37188",
+    "crates/postgres/tests/foundation/source_authority/mutations/executor.rs": "6c19421c3e6e1801bf0d229c0e5fdb58a9393687daf92e5a9bd3968ab185ba95",
+    "crates/postgres/tests/foundation/source_authority/mutations/policy.rs": "c0982c8d971e7c47b3660745246cb51ec9125d1dd18974c195f0ee3237a56007",
+    "crates/postgres/tests/foundation/source_authority/recovery.rs": "c3c372f6984ea8a1efd4c2ea3550ed0ca98aacae704a5be43f5ed99fb0711f03",
+    "crates/protocol/Cargo.toml": "c4329ecb155613ba02b1756a93f10b4ec2353ebc4ae5dff64af1999ec90dc747",
+    "crates/protocol/src/generated/celetixo.orchestration.v1.rs": "c335381a9c9dfe782a8c005257d6644d186764c38b4f00a3fd3a815fac7a50e2",
+    "crates/protocol/src/generated/celetixo.platform.v1.rs": "fb2f540badc41b63184a1c49c4e45d5cdc36fee0d9866d7fac9b24f09fdee03e",
+    "crates/protocol/src/generated/strict_fields.rs": "14bb453654c27813bd37ca88f2548a36056406c224a4fd27bb86c34f3701aa9f",
+    "crates/protocol/src/intake.rs": "cb379cc03ed63126703bf5bdac9ae9ed0745d6f9478739d90e27b16c84498bd7",
+    "crates/protocol/src/lib.rs": "64bdc2b6a8882df4ce35e79eeb04fb17a7c0def8f169dc1b9ac01316d5561562",
+    "crates/protocol/tests/intake.rs": "028afcfc3af6f59d37f2425288801763938f6302644401d0e86408a45d24191e",
+    "crates/repository/Cargo.toml": "ad2ee893a149dd79e91beb8528eeb1a7314d6f935e7d54cc9e4d331e79e10d0a",
+    "crates/repository/examples/inspect_repository.rs": "fdaef9f30e6dec319e5d558b7dd1c1739b6336124af38fccdc7c40aa9bbf031c",
+    "crates/repository/examples/repository_bench.rs": "beeda0193524ee1df6423814053c4eb45b71fbf34525720a21853147f09a52f3",
+    "crates/repository/src/capture.rs": "5831e9739a3c2d3f13887a8c3b4270e7bde7b7ab144076a2cbc687759284ed81",
+    "crates/repository/src/harness.rs": "dcfd8ef5a7deb0c4037213f77ddea15f6b6c82b6c6231df89816d90e4d6d9a6c",
+    "crates/repository/src/impact.rs": "b5496a9dacb02f03111913ecfbd1dacdcd89e55defef0c5fb5e44cde0b128a92",
+    "crates/repository/src/index.rs": "a8250529cafd2b468de2db13244115913be939272f14f3113eee3a48b272ebcb",
+    "crates/repository/src/lib.rs": "ffa3731dfdd0b2b7a47532d5e6d2bf87bafda2ffb01940de87dcd228c42f0b88",
+    "crates/repository/src/lsp.rs": "d71326ddc330b7b9229527600ddcd1a3927f24b46402d465388c9648675de964",
+    "crates/repository/src/reviewed_inputs.rs": "54d1e98cc696f3b571c6acd1b24033391b4cc80839300b15040a17721d522d4e",
+    "crates/repository/tests/benchmark_quality.rs": "6e019f0a62d8edaabd4cb8df29a49176266a6c32d4470ad335e5ae6f8a14fbe1",
+    "crates/repository/tests/capture.rs": "fbd8e8e687c6b6930c2e3ef27220253f867f042d4b39438a97765224061e5b34",
+    "crates/repository/tests/credential_compatibility.rs": "f2ca23886dcb7b5354756f2bb8ba72edc1be65e74af87ee5a0310c111cef2d81",
+    "crates/repository/tests/fixtures/benchmark/README.md": "8174d53b815eaed0dab9f7506ab2dab66310c6ac6a29a7a3be83e3d1f9ba6ec7",
+    "crates/repository/tests/fixtures/benchmark/reference.json": "e8447efccd5ec6bfaef192a640bf6c0f11746e338e5e3ea4ff43389a0d688c2f",
+    "crates/repository/tests/fixtures/benchmark/template/Cargo.toml": "6d5f98d2f36ff4b1d7f2447089050ecd2b356118fb738d7c688df79ce36b578a",
+    "crates/repository/tests/fixtures/benchmark/template/go/__UNIT__/app.go": "b902c9307708b856c449768cf551ed5190e7b6b5e8e902c6eb37f689bcf79dd9",
+    "crates/repository/tests/fixtures/benchmark/template/go/__UNIT__/app_test.go": "c1a5d9d13ad8f8c252bf7ab018570fc21c506f9e5023d261cdc20667980b3067",
+    "crates/repository/tests/fixtures/benchmark/template/go/__UNIT__/math.go": "49fe78e8f1913984fb22e3ac7977943be27f9e1bf6570e71b0e7e7b6a614055a",
+    "crates/repository/tests/fixtures/benchmark/template/go/__UNIT__/unrelated.go": "7a5800de8ee9e4a025167788168827caf6c24e9ec5862076847c54e04f63bc95",
+    "crates/repository/tests/fixtures/benchmark/template/go/go.mod": "5ef4fa131467a87a73c6927085e1eb75b2a4c1fe7a3783039e39d123c9c56ed2",
+    "crates/repository/tests/fixtures/benchmark/template/javascript/__UNIT__/app.js": "8cc8ed18f0f9c94f42596b97c7477a9260bac5afd083ea157cc6559315f70c54",
+    "crates/repository/tests/fixtures/benchmark/template/javascript/__UNIT__/app.test.js": "bf85856949b5a70dd3b0b446c9af64e8462cff9f9ca03bf796e679fb31168be5",
+    "crates/repository/tests/fixtures/benchmark/template/javascript/__UNIT__/math.js": "16847f32b5c9ac4761475d6957c0917bf35c408103d58f62d1af836585863ea9",
+    "crates/repository/tests/fixtures/benchmark/template/javascript/__UNIT__/unrelated.js": "3b66bc438408c4b58a769de3337918a55c9a0ebc01d31b14017ebf486dd63796",
+    "crates/repository/tests/fixtures/benchmark/template/package.json": "bda3ff3787a2f95fd16be76914c9a37b53fe975162e5e039a46d75d35e1ae3ee",
+    "crates/repository/tests/fixtures/benchmark/template/pyproject.toml": "41c1ba6211340c116d542f1477a0101d7c78bc18ca6423c90194636e3be1dc92",
+    "crates/repository/tests/fixtures/benchmark/template/python/__UNIT__/__init__.py": "3aa04d11b947b0e9d2818db44e2adc875dedfae20f41643a4bceb5f376800fff",
+    "crates/repository/tests/fixtures/benchmark/template/python/__UNIT__/app.py": "75cd4fadc91e9f4a69d19579b016ce46876fb54c1fa537e50d056870eb32ad8d",
+    "crates/repository/tests/fixtures/benchmark/template/python/__UNIT__/dynamic.py": "712c73e1144c2b48d1ddbdd62108dec8f2ae745fa8aeb31128a3a0df1a69a0e0",
+    "crates/repository/tests/fixtures/benchmark/template/python/__UNIT__/math_ops.py": "f8ff690c96621c1edd8bb74b9c9aee15eda5d1427d28a5b463c42b340c638803",
+    "crates/repository/tests/fixtures/benchmark/template/python/__UNIT__/test_app.py": "175240098209ada0dd35162bccf1dab23c18e9dbf81989663265c0d2a42abf58",
+    "crates/repository/tests/fixtures/benchmark/template/python/__UNIT__/unrelated.py": "26d42e412345762c32efb0eb720f941561913db706928f0fda632181cb0d6be3",
+    "crates/repository/tests/fixtures/benchmark/template/src/__UNIT__/app.rs": "28876870aebd4cb874f02df623802157137a59737033db3c3d5d8114be8caba9",
+    "crates/repository/tests/fixtures/benchmark/template/src/__UNIT__/math.rs": "360c332a404a0e06d5bf2b6f1ce69cc4daa414186470f58c77417457fde065f7",
+    "crates/repository/tests/fixtures/benchmark/template/src/__UNIT__/mod.rs": "a3fe45961f6beaaefe7fd09748a251e66b9b9dea29ff961586e8675017db768c",
+    "crates/repository/tests/fixtures/benchmark/template/src/__UNIT__/test_app.rs": "dd11e95f74367f123470ce362075055084e1015412f7d1d6af3b2b4fa3880497",
+    "crates/repository/tests/fixtures/benchmark/template/src/__UNIT__/unrelated.rs": "4f4e09d9c3aee27dc690111371314f1d3c95f93e06fd073f0bf4bc7e04c82c2d",
+    "crates/repository/tests/fixtures/benchmark/template/tsconfig.json": "0216b08ab8d77d3e0905f832960d7a51fb1a0d7617814582edec1bd626e5b3e6",
+    "crates/repository/tests/fixtures/benchmark/template/typescript/__UNIT__/app.test.ts": "dce308b723c3cc7e0dd79478d45022654cdf3432ed2e1ea80c2b48c00d4e2579",
+    "crates/repository/tests/fixtures/benchmark/template/typescript/__UNIT__/app.ts": "016b214da13a64ac257b15c0b74a211e8eeb5f5561589e3a72d46d3fed50d722",
+    "crates/repository/tests/fixtures/benchmark/template/typescript/__UNIT__/math.ts": "e11e401a53e14d0fdf9e79e020c15d9a51092b355b98414ef413a10756a396f7",
+    "crates/repository/tests/fixtures/benchmark/template/typescript/__UNIT__/unrelated.ts": "676afef7b8bb6bf48da2aef2258ff395159fb7174baa8716d4150cf61167dfad",
+    "crates/repository/tests/fixtures/index/go/app.go": "cda60225852299e8eba41a7540b70bdbc0719d9e60a455919a21645b1680b084",
+    "crates/repository/tests/fixtures/index/go/go.mod": "133b594d5721a07794674bbd4f0780a9723f4026df9556d7f2a9f1b3a4d60358",
+    "crates/repository/tests/fixtures/index/go/math/math.go": "b09b21d4987d3907f85c923ae670493effdea211fe93e50d975fba2dc2b1c374",
+    "crates/repository/tests/fixtures/index/javascript/app.jsx": "4e32562ee62a2fdcbcbba27b7b2f97d510168f9d290e2f74e9c0b03d09616df2",
+    "crates/repository/tests/fixtures/index/javascript/math.js": "16847f32b5c9ac4761475d6957c0917bf35c408103d58f62d1af836585863ea9",
+    "crates/repository/tests/fixtures/index/python/app.py": "c9924d13600174dfe3a4da26b3376a4e82dec5b5c5f28859405722d2742bd657",
+    "crates/repository/tests/fixtures/index/python/math_ops.py": "f8ff690c96621c1edd8bb74b9c9aee15eda5d1427d28a5b463c42b340c638803",
+    "crates/repository/tests/fixtures/index/rust/src/lib.rs": "4500c4636a37dee629ad964b1fb9ed9136af264f9798538a1044c04c53184824",
+    "crates/repository/tests/fixtures/index/rust/src/math.rs": "360c332a404a0e06d5bf2b6f1ce69cc4daa414186470f58c77417457fde065f7",
+    "crates/repository/tests/fixtures/index/typescript/app.ts": "325bfa491ff50f4a602aa4dbf9d3df54201a69d17e565a158d9080260d1ba0c1",
+    "crates/repository/tests/fixtures/index/typescript/math.ts": "3c437c68b4f736f262777f1ac043e58b4c92607f37a811431dcf63a03b67b984",
+    "crates/repository/tests/fixtures/index/typescript/view.tsx": "2b788d8a808b713c43c06b5b791618f58702556f2ee17601025739372aad13af",
+    "crates/repository/tests/harness.rs": "e93a814e6010a778c22e13739aba2991c7e9362741cc76136222237661d175b0",
+    "crates/repository/tests/identity.rs": "bcb92c2a58c478c7af265f7f06587eaf3e4fc0f7c043f9aa6fd70fe841e61495",
+    "crates/repository/tests/impact.rs": "785de43663677fb38f007e7c33021bfd2d0ab66e957196b7c9e7e5a8b2585a37",
+    "crates/repository/tests/index.rs": "ecffa65a53a9227f669063da42c1d82bfa63931fd724127c20fb4ef2b58b1c26",
+    "crates/repository/tests/lsp.rs": "8fa6dbd5548742376fb742cfe78315b61b882ad9262f608689be2664655a9a4c",
+    "crates/repository/tests/reviewed_inputs.rs": "367a8ac4315c7e0656df8c9ea4fa6301c3d01fca13498a305ca953e459fb171a",
+    "proto/README.md": "f929a7c105ddc4ba9169a58b5b35641d47e17685d79d5bdbb2cbd0ece72beb24",
+    "proto/celetixo/orchestration/v1/task_intent.proto": "fca7edb887b758a611f9d082d0d2c02623e8a60801fda15860894d72f0d2ee7a",
+    "proto/celetixo/platform/v1/task_intent_envelope.proto": "04ccca3e89827dfd2968be563790e6f1cd9f6070714046620f7fe0917d9fec40",
+    "proto/compatibility/v1.json": "94f0f22f6df2f3a022a09215221d7fbd302bff10785126e9cd892b57ea215f42",
+    "proto/descriptor.bin": "b839037c6c8551f23bab858267031356539237aca8cadb364464c86bbf158f80",
+    "proto/fixtures/task_intent_envelope.bin": "1ee413f37b9ddf76137010ce47473085a20b7fbeec21e067fd9d757c35410349",
+    "proto/fixtures/task_intent_envelope.textproto": "e8b029386b079745197b5c4ee06db9be52beb9803a1307d0973747ea8e19b9b3",
+    "proto/generation.json": "5837f9735399ba76a6900bb70aaa5793fbf71232723e7197682e518d5e94dc9a",
+    "rust-toolchain.toml": "d52c5633ea77aefd345519d0a6c87e19c2636a1e90178585c30db481b3de9de0",
+    "scripts/goal04/README.md": "653d8a8c88a48605200c3c76e33aac9f0b4c84eda3fe9d3bcc867f6fdedbf327",
+    "scripts/goal04/postgres_fixture.py": "a95f4071f97d95d0e8c4613c5aebddb90bd1c8238df9ec1fed9cd8ed6340e1e4",
+    "scripts/protocol/check.py": "7b70717fa204e7959a23f6cb9ede3fc6744ac3f6e5479c1adca8c3d63ef05491",
+    "scripts/protocol/descriptor.py": "5e3b91ae57ec65df3669c1e7fb04bfea7c151aa634fa50bf870fb4142323ed53",
+    "scripts/protocol/generator/Cargo.lock": "f1095ee9b034ba6e2ca8aae3638e77058f8b55017353fcf58a37100b4000d60a",
+    "scripts/protocol/generator/Cargo.toml": "5b115bc35a75f7881dd822f2c6c55b8333afdeb7eb5df6c8f78f20f57d247ca8",
+    "scripts/protocol/generator/src/main.rs": "9c1415169b2e82ffa03259c2e6a69d73f272309ff101ec788bc2c2c783f7e2c1",
+    "scripts/protocol/provision.py": "e45da85978c4e37dc8b88046f2789bd009d321ca835a9a16ad36a6df66edef76",
+    "scripts/protocol/regenerate.py": "60706808b6679ccfe8be66ef4ad7a06304f0a603b8612572ca2038d95a8c63b5",
+    "scripts/protocol/test_compatibility.py": "047b7d68ef597bb56a1aa4101e3256d36cc58f134b72883a3e7385226ce6d29a"
+  },
+  "source_unchanged_during_checks": true,
+  "binary_sha256": "da37449112664ab6b9a891894cd798a2cbc3d0a11f023a01e86f4eaea03d07fd",
+  "build_command": [
+    "cargo",
+    "test",
+    "-p",
+    "celetixo-postgres",
+    "--test",
+    "foundation",
+    "--no-run",
+    "--locked",
+    "--offline",
+    "--message-format=json"
+  ],
+  "parent_cases_passed": 87,
+  "parent_cases_expected": 87,
+  "all_expected_parent_cases_passed": true,
+  "excluded_standalone_helpers": [
+    "migration_crash_child",
+    "source_authority::lifecycle::mutations::executor::executor_replay_child",
+    "source_authority::recovery::source_process_child"
+  ],
+  "child_result_summaries_not_added": 8,
+  "elapsed_case_seconds": 2280.616,
+  "cases": [
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "actual_repository_analysis_reopens_and_retains_engine_rejection_of_incomplete_impact",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "actual_repository_analysis_reopens_and_retains_engine_rejection_of_incomplete_impact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.018,
+      "finished_at": "2026-11-13T22:07:02.947299+00:00",
+      "raw_log_sha256": "a8b74f361c4e567ac9550c345b4d031c707410464f522dab9a8d0427f7771ca1",
+      "private_log": "executor-sql-checkpoints/4787a3eaa6720addc555-1794607621929234447.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "durable_payloads_cannot_forge_content_scope_format_or_manifest",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "durable_payloads_cannot_forge_content_scope_format_or_manifest",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.445,
+      "finished_at": "2026-11-13T22:07:04.383845+00:00",
+      "raw_log_sha256": "abfe1216bc604ab5d9926b4d695a58970559885518d3f414dbe4efc1057d8f0f",
+      "private_log": "executor-sql-checkpoints/475b55b70eb4678e9ef6-1794607623938878071.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "immutable_catalogs_survive_actual_database_process_restart",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "immutable_catalogs_survive_actual_database_process_restart",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 73.199,
+      "finished_at": "2026-11-13T22:08:18.361108+00:00",
+      "raw_log_sha256": "cb8f566fac3c81950d9f81397d96685670c0fcf8254d90341ed770ba29794bd2",
+      "private_log": "executor-sql-checkpoints/4a053a444620421f7686-1794607625162555934.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "migration_checksum_version_skew_and_concurrent_migrators_fail_closed",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "migration_checksum_version_skew_and_concurrent_migrators_fail_closed",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.734,
+      "finished_at": "2026-11-13T22:08:19.922953+00:00",
+      "raw_log_sha256": "c2ce9a8070b3ef0dd8bfbc72aa7b7f7b5b4acc85e8363cf9da1a433fca35d0d9",
+      "private_log": "executor-sql-checkpoints/7ffdf9c93293113da9ad-1794607699189307355.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::commit_transport::actual_server_commit_reply_loss_reconciles_the_original_durable_receipt",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::commit_transport::actual_server_commit_reply_loss_reconciles_the_original_durable_receipt",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 18.809,
+      "finished_at": "2026-11-13T22:08:39.505577+00:00",
+      "raw_log_sha256": "437a258aab6cd502c60fbebd7c4dc2b2e6114885a59d21212d09ba7893d77d2d",
+      "private_log": "executor-sql-checkpoints/077ef461918cc3b8b490-1794607700696912904.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::a_rejected_mutation_survives_before_repository_registration",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::a_rejected_mutation_survives_before_repository_registration",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 5.108,
+      "finished_at": "2026-11-13T22:08:45.555687+00:00",
+      "raw_log_sha256": "5be48c70ccdf2dc3708dd9daeb7d518803f78aadf091624e8c4c906d0bf1243d",
+      "private_log": "executor-sql-checkpoints/f50a2d9c69ceeeca5ec3-1794607720447929142.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::analysis_replies_survive_model_replacement_and_an_ambiguous_commit",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::analysis_replies_survive_model_replacement_and_an_ambiguous_commit",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 21.861,
+      "finished_at": "2026-11-13T22:09:08.271496+00:00",
+      "raw_log_sha256": "cf78b23af4fbc49aa62e1519e035688c3df738f02a5e4d9da2e658051bc12f03",
+      "private_log": "executor-sql-checkpoints/992e56a98ed78ca21a9e-1794607726409992437.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::delayed_execution_does_not_publish_success_after_lease_expiry",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::delayed_execution_does_not_publish_success_after_lease_expiry",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 11.835,
+      "finished_at": "2026-11-13T22:09:20.980048+00:00",
+      "raw_log_sha256": "3df413057d01ddab4c11bc5b828246ac2aaa5b6380b30c652b2b9ff94e7a861b",
+      "private_log": "executor-sql-checkpoints/d6382d48e7f03ae9fc8a-1794607749145351210.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::delayed_renewal_cannot_publish_after_original_lease_expiry",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::delayed_renewal_cannot_publish_after_original_lease_expiry",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 14.601,
+      "finished_at": "2026-11-13T22:09:36.479402+00:00",
+      "raw_log_sha256": "24516a95efa0692f9b496ac8570df6bd8e7c363ad6546d6b14b28ecb5762cf80",
+      "private_log": "executor-sql-checkpoints/37641142b9840cb569e5-1794607761878073240.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::duplicate_lease_mutations_use_one_atomic_reply_across_connections",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::duplicate_lease_mutations_use_one_atomic_reply_across_connections",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 9.687,
+      "finished_at": "2026-11-13T22:09:46.994103+00:00",
+      "raw_log_sha256": "f6c81409a03d311e73ad3c070ffd3505587929b047855eed8ec686295b739b5f",
+      "private_log": "executor-sql-checkpoints/c18ed57a85afd373d108-1794607777307526254.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::execution_and_cancellation_recover_original_results_after_abort",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::execution_and_cancellation_recover_original_results_after_abort",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 22.664,
+      "finished_at": "2026-11-13T22:10:10.679713+00:00",
+      "raw_log_sha256": "91aa3449f78c5bd01cb39fc7e6b531052de40b7c39cd2ba8eecec53ecd64a479",
+      "private_log": "executor-sql-checkpoints/6ea75383c6750fb9ea0d-1794607788015895956.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::independent_processes_recover_one_reply_for_one_lease_effect",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::independent_processes_recover_one_reply_for_one_lease_effect",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 15.57,
+      "finished_at": "2026-11-13T22:10:27.361257+00:00",
+      "raw_log_sha256": "57ad3f54d3f33cc5a1b5e588590c917075965273a390d46f738f435130609a55",
+      "private_log": "executor-sql-checkpoints/abcfceb5123bc6425ba7-1794607811791433407.raw.log",
+      "child_result_summaries_not_added": 2
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::mutation_faults_roll_back_or_reconcile_without_a_second_effect",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::mutation_faults_roll_back_or_reconcile_without_a_second_effect",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 20.536,
+      "finished_at": "2026-11-13T22:10:49.010372+00:00",
+      "raw_log_sha256": "f891b9b1a39d0680386b90d9d05f5a0bc3b7cc82bcc3d919cea1391d447ade29",
+      "private_log": "executor-sql-checkpoints/13354f707eb5171bd176-1794607828474657279.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::mutation_rows_enforce_immutable_scope_actor_and_effect_bindings",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::mutation_rows_enforce_immutable_scope_actor_and_effect_bindings",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 5.343,
+      "finished_at": "2026-11-13T22:10:55.141466+00:00",
+      "raw_log_sha256": "ae9e9e0a55e066d55c026f96a4fa66b8c2ae36772c78b929b522f5d59d75697b",
+      "private_log": "executor-sql-checkpoints/ca14a7621d4a4de588cc-1794607849797998032.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::native_effects::delayed_patch_submission_cannot_publish_bindings_after_lease_expiry",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::native_effects::delayed_patch_submission_cannot_publish_bindings_after_lease_expiry",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 26.872,
+      "finished_at": "2026-11-13T22:11:22.839192+00:00",
+      "raw_log_sha256": "3df9a858e3945d1db4b3c6e1e3581417aa568cf3db2a384df635792425ccb40a",
+      "private_log": "executor-sql-checkpoints/edb34bfad5f85da0eae3-1794607855966826596.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::native_effects::delayed_revalidation_cannot_append_an_attempt_after_lease_expiry",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::native_effects::delayed_revalidation_cannot_append_an_attempt_after_lease_expiry",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 41.312,
+      "finished_at": "2026-11-13T22:12:05.222943+00:00",
+      "raw_log_sha256": "b9109bf046b190ff34533f9c0c7fba9f63142536cf8c5cf60f0013f3c5272d67",
+      "private_log": "executor-sql-checkpoints/2623fd82521d29888785-1794607883910918225.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::native_effects::native_mutation_faults_recover_each_original_effect_after_lost_response",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::native_effects::native_mutation_faults_recover_each_original_effect_after_lost_response",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 62.829,
+      "finished_at": "2026-11-13T22:13:08.887178+00:00",
+      "raw_log_sha256": "686657e24f1b97cd6c2c97af047004ab8bc94ab833490b98ffc7c16be91d066c",
+      "private_log": "executor-sql-checkpoints/1e24a74c7354bb16431c-1794607926057862070.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::native_effects::native_reply_constraints_bind_exact_attempt_evidence_and_admitting_verifier",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::native_effects::native_reply_constraints_bind_exact_attempt_evidence_and_admitting_verifier",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 14.302,
+      "finished_at": "2026-11-13T22:13:24.018685+00:00",
+      "raw_log_sha256": "fdd1b7643658d73672c932eb6659af7bd9c8ba6c8340c7be6aff19c59afedcd2",
+      "private_log": "executor-sql-checkpoints/fbe804c09255e3b7e977-1794607989717061805.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::native_effects::original_native_replies_survive_later_evidence_selection_and_revalidation",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::native_effects::original_native_replies_survive_later_evidence_selection_and_revalidation",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 51.833,
+      "finished_at": "2026-11-13T22:14:16.775334+00:00",
+      "raw_log_sha256": "e9c45cf3ca98bdea03beb7010fdd1080831fd8ed3894a5acce14218d1a104744",
+      "private_log": "executor-sql-checkpoints/e8041cbeb40b6ed79e34-1794608004941953652.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::native_effects::rejected_revalidation_keeps_original_conflict_provenance_after_cancellation",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::native_effects::rejected_revalidation_keeps_original_conflict_provenance_after_cancellation",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 23.787,
+      "finished_at": "2026-11-13T22:14:41.371955+00:00",
+      "raw_log_sha256": "bba69ed3a81f23fe1d8bab040f5b3281ff1791c273aa3a0a20674d9dd42b506c",
+      "private_log": "executor-sql-checkpoints/0d29695df97c10a98c7f-1794608057584840712.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::original_lease_replies_and_rejections_survive_cold_reopen",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::original_lease_replies_and_rejections_survive_cold_reopen",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 23.707,
+      "finished_at": "2026-11-13T22:15:05.844168+00:00",
+      "raw_log_sha256": "359b2c712a511808df382ca4d189560393d2a96248e240dc173f2440630775a8",
+      "private_log": "executor-sql-checkpoints/cde97db4e50d108519da-1794608082137163997.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::proposal_originals_survive_registration_and_a_lost_admission_reply",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::proposal_originals_survive_registration_and_a_lost_admission_reply",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 14.446,
+      "finished_at": "2026-11-13T22:15:21.052383+00:00",
+      "raw_log_sha256": "8a2d3d2840f886018867ad037ff8d6307b5cac6db62074aa63effa535dd18262",
+      "private_log": "executor-sql-checkpoints/0ce9dbcebac3afd18526-1794608106606269555.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::published_v4_upgrade_is_atomic_and_preserves_snapshot_data",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::published_v4_upgrade_is_atomic_and_preserves_snapshot_data",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.622,
+      "finished_at": "2026-11-13T22:15:25.861337+00:00",
+      "raw_log_sha256": "f04a731717bf09d1a324ef2bcc06502905603ef5e8bba57192d94a8e8867cc33",
+      "private_log": "executor-sql-checkpoints/0b928d7b209efe154605-1794608122239391972.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::repository::repository_original_replies_survive_registration_model_replacement_and_lost_responses",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::repository::repository_original_replies_survive_registration_model_replacement_and_lost_responses",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.692,
+      "finished_at": "2026-11-13T22:15:56.856051+00:00",
+      "raw_log_sha256": "56e4245d4b0ac46570ba3f46a036f25c164900d12072ca4fbc2d317bc5f26627",
+      "private_log": "executor-sql-checkpoints/bf098590ec3cbeff5303-1794608127163703474.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::repository::repository_reply_rows_bind_model_payloads_snapshot_and_optional_target",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::repository::repository_reply_rows_bind_model_payloads_snapshot_and_optional_target",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.948,
+      "finished_at": "2026-11-13T22:16:00.604471+00:00",
+      "raw_log_sha256": "0e0828b15e30960ce8567ce4d43306ce0c11d4bac28f4c014e09f758d543f964",
+      "private_log": "executor-sql-checkpoints/f5ca2b282a8a80d08766-1794608157656209629.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::mutations::upgrade::v5_original_mutation_upgrade_preserves_rows_and_rolls_back_errors_and_process_death",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::mutations::upgrade::v5_original_mutation_upgrade_preserves_rows_and_rolls_back_errors_and_process_death",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.315,
+      "finished_at": "2026-11-13T22:16:03.863874+00:00",
+      "raw_log_sha256": "80b23a2053be28b0f94d87f9492747746eb174548cf1aa30232149d394677aa3",
+      "private_log": "executor-sql-checkpoints/ee6b1607c51f7dc7a7f1-1794608161548592919.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_auxiliary_corruption_and_unsupported_state_cannot_be_silently_repaired",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_auxiliary_corruption_and_unsupported_state_cannot_be_silently_repaired",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 42.606,
+      "finished_at": "2026-11-13T22:16:47.258130+00:00",
+      "raw_log_sha256": "f805efcc0ed520dd7346bb8d4b197ca1d4b1a2c211fddb5062cc6a46c98ebd7c",
+      "private_log": "executor-sql-checkpoints/2ce9bdc503796f9ad04c-1794608164652022686.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_expiry_read_observation_final_gate_and_revocation_fail_closed",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_expiry_read_observation_final_gate_and_revocation_fail_closed",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 89.635,
+      "finished_at": "2026-11-13T22:18:17.724726+00:00",
+      "raw_log_sha256": "d300430df893ee887f9b903a985e792861b4c63ebb3f2b4ca5bc1296c1f95304",
+      "private_log": "executor-sql-checkpoints/a8c2e5d91f5e4ea0a573-1794608208089588728.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_generated_pair_histories_match_independent_bitmask_oracle",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_generated_pair_histories_match_independent_bitmask_oracle",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 319.481,
+      "finished_at": "2026-11-13T22:23:38.234185+00:00",
+      "raw_log_sha256": "f7ae41e25be4c92301283edfc537b21e0470c21c471ee58c8cb631b7fe45ef0f",
+      "private_log": "executor-sql-checkpoints/9ff974f13ab68fcec7d9-1794608298753428126.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_independent_processes_race_and_recover_without_duplicate_revision",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_independent_processes_race_and_recover_without_duplicate_revision",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 73.673,
+      "finished_at": "2026-11-13T22:24:52.566873+00:00",
+      "raw_log_sha256": "eb76867dc84d4eb9f0b3f6be0b4e5d30df864bff623b162b4080b10da9b68090",
+      "private_log": "executor-sql-checkpoints/06061ea9c7eda3ff6219-1794608618893790026.raw.log",
+      "child_result_summaries_not_added": 6
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_lifecycle_reopens_and_commits_receipt_operation_terminal_and_outbox_atomically",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_lifecycle_reopens_and_commits_receipt_operation_terminal_and_outbox_atomically",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 34.353,
+      "finished_at": "2026-11-13T22:25:27.845605+00:00",
+      "raw_log_sha256": "26aba2d963ec255179f2f73eb6aa5aeb9db808118511c3f28b991a09bb0dbcba",
+      "private_log": "executor-sql-checkpoints/a4140ee65dc88ee02dc2-1794608693492714935.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_numeric_attempt_revision_and_event_order_survives_double_digits",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_numeric_attempt_revision_and_event_order_survives_double_digits",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 311.279,
+      "finished_at": "2026-11-13T22:30:39.732282+00:00",
+      "raw_log_sha256": "1f4546869da491f7f23dc51ebb6ed60c7761b77ee3435c5dadca0301a0435d35",
+      "private_log": "executor-sql-checkpoints/57757e92ba62adbf2e49-1794608728453376346.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_original_requests_survive_evidence_replacement_and_revalidation",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_original_requests_survive_evidence_replacement_and_revalidation",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 75.514,
+      "finished_at": "2026-11-13T22:31:55.777688+00:00",
+      "raw_log_sha256": "b967b4d2df507dea661407dfdc259d91fe70847dfb565e7bd69f58152f978b04",
+      "private_log": "executor-sql-checkpoints/1a4d4d81d76a3e2cfcbe-1794609040263478929.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_process_death_around_sql_commit_retains_one_unambiguous_outcome",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_process_death_around_sql_commit_retains_one_unambiguous_outcome",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 14.645,
+      "finished_at": "2026-11-13T22:32:10.955035+00:00",
+      "raw_log_sha256": "2dca672729cd76aa0b9c87a0ee6d465b244ab8b7d54c7c4ae7a9713c8194f97a",
+      "private_log": "executor-sql-checkpoints/3546a6f77b020e272280-1794609116310472884.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_repeated_admission_preserves_original_signer_timestamp_and_binary_abort",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_repeated_admission_preserves_original_signer_timestamp_and_binary_abort",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 27.268,
+      "finished_at": "2026-11-13T22:32:38.875480+00:00",
+      "raw_log_sha256": "d316a8278ecb48203b59745bea8afd45aa3e51c0a3d5fa351b7b928e0c755b6e",
+      "private_log": "executor-sql-checkpoints/93b69ae32bdd4668caba-1794609131607231042.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_reservation_conflict_and_distinct_proposal_acquisition_grants_remain_exact",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_reservation_conflict_and_distinct_proposal_acquisition_grants_remain_exact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 16.662,
+      "finished_at": "2026-11-13T22:32:56.062657+00:00",
+      "raw_log_sha256": "7de998c5ddaacb2e28b91c69de45ceff29c9808026ef709f202c6d034294d6a3",
+      "private_log": "executor-sql-checkpoints/df6bb3de48ae8f69d687-1794609159400232834.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "native_authority::native_sql_faults_roll_back_or_reconcile_exactly_once",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "native_authority::native_sql_faults_roll_back_or_reconcile_exactly_once",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 33.087,
+      "finished_at": "2026-11-13T22:33:29.649755+00:00",
+      "raw_log_sha256": "6a2fdbfae005dee9dad23bed90cfb3abb97d6fbf3e349ea086bf742072e79828",
+      "private_log": "executor-sql-checkpoints/0fbbdb562f0836a2bdcf-1794609176563179544.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "process_death_during_v1_upgrade_retains_v1_until_recovered_publication",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "process_death_during_v1_upgrade_retains_v1_until_recovered_publication",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.465,
+      "finished_at": "2026-11-13T22:33:31.618781+00:00",
+      "raw_log_sha256": "053ea90bd3b38e2f4426f62c62d2424b616e04d91564d16c63f52bee01f43597",
+      "private_log": "executor-sql-checkpoints/4b8b65f610bb3632d16f-1794609210153985056.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "process_death_rolls_back_ddl_and_ledger_before_successful_recovery",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "process_death_rolls_back_ddl_and_ledger_before_successful_recovery",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.447,
+      "finished_at": "2026-11-13T22:33:33.574610+00:00",
+      "raw_log_sha256": "6f477009409d456971dabbc0705be3389c271fa156f2b6b4957f84414ecf2c90",
+      "private_log": "executor-sql-checkpoints/2e0b36e4b16129a68f16-1794609212127525177.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "reconstruction_metadata_enforces_scope_current_head_and_zero_based_attempts",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "reconstruction_metadata_enforces_scope_current_head_and_zero_based_attempts",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.755,
+      "finished_at": "2026-11-13T22:33:34.842841+00:00",
+      "raw_log_sha256": "de55c27301ec257a3dbc5ed6e69698617dd68ce0f003f99bccc894e7edb81421",
+      "private_log": "executor-sql-checkpoints/6fdb2b1c7ee9a584c2c2-1794609214087302768.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "semantic_catalog_rejects_forged_bytes_formats_versions_contexts_and_generations",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "semantic_catalog_rejects_forged_bytes_formats_versions_contexts_and_generations",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.541,
+      "finished_at": "2026-11-13T22:33:36.049675+00:00",
+      "raw_log_sha256": "97ee443d9800c391c635d69fa3caca0765ffef74d970deb8a074f23a6acbe05e",
+      "private_log": "executor-sql-checkpoints/241639187244eee09087-1794609215508644837.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "semantic_records_reopen_with_scope_snapshot_and_generation_binding_without_installing_authority",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "semantic_records_reopen_with_scope_snapshot_and_generation_binding_without_installing_authority",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.894,
+      "finished_at": "2026-11-13T22:33:37.499468+00:00",
+      "raw_log_sha256": "79ec2190851b3fb748f139883169ed2b50a94129e48bbc524d2d6e36bd229ada",
+      "private_log": "executor-sql-checkpoints/9704e1b0b2c389287661-1794609216605866564.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "snapshot_reopen_scope_isolation_immutable_rows_and_exact_u64_revision",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "snapshot_reopen_scope_isolation_immutable_rows_and_exact_u64_revision",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.691,
+      "finished_at": "2026-11-13T22:33:38.734592+00:00",
+      "raw_log_sha256": "675b63761e2abc82cb2ee863b7b5ebdf105f587ca1cdf0a6a767f131df4b9187",
+      "private_log": "executor-sql-checkpoints/77925c48e51cd6b2ace1-1794609218043394974.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::guards::source_budgets_corrupt_state_and_legacy_registration_fail_without_publication",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::guards::source_budgets_corrupt_state_and_legacy_registration_fail_without_publication",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 15.456,
+      "finished_at": "2026-11-13T22:33:54.682145+00:00",
+      "raw_log_sha256": "2272100e2e64abbf2f4bacb81bae7159cdd0aeedf441a99779c77d4be7f4d35d",
+      "private_log": "executor-sql-checkpoints/f564f58d2ee9c4f42157-1794609219225761768.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::guards::source_unpublished_metadata_and_profile_reinterpretation_are_rejected",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::guards::source_unpublished_metadata_and_profile_reinterpretation_are_rejected",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.497,
+      "finished_at": "2026-11-13T22:33:56.708124+00:00",
+      "raw_log_sha256": "f320df2db954f4f6ddb361d414c2f1d46e0e1fa0606e836a9db49d47c6c9b99c",
+      "private_log": "executor-sql-checkpoints/2f30ff5f3eaa244f2055-1794609235211191363.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::isolation::source_revocation_during_artifact_io_prevents_receipt_publication",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::isolation::source_revocation_during_artifact_io_prevents_receipt_publication",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 17.897,
+      "finished_at": "2026-11-13T22:34:15.155596+00:00",
+      "raw_log_sha256": "fcf02f58ea000dd574d533080c3b3122a63f0beeac8ce46a17b82486df133dcf",
+      "private_log": "executor-sql-checkpoints/6f28ca23b5da4e8c2295-1794609237258349891.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::isolation::source_same_embedding_reused_grant_and_store_numbers_remain_scoped",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::isolation::source_same_embedding_reused_grant_and_store_numbers_remain_scoped",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.282,
+      "finished_at": "2026-11-13T22:34:50.945860+00:00",
+      "raw_log_sha256": "96f91d0a07757d818119e1c3e5386efa15a58a250908d2925120bf914b2e93c4",
+      "private_log": "executor-sql-checkpoints/cb48a75f10d81f07e87b-1794609255664100721.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::administrative::administrative_allocation_races_reconcile_one_original_id_per_resource",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::administrative::administrative_allocation_races_reconcile_one_original_id_per_resource",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 6.869,
+      "finished_at": "2026-11-13T22:34:58.329515+00:00",
+      "raw_log_sha256": "9d2d90cb534c539f163d656272c1f93d112bf345b0b52e58b3e2212360653a7b",
+      "private_log": "executor-sql-checkpoints/edf37497fa11b32d399d-1794609291460617844.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::administrative::administrative_original_results_survive_revocation_and_fresh_sql_instances_without_a_repository",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::administrative::administrative_original_results_survive_revocation_and_fresh_sql_instances_without_a_repository",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 19.365,
+      "finished_at": "2026-11-13T22:35:18.245327+00:00",
+      "raw_log_sha256": "fa6d6443461ec767cd7982e304634ae1c75e0a2d5575f24b55ec55012a327ad4",
+      "private_log": "executor-sql-checkpoints/1c6688853cdd78b35faa-1794609298879864852.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::administrative::administrative_sql_constraints_reject_partial_or_unbound_resource_results",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::administrative::administrative_sql_constraints_reject_partial_or_unbound_resource_results",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.241,
+      "finished_at": "2026-11-13T22:35:23.030410+00:00",
+      "raw_log_sha256": "3985105889e983072006f3686e64c8cf69332efbeb24bf498832919267080e3c",
+      "private_log": "executor-sql-checkpoints/57300b6a1bf561e27ad7-1794609318789753847.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::administrative::administrative_sql_faults_preserve_one_allocation_and_original_revocation_per_resource",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::administrative::administrative_sql_faults_preserve_one_allocation_and_original_revocation_per_resource",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 44.373,
+      "finished_at": "2026-11-13T22:36:07.915676+00:00",
+      "raw_log_sha256": "c0029fca3be30d5f8c77af5a156eb9d24afa12b1dafdf374654b3525ffee5cd8",
+      "private_log": "executor-sql-checkpoints/e7181945ff905555a7e4-1794609323542652672.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::administrative::grants_expiring_before_sql_publication_roll_back_allocation_and_key",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::administrative::grants_expiring_before_sql_publication_roll_back_allocation_and_key",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 17.241,
+      "finished_at": "2026-11-13T22:36:25.714470+00:00",
+      "raw_log_sha256": "1a653dacdf5a9f36b7b0a5ef21133ac026749aebd7caa9790edae4bde5b879b1",
+      "private_log": "executor-sql-checkpoints/1b12f2a9f91bf394245c-1794609368473117409.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::administrative::runtime_database_login_cannot_forge_an_administrative_journal_actor",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::administrative::runtime_database_login_cannot_forge_an_administrative_journal_actor",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.124,
+      "finished_at": "2026-11-13T22:36:28.313916+00:00",
+      "raw_log_sha256": "7b98e640c8ac0405c0cc7e088c104c678d735972f66259bf7d8ca7f957779cf9",
+      "private_log": "executor-sql-checkpoints/6486394a4ffd5119a95e-1794609386190092375.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::executor::executor_concurrent_original_claims_publish_one_event_and_one_original_result",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::executor::executor_concurrent_original_claims_publish_one_event_and_one_original_result",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 14.042,
+      "finished_at": "2026-11-13T22:36:42.854138+00:00",
+      "raw_log_sha256": "824cd9d954c154d2556c12e018321d3005e4acf496855b20afdcf09b3cd6b818",
+      "private_log": "executor-sql-checkpoints/d3639cfe9c707b5a74e2-1794609388812419145.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::executor::executor_each_transition_rolls_back_and_recovers_lost_commit_replies",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::executor::executor_each_transition_rolls_back_and_recovers_lost_commit_replies",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 51.561,
+      "finished_at": "2026-11-13T22:37:34.963725+00:00",
+      "raw_log_sha256": "e0896b102b755c4acb5cc94256dfe20e46123918743ae4d45b5997f66ad8b750",
+      "private_log": "executor-sql-checkpoints/6d088700344c886becbe-1794609403402940536.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::executor::executor_final_database_clock_rolls_back_the_transition_and_original_key",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::executor::executor_final_database_clock_rolls_back_the_transition_and_original_key",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 15.013,
+      "finished_at": "2026-11-13T22:37:50.506999+00:00",
+      "raw_log_sha256": "e5404293c0df8d21faa2a77bd64a775a5d28632c7a7c7a5e484bbc0c0e5faa20",
+      "private_log": "executor-sql-checkpoints/f412b7e479328c7f752f-1794609455493581649.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::executor::executor_original_missing_selector_and_invalid_finish_remain_original_after_admission",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::executor::executor_original_missing_selector_and_invalid_finish_remain_original_after_admission",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 16.385,
+      "finished_at": "2026-11-13T22:38:07.383170+00:00",
+      "raw_log_sha256": "2123b2c9b0695d2408abf2372b297a68aa98aaf468ddf245567b90e62b605595",
+      "private_log": "executor-sql-checkpoints/0cb04668105cdd3abcb5-1794609470998497057.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::executor::executor_original_replies_and_rejections_survive_terminal_state_and_fresh_connections",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::executor::executor_original_replies_and_rejections_survive_terminal_state_and_fresh_connections",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 30.005,
+      "finished_at": "2026-11-13T22:38:37.871933+00:00",
+      "raw_log_sha256": "eedf78f8773ec69cfeeb790cfcbdf06d3bbc2a8c541c9177b664f35c28a78151",
+      "private_log": "executor-sql-checkpoints/37c97b6f57ee54117777-1794609487866461698.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::executor::executor_sql_constraints_reject_partial_context_results_and_duplicate_events",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::executor::executor_sql_constraints_reject_partial_context_results_and_duplicate_events",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 10.132,
+      "finished_at": "2026-11-13T22:38:48.494635+00:00",
+      "raw_log_sha256": "76d4ac5df9ae1ddb1baffaa9111bc4e1309afe7facd50c0d26771bab5d314b4b",
+      "private_log": "executor-sql-checkpoints/d019613c1085bb073c09-1794609518363060156.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::native_patch_and_revalidation_rejections_never_substitute_for_source_operations",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::native_patch_and_revalidation_rejections_never_substitute_for_source_operations",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 11.853,
+      "finished_at": "2026-11-13T22:39:00.849284+00:00",
+      "raw_log_sha256": "2917db68809f4913662ddf6c0e86b92a65ba2988136c0972d6df695221c0b814",
+      "private_log": "executor-sql-checkpoints/acb6d2597c72dd42f029-1794609528996141710.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::policy::delayed_policy_installation_cannot_publish_an_expired_new_head",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::policy::delayed_policy_installation_cannot_publish_an_expired_new_head",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 25.515,
+      "finished_at": "2026-11-13T22:39:26.940772+00:00",
+      "raw_log_sha256": "048cb9eafb6f1611b6a7216d04867953c35cba0d5f6fbf00abada38b05226822",
+      "private_log": "executor-sql-checkpoints/8f1c81ba9ec5fa6a1946-1794609541425840505.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::policy::source_policy_original_results_survive_replacement_and_a_lost_response",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::policy::source_policy_original_results_survive_replacement_and_a_lost_response",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 17.042,
+      "finished_at": "2026-11-13T22:39:44.438016+00:00",
+      "raw_log_sha256": "b790d083875b25be62fbe316ccb7565303f1d5ec259986c7f0463212b315a00f",
+      "private_log": "executor-sql-checkpoints/0b04e734260cf8a871b0-1794609567395503730.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::source_analysis_returns_the_original_effective_accesses_after_abort_and_reopen",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::source_analysis_returns_the_original_effective_accesses_after_abort_and_reopen",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 12.477,
+      "finished_at": "2026-11-13T22:39:57.378930+00:00",
+      "raw_log_sha256": "ab8a0c8603cac13fa3697b7f31f711bf42a4744ea6e8bcefdb0a001ca103886f",
+      "private_log": "executor-sql-checkpoints/c7ba8c9cea062211bd33-1794609584902402622.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::source_cancellation_keeps_execution_reply_and_closes_admitted_work",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::source_cancellation_keeps_execution_reply_and_closes_admitted_work",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 17.296,
+      "finished_at": "2026-11-13T22:40:15.159053+00:00",
+      "raw_log_sha256": "1228f623466ae7c77ff07e383c5e4d205a70ed887f930fdcd177b512e2082113",
+      "private_log": "executor-sql-checkpoints/421dd13527151c53aef5-1794609597863424569.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::source_lease_original_results_survive_full_graph_reopen",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::source_lease_original_results_survive_full_graph_reopen",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 14.177,
+      "finished_at": "2026-11-13T22:40:29.831439+00:00",
+      "raw_log_sha256": "bad3e785cfa1cb6dc4cf261b752b5f23f2db463dde6cfc1c3b7e07834563132c",
+      "private_log": "executor-sql-checkpoints/10de85f77ef2ea6c80b0-1794609615654013442.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::source_lease_reply_survives_an_ambiguous_database_commit",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::source_lease_reply_survives_an_ambiguous_database_commit",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 11.755,
+      "finished_at": "2026-11-13T22:40:42.115920+00:00",
+      "raw_log_sha256": "ab73a1853319092d15f5d1202fec9c9c346975bb6d2c5a48624d0553930cb99e",
+      "private_log": "executor-sql-checkpoints/ab4528128896167f683f-1794609630361023050.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::source_proposal_replays_its_original_state_after_source_execution_and_cancellation",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::source_proposal_replays_its_original_state_after_source_execution_and_cancellation",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 13.251,
+      "finished_at": "2026-11-13T22:40:55.862754+00:00",
+      "raw_log_sha256": "a0c30f49bfb8866db7e59093a6a8bd85da8087de6e774247c5eae7f2b35c5544",
+      "private_log": "executor-sql-checkpoints/c6d2d847cd79645c9ba5-1794609642611823597.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::mutations::source_repository_requests_recover_original_registration_and_analysis_heads",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::mutations::source_repository_requests_recover_original_registration_and_analysis_heads",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 13.752,
+      "finished_at": "2026-11-13T22:41:10.158540+00:00",
+      "raw_log_sha256": "7c122e418e5532b2ef40011acc1fc182a6381a086c38436fdaab3c21f9d5a5c3",
+      "private_log": "executor-sql-checkpoints/38220c3a45318bda72f7-1794609656406978047.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::source_admission_publication_faults_withhold_results_and_recover_original_rejection",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::source_admission_publication_faults_withhold_results_and_recover_original_rejection",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 14.228,
+      "finished_at": "2026-11-13T22:41:24.881697+00:00",
+      "raw_log_sha256": "94d1381ee2bd30910c106a50d7d3dd8f927a15c58b58a52d6bab49535e11b357",
+      "private_log": "executor-sql-checkpoints/15080dbf235540e20b42-1794609670653630031.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::source_evidence_receipts_and_logical_object_associations_reopen_all_assessments",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::source_evidence_receipts_and_logical_object_associations_reopen_all_assessments",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 71.329,
+      "finished_at": "2026-11-13T22:42:36.720120+00:00",
+      "raw_log_sha256": "08db2831f177e57b2b4ba191e717ffef09126d2353539333218b72d031b2cbef",
+      "private_log": "executor-sql-checkpoints/9d687aba58808cdc9f84-1794609685390922517.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::source_final_database_clock_rejects_an_execution_transition_after_lease_expiry",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::source_final_database_clock_rejects_an_execution_transition_after_lease_expiry",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 14.693,
+      "finished_at": "2026-11-13T22:42:51.906406+00:00",
+      "raw_log_sha256": "85626311578caec0a6e03fb9d9c7a8a85d962e5b8a30e2f075f90c3da849dc1c",
+      "private_log": "executor-sql-checkpoints/dd796a78f44bd550c30d-1794609757213209450.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::source_lifecycle_admission_claim_and_failure_reopen_each_phase_without_native_patches",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::source_lifecycle_admission_claim_and_failure_reopen_each_phase_without_native_patches",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 55.521,
+      "finished_at": "2026-11-13T22:43:47.891328+00:00",
+      "raw_log_sha256": "39e99348d27268e8cca118169d7291cd6de0d8f32a974cbbd693ce6014f31daa",
+      "private_log": "executor-sql-checkpoints/5c96f10f39f79209539b-1794609772370333710.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::lifecycle::source_original_rejections_collisions_and_historical_policy_survive_head_replacement",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::lifecycle::source_original_rejections_collisions_and_historical_policy_survive_head_replacement",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.427,
+      "finished_at": "2026-11-13T22:44:17.906008+00:00",
+      "raw_log_sha256": "e8c7a1c7a666be4dd5f1a8d583c9cf40cdd0e6da2d71e8ce285186fa01ad68ee",
+      "private_log": "executor-sql-checkpoints/9af007288312cc9c6edc-1794609828478544225.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::migration::v3_source_upgrade_preserves_legacy_artifact_associations_and_rolls_back_faults",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::migration::v3_source_upgrade_preserves_legacy_artifact_associations_and_rolls_back_faults",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.504,
+      "finished_at": "2026-11-13T22:44:20.903284+00:00",
+      "raw_log_sha256": "e03d24d6545553a9b7e61da4c32b302341a17f0eac6e3ca3be957c98c4d17430",
+      "private_log": "executor-sql-checkpoints/6c47284bd6421b6e778e-1794609858399019675.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::recovery::source_independent_process_claim_race_has_one_durable_winner",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::recovery::source_independent_process_claim_race_has_one_durable_winner",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 13.219,
+      "finished_at": "2026-11-13T22:44:34.652067+00:00",
+      "raw_log_sha256": "afb515037c5df8341f5a4efbcc1dfd3ee1398375fe3847032ca950094abd4c2f",
+      "private_log": "executor-sql-checkpoints/e8e29ae09bbed75365c4-1794609861432976641.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::recovery::source_process_death_before_and_after_commit_reconciles_original_admission",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::recovery::source_process_death_before_and_after_commit_reconciles_original_admission",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 32.447,
+      "finished_at": "2026-11-13T22:45:07.591840+00:00",
+      "raw_log_sha256": "077de9e91d5ddf1ae800582c7942194c97df8a5fe66e28d526f78350afa90841",
+      "private_log": "executor-sql-checkpoints/64736b5a9c8c4d0018b3-1794609875144874391.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "source_authority::source_profile_pre_registration_grants_and_configured_store_reopen_without_runtime_resources",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "source_authority::source_profile_pre_registration_grants_and_configured_store_reopen_without_runtime_resources",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 11.134,
+      "finished_at": "2026-11-13T22:45:19.233187+00:00",
+      "raw_log_sha256": "0b7cb5256bc71d91e65d0954b2957fffb778c7eae9987654b17c6cdd13ccce06",
+      "private_log": "executor-sql-checkpoints/949029cef437908b76b5-1794609908099202539.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "sql_native_preserves_lifecycle_and_rejects_budget_clock_and_scope_without_publication",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "sql_native_preserves_lifecycle_and_rejects_budget_clock_and_scope_without_publication",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.244,
+      "finished_at": "2026-11-13T22:45:23.968744+00:00",
+      "raw_log_sha256": "5e80afaa6304881bdb9bc42e5a9024a645f868320a6e0ac0ec12b7f44a47f4af",
+      "private_log": "executor-sql-checkpoints/40017dd1433b648682c6-1794609919724518340.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "sql_registration_checks_the_new_schema_after_waiting_for_a_migrator",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "sql_registration_checks_the_new_schema_after_waiting_for_a_migrator",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.487,
+      "finished_at": "2026-11-13T22:45:26.975580+00:00",
+      "raw_log_sha256": "4b888a68ee0b7e34e786e44f8880030c1da3de2fa6a6fadb30c7c762dbf06726",
+      "private_log": "executor-sql-checkpoints/7ff27d1c104ed84243ff-1794609924488376395.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "sql_registration_process_death_rolls_back_before_a_fresh_independent_writer",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "sql_registration_process_death_rolls_back_before_a_fresh_independent_writer",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.248,
+      "finished_at": "2026-11-13T22:45:29.760661+00:00",
+      "raw_log_sha256": "b687d03515f08f2fa63e03dfd5c4296cd860cae1e8f39d70d7559c62618cda09",
+      "private_log": "executor-sql-checkpoints/e5af735a9eaeca9eef6c-1794609927512377872.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "sql_registration_reopens_exact_state_preserves_uncertainty_and_requires_fresh_sessions",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "sql_registration_reopens_exact_state_preserves_uncertainty_and_requires_fresh_sessions",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 7.211,
+      "finished_at": "2026-11-13T22:45:37.488163+00:00",
+      "raw_log_sha256": "c80a4d0edc27be0f7f2850577ff62f7925b66ba731658d0dc6bf385d86aa9a43",
+      "private_log": "executor-sql-checkpoints/5954fbf6e219da66d9a2-1794609930277011291.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "sql_registration_roles_scope_revocation_and_live_schema_fencing_fail_closed",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "sql_registration_roles_scope_revocation_and_live_schema_fencing_fail_closed",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.017,
+      "finished_at": "2026-11-13T22:45:41.019830+00:00",
+      "raw_log_sha256": "f79fc5b2135a1c5a8331a163f25b9307f1a81f28d780a90d6d5ef7e19da6c72c",
+      "private_log": "executor-sql-checkpoints/a3a910b84caefcbeff45-1794609938002492779.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "sql_registration_rolls_back_failures_and_withholds_lost_commit_acknowledgement",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "sql_registration_rolls_back_failures_and_withholds_lost_commit_acknowledgement",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 5.441,
+      "finished_at": "2026-11-13T22:45:46.984115+00:00",
+      "raw_log_sha256": "9cc7cfa208deaa7859a539c08dce15a837cbf8f9637ab578227b0a22313098d8",
+      "private_log": "executor-sql-checkpoints/5c770930459af0ba012a-1794609941543474643.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "sql_registration_serializes_independent_instances_and_bootstrap_creators",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "sql_registration_serializes_independent_instances_and_bootstrap_creators",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.245,
+      "finished_at": "2026-11-13T22:45:50.994599+00:00",
+      "raw_log_sha256": "f5b5e7dd8ebd4bb3c4ebf57f9eb6b6749ce99ef1a3507f0a640e1eefb8a270f3",
+      "private_log": "executor-sql-checkpoints/372d71108474682e810e-1794609947749280415.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "sql_registration_waiting_reader_observes_coherent_state_or_explicit_contention",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "sql_registration_waiting_reader_observes_coherent_state_or_explicit_contention",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.353,
+      "finished_at": "2026-11-13T22:45:53.872001+00:00",
+      "raw_log_sha256": "62033447a8d463ba9f3ed5a379be9221615b69cc68f700891c9bebffbf927f41",
+      "private_log": "executor-sql-checkpoints/46f5acf25a584157a339-1794609951518574571.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "v1_upgrade_is_atomic_preserves_data_and_rejects_incomplete_or_future_history",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "v1_upgrade_is_atomic_preserves_data_and_rejects_incomplete_or_future_history",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.007,
+      "finished_at": "2026-11-13T22:45:56.389951+00:00",
+      "raw_log_sha256": "bb6ed12c4b013d53d900cba2dd661b9dab283a7c26a9e464c9eb02635a3ddd8e",
+      "private_log": "executor-sql-checkpoints/5e807944b1087e5a042f-1794609954383225108.raw.log",
+      "child_result_summaries_not_added": 0
+    },
+    {
+      "identity_digest": "35d3a7038c16112933daea8e9d9a18c29c96432e224da683e34ff388a5f783df",
+      "case": "v2_upgrade_recovers_errors_and_process_death_with_scoped_immutable_publications",
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0",
+        "--ignored",
+        "--exact",
+        "v2_upgrade_recovers_errors_and_process_death_with_scoped_immutable_publications",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.189,
+      "finished_at": "2026-11-13T22:45:59.200410+00:00",
+      "raw_log_sha256": "dde2293b521451fa119cb11a6d2ccfdb1ec49a45560a27fca044a62a68853baf",
+      "private_log": "executor-sql-checkpoints/76080b55693075253b03-1794609957011385899.raw.log",
+      "child_result_summaries_not_added": 0
+    }
+  ],
+  "exit_code": 0,
+  "prior_monolithic_interruption_retained": true,
+  "limitation": "Serial isolated-process execution of all parent cases; not a successful monolithic-process invocation.",
+  "log_presentation": {
+    "public_sha256_before_eof_normalization": "c8037603fb4543834b8f7015f60bcbc810fd77a30014cbd1a5f3518d7d85c655",
+    "public_sha256": "9b89360503fc36d21aea8a91b92eb37e5d8563fabd8d71f7a529005f5e0f5352",
+    "extra_blank_lines_at_eof_removed": true,
+    "individual_raw_case_logs_unchanged_and_retained": true
+  }
+}

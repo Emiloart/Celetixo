@@ -1242,7 +1242,7 @@ fn public_source_literals_and_reviewed_grant_assignments_require_exact_admission
     ));
     let mut approved = request(dir.path());
     for argument in [
-        "engine.rs=9ae93c2684cc990ec9be9d7c9dae5c2a6e2796193869fad373e61148f5f5dc43",
+        "engine.rs=9c92eab1627977cf6b355ce90f75490aa37871d3fcafe15c1e13fea906cd066c",
         "authority_records.rs=4b38c95bf1e0739a57db589bd9865da841af3a437fff557350a9a965fa22acf9",
         "source_recovery.rs=1552093e377c74023caa1aaf702a116758b81d203735c074e62b4d26a98f658d",
     ] {

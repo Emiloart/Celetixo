@@ -52,7 +52,7 @@ fn v3_source_upgrade_preserves_legacy_artifact_associations_and_rolls_back_fault
             .get::<_, i64>(0),
         3
     );
-    assert_eq!(migrate(&mut client).unwrap().schema_version, 5);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 6);
     validate_schema(&mut client).unwrap();
     assert!(!migrate(&mut client).unwrap().newly_applied);
     let row=client.query_one("SELECT original.object_digest=content.object_digest,original.byte_length=content.byte_length,original.registration_id=location.registration_id,original.locator_payload_digest=location.locator_payload_digest,location.locator_kind,store.definition_payload_digest IS NULL FROM celetixo.artifact_objects AS original JOIN celetixo.artifact_contents AS content USING (organization_id,workspace_id,repository_id,object_digest) JOIN celetixo.artifact_locations AS location USING (organization_id,workspace_id,repository_id,object_digest,registration_id) JOIN celetixo.artifact_store_registrations AS store USING (organization_id,workspace_id,repository_id,registration_id)",&[]).unwrap();

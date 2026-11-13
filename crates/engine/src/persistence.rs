@@ -30,6 +30,7 @@ mod source_errors;
 mod source_event;
 mod source_evidence;
 mod source_execution;
+mod source_mutation;
 mod source_operation;
 pub use lifecycle::{
     ImpactAnalysisRecord, NativeIntentRecord, VerificationEvidenceRecord, restore_access_set,

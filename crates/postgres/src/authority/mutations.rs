@@ -11,9 +11,11 @@ use celetixo_engine::persistence::{
 };
 use native::{Loader, SqlResult, optional_digest, optional_number};
 use postgres::types::ToSql;
+mod source_executor;
 
 fn kind(request: &MutationRequest) -> &'static str {
     match request {
+        MutationRequest::SourceExecutor(request) => request.action.kind(),
         MutationRequest::Administrative(request) => request.kind(),
         MutationRequest::Repository(request) => match request.as_ref() {
             RepositoryMutation::InstallPolicy { .. } => "InstallPolicy",
@@ -40,11 +42,16 @@ pub(super) fn load(
     records: &mut NativeRecords,
 ) -> SqlResult<()> {
     for row in loader.rows(tx, "engine_mutations",
-        "actor_kind,grant_kind,actor_principal_id::text,actor_grant_id::text,idempotency_key::text,request_kind,request_digest::bytea,request_payload_digest::bytea,transaction_id::text,recorded_at_ms::text,resolved_transaction_id::text,resolved_attempt::text,state_before,lease_events_before::text,outcome_kind,outcome_payload_digest::bytea,event_sequence::text,result_fence::text,result_expiry_ms::text,result_acquisition_attempt::text,result_kind,result_state,result_attempt::text,result_access_digest::bytea,result_base_snapshot_digest::bytea,result_candidate_snapshot_digest::bytea,result_patch_digest::bytea,result_analysis_digest::bytea,result_analysis_payload_digest::bytea,result_evidence_digest::bytea,result_repository_snapshot_digest::bytea,result_repository_model_digest::bytea,result_repository_model_generation::text,result_policy_digest::bytea,result_policy_model_generation::text,actor_digest::bytea,admin_counter_before::text,admin_target_active_before,administrative_target_id::text,result_resource_kind,result_resource_id::text,result_grant_kind,result_grant_id::text,result_store_registration_id::text",
+        "actor_kind,grant_kind,actor_principal_id::text,actor_grant_id::text,idempotency_key::text,request_kind,request_digest::bytea,request_payload_digest::bytea,transaction_id::text,recorded_at_ms::text,resolved_transaction_id::text,resolved_attempt::text,state_before,lease_events_before::text,outcome_kind,outcome_payload_digest::bytea,event_sequence::text,result_fence::text,result_expiry_ms::text,result_acquisition_attempt::text,result_kind,result_state,result_attempt::text,result_access_digest::bytea,result_base_snapshot_digest::bytea,result_candidate_snapshot_digest::bytea,result_patch_digest::bytea,result_analysis_digest::bytea,result_analysis_payload_digest::bytea,result_evidence_digest::bytea,result_repository_snapshot_digest::bytea,result_repository_model_digest::bytea,result_repository_model_generation::text,result_policy_digest::bytea,result_policy_model_generation::text,actor_digest::bytea,admin_counter_before::text,admin_target_active_before,administrative_target_id::text,result_resource_kind,result_resource_id::text,result_grant_kind,result_grant_id::text,result_store_registration_id::text,raw_source_attempt_id::text,raw_source_admission_digest::bytea,resolved_source_attempt_id::text,source_admission_digest::bytea,source_state_before,source_executor_before::text,source_events_before::text,source_events_after::text,source_before_event_sequence::text,source_effect_event_sequence::text,result_source_state,result_source_event_sequence::text,result_source_executor_grant_id::text",
         "actor_kind,actor_digest,idempotency_key")? {
         let actor_kind = row.get::<_, String>(0);
         let actor = if actor_kind == "Session" && row.get::<_, Option<String>>(1).as_deref() == Some("session") {
             MutationActor::Session {
+                principal: PrincipalId::new(row.get::<_, Option<String>>(2).ok_or(AuthorityFailure::Integrity)?).map_err(|_| AuthorityFailure::Integrity)?,
+                grant: optional_number(&row, 3)?.ok_or(AuthorityFailure::Integrity)?,
+            }
+        } else if actor_kind == "SourceExecutor" && row.get::<_, Option<String>>(1).as_deref() == Some("executor") {
+            MutationActor::SourceExecutor {
                 principal: PrincipalId::new(row.get::<_, Option<String>>(2).ok_or(AuthorityFailure::Integrity)?).map_err(|_| AuthorityFailure::Integrity)?,
                 grant: optional_number(&row, 3)?.ok_or(AuthorityFailure::Integrity)?,
             }
@@ -71,6 +78,7 @@ pub(super) fn load(
         let bytes = loader.payload(tx, outcome_id, MutationOutcomeRecord::FORMAT)?;
         let outcome = restore_mutation_outcome(loader.scope, &key, &request, outcome_id, &bytes, loader.budget.decode_limits()).map_err(restore)?;
         let record = outcome.record();
+        if source_executor::Columns::load(&row,44)? != source_executor::Columns::new(&key,record)? { return Err(AuthorityFailure::Integrity); }
         if optional_number(&row,36)? != record.administration.as_ref().map(|context| context.counter_before)
             || row.get::<_,Option<bool>>(37) != record.administration.as_ref().and_then(|context| context.target_active_before)
             || optional_number(&row,38)? != administrative_target(&record.request) {return Err(AuthorityFailure::Integrity);}
@@ -84,6 +92,7 @@ pub(super) fn load(
             return Err(AuthorityFailure::Integrity);
         }
         let (outcome_kind, sequence, fence, expiry, acquisition) = match record.outcome {
+            Ok(MutationValue::SourceAttempt(_)) => ("Accepted",None,None,None,None),
             Ok(MutationValue::Allocation {..} | MutationValue::Revocation {..}) => ("Accepted", None, None, None, None),
             Ok(MutationValue::Policy {..})=>("Accepted",None,None,None,None),
             Ok(MutationValue::Repository {..})=>("Accepted",None,None,None,None),
@@ -95,6 +104,7 @@ pub(super) fn load(
             Ok(MutationValue::Bindings {..}|MutationValue::Evidence {..})=>("Accepted",None,None,None,None),
         };
         let (result_kind,result_state,result_attempt)=match record.outcome {
+            Ok(MutationValue::SourceAttempt(_)) => (Some("SourceAttempt"),None,None),
             Ok(MutationValue::Allocation {..})=>(Some("Allocation"),None,None),
             Ok(MutationValue::Revocation {..})=>(Some("Revocation"),None,None),
             Ok(MutationValue::Policy {..})=>(Some("Policy"),None,None),
@@ -186,7 +196,12 @@ pub(super) fn publish(
                 Some(grant.to_string()),
             ),
             MutationActor::EmbeddingAdministrator => ("EmbeddingAdministrator", None, None, None),
-            _ => return Err(AuthorityFailure::UnsupportedProfile),
+            MutationActor::SourceExecutor { principal, grant } => (
+                "SourceExecutor",
+                Some("executor"),
+                Some(principal.as_str()),
+                Some(grant.to_string()),
+            ),
         };
         let request_id = record.request.digest(scope, &key.actor);
         semantic::put_payload(
@@ -214,6 +229,7 @@ pub(super) fn publish(
         let attempt = record.resolved_attempt.map(|n| n.to_string());
         let state = record.state_before.map(native::state_name);
         let (outcome_kind, sequence, fence, expiry, acquisition) = match record.outcome {
+            Ok(MutationValue::SourceAttempt(_)) => ("Accepted", None, None, None, None),
             Ok(MutationValue::Allocation { .. } | MutationValue::Revocation { .. }) => {
                 ("Accepted", None, None, None, None)
             }
@@ -238,6 +254,7 @@ pub(super) fn publish(
             }
         };
         let (result_kind, result_state, result_attempt) = match record.outcome {
+            Ok(MutationValue::SourceAttempt(_)) => (Some("SourceAttempt"), None, None),
             Ok(MutationValue::Allocation { .. }) => (Some("Allocation"), None, None),
             Ok(MutationValue::Revocation { .. }) => (Some("Revocation"), None, None),
             Ok(MutationValue::Policy { .. }) => (Some("Policy"), None, None),
@@ -342,6 +359,14 @@ pub(super) fn publish(
         let resource_store_id = resource.and_then(|(kind, id)| {
             (kind == AdministrativeResource::ArtifactStore).then(|| id.to_string())
         });
+        let source = source_executor::Columns::new(key, record)?;
+        let source_executor_before = source.executor_before.map(|n| n.to_string());
+        let source_events_before = source.events_before.map(|n| n.to_string());
+        let source_events_after = source.events_after.map(|n| n.to_string());
+        let source_before_sequence = source.before_sequence.map(|n| n.to_string());
+        let source_effect_sequence = source.effect_sequence.map(|n| n.to_string());
+        let source_result_sequence = source.result_sequence.map(|n| n.to_string());
+        let source_result_executor = source.result_executor.map(|n| n.to_string());
         let args: &[&(dyn ToSql + Sync)] = &[
             &a[0],
             &a[1],
@@ -389,9 +414,22 @@ pub(super) fn publish(
             &resource_grant_kind,
             &resource_grant_id,
             &resource_store_id,
+            &source.raw_attempt,
+            &source.raw_admission,
+            &source.resolved_attempt,
+            &source.admission,
+            &source.state_before,
+            &source_executor_before,
+            &source_events_before,
+            &source_events_after,
+            &source_before_sequence,
+            &source_effect_sequence,
+            &source.result_state,
+            &source_result_sequence,
+            &source_result_executor,
         ];
         let changed = tx.execute(
-            "INSERT INTO celetixo.engine_mutations (organization_id,workspace_id,repository_id,actor_kind,grant_kind,actor_principal_id,actor_grant_id,idempotency_key,request_kind,request_digest,request_payload_digest,transaction_id,recorded_at_ms,resolved_transaction_id,resolved_attempt,state_before,lease_events_before,outcome_kind,outcome_payload_digest,event_sequence,result_fence,result_expiry_ms,result_acquisition_attempt,result_kind,result_state,result_attempt,result_access_digest,result_base_snapshot_digest,result_candidate_snapshot_digest,result_patch_digest,result_analysis_digest,result_analysis_payload_digest,result_evidence_digest,result_repository_snapshot_digest,result_repository_model_digest,result_repository_model_generation,result_policy_digest,result_policy_model_generation,actor_digest,admin_counter_before,admin_target_active_before,administrative_target_id,result_resource_kind,result_resource_id,result_grant_kind,result_grant_id,result_store_registration_id) VALUES ($1::text,$2::text,$3::text,$37,$38,$4::text,$5::text::numeric,$6::text,$7,$8::bytea,$8::bytea,$9::text,$10::text::numeric,$11::text,$12::text::numeric,$13,$14::text::numeric,$15,$16::bytea,$17::text::numeric,$18::text::numeric,$19::text::numeric,$20::text::numeric,$21,$22,$23::text::numeric,$24::bytea,$25::bytea,$26::bytea,$27::bytea,$28::bytea,$29::bytea,$30::bytea,$31::bytea,$32::bytea,$33::text::numeric,$34::bytea,$35::text::numeric,$36::bytea,$39::text::numeric,$40,$41::text::numeric,$42,$43::text::numeric,$44,$45::text::numeric,$46::text::numeric)", args).map_err(database)?;
+            "INSERT INTO celetixo.engine_mutations (organization_id,workspace_id,repository_id,actor_kind,grant_kind,actor_principal_id,actor_grant_id,idempotency_key,request_kind,request_digest,request_payload_digest,transaction_id,recorded_at_ms,resolved_transaction_id,resolved_attempt,state_before,lease_events_before,outcome_kind,outcome_payload_digest,event_sequence,result_fence,result_expiry_ms,result_acquisition_attempt,result_kind,result_state,result_attempt,result_access_digest,result_base_snapshot_digest,result_candidate_snapshot_digest,result_patch_digest,result_analysis_digest,result_analysis_payload_digest,result_evidence_digest,result_repository_snapshot_digest,result_repository_model_digest,result_repository_model_generation,result_policy_digest,result_policy_model_generation,actor_digest,admin_counter_before,admin_target_active_before,administrative_target_id,result_resource_kind,result_resource_id,result_grant_kind,result_grant_id,result_store_registration_id,raw_source_attempt_id,raw_source_admission_digest,resolved_source_attempt_id,source_admission_digest,source_state_before,source_executor_before,source_events_before,source_events_after,source_before_event_sequence,source_effect_event_sequence,result_source_state,result_source_event_sequence,result_source_executor_grant_id) VALUES ($1::text,$2::text,$3::text,$37,$38,$4::text,$5::text::numeric,$6::text,$7,$8::bytea,$8::bytea,$9::text,$10::text::numeric,$11::text,$12::text::numeric,$13,$14::text::numeric,$15,$16::bytea,$17::text::numeric,$18::text::numeric,$19::text::numeric,$20::text::numeric,$21,$22,$23::text::numeric,$24::bytea,$25::bytea,$26::bytea,$27::bytea,$28::bytea,$29::bytea,$30::bytea,$31::bytea,$32::bytea,$33::text::numeric,$34::bytea,$35::text::numeric,$36::bytea,$39::text::numeric,$40,$41::text::numeric,$42,$43::text::numeric,$44,$45::text::numeric,$46::text::numeric,$47::text,$48::bytea,$49::text,$50::bytea,$51,$52::text::numeric,$53::text::numeric,$54::text::numeric,$55::text::numeric,$56::text::numeric,$57,$58::text::numeric,$59::text::numeric)", args).map_err(database)?;
         if changed != 1 {
             return Err(AuthorityFailure::Contention);
         }

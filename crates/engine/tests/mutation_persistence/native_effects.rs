@@ -202,6 +202,7 @@ fn original_native_inputs_bind_raw_snapshot_patch_and_full_verification_fields()
             resolved_attempt: Some(attempt),
             state_before: Some(state),
             lease_events_before: 1,
+            source_execution: None,
             administration: None,
             outcome,
         };
@@ -249,6 +250,7 @@ fn original_native_rejections_keep_before_images_invariants_and_mismatched_evide
             resolved_attempt: Some(3),
             state_before: Some(TransactionState::Executing),
             lease_events_before: 1,
+            source_execution: None,
             administration: None,
             outcome: Err(error),
         });
@@ -266,6 +268,7 @@ fn original_native_rejections_keep_before_images_invariants_and_mismatched_evide
         resolved_attempt: Some(8),
         state_before: Some(TransactionState::Validating),
         lease_events_before: 1,
+        source_execution: None,
         administration: None,
         outcome: Err(EngineError::EvidenceMismatch),
     });
@@ -283,6 +286,7 @@ fn original_native_rejections_keep_before_images_invariants_and_mismatched_evide
             resolved_attempt: Some(3),
             state_before: Some(TransactionState::Validating),
             lease_events_before: 1,
+            source_execution: None,
             administration: None,
             outcome: Ok(MutationValue::Evidence {
                 evidence: original.id(),

@@ -1,0 +1,34 @@
+{
+  "kind": "Combined exact-source local development validation; not Engine-admitted evidence or full Goal 04 acceptance",
+  "workspace_passed": 504,
+  "ordinary_ignored": 102,
+  "actual_linux_t1_passed": 10,
+  "actual_postgres_parent_groups_passed": 87,
+  "postgres_execution_method": "All 87 parent cases serially in separate processes; durable exact-source/executable per-case receipts. No successful monolithic-process invocation is claimed.",
+  "postgres_child_summaries_not_added": 8,
+  "remaining_check_groups_passed": 6,
+  "source_unchanged_across_original_and_resumed_gates": true,
+  "frozen_source_files": 255,
+  "prior_environment_failed_sql_attempt_retained": true,
+  "subsequent_interrupted_monolithic_attempt_retained": true,
+  "evidence_files": {
+    "checks.json": "3e9c4c9b6c02fdb1d1b5c1dee5ac4816aef7feda038e4f60c0650d9efeb1a1b6",
+    "checks.log": "020af373739b56fbd1f57b0163f7f3c3c4a5a494ca91a0c0e2bd7015d07a3e14",
+    "checkpointed-sql-checks.json": "bb2214c0b6d8098f24c1bc0bc84a58ccf905064d506d2fc9cad443267d95c9e1",
+    "checkpointed-sql-checks.log": "9b89360503fc36d21aea8a91b92eb37e5d8563fabd8d71f7a529005f5e0f5352",
+    "example-checks.json": "5a2deca1704ba2f31c9534a8c49f4225d95f61a124355f53d9a2ed83fce76dc3",
+    "example-checks.log": "abc13bf528e7f7959356f3ca4e69fc0dc6782866d0b7bfe656e44032aec4ef2b",
+    "remaining-checks.json": "eb054e3b9f5cb6193595a022ad85e30c27515c370264937d1a77ed23a5f59b45",
+    "remaining-checks.log": "619c99d7910115ef988f39a1f392962d1eeb785d16897df87f1839064f5d5aab",
+    "interrupted-checks.json": "3485dcd8423c61d21f23f06e68db1407e57c0da1151101e2c707ecd7c9931fe7",
+    "interrupted-checks.log": "3cb63f751fb6b5481f9c8a93734227f37cfb5c9a3cb337f27ce31c50003003db",
+    "postgres-profile.json": "1c5ddf39f7008e8dccad2562b29c346f5202642365aa977252a1f461d08c5f53",
+    "postgres-stop.json": "ebbcef873f1255a77aca0aa6fe71f11d38a262ea2cf32d30e481780ba2d872e7"
+  },
+  "not_run": [
+    "Hosted CI execution remains unconfirmed.",
+    "Real rust-analyzer probe unchanged; not rerun.",
+    "Source commit/revalidation, complete 04.1/04.2, broader generated SQL oracle, remaining real services/security/failover/backup/restore/load remain incomplete."
+  ],
+  "checkpointed_sql_wall_seconds": 2340.697
+}

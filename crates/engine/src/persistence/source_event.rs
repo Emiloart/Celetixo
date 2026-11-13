@@ -123,24 +123,9 @@ pub fn restore_source_event(
     Ok(record)
 }
 fn state_name(value: SourceAttemptState) -> &'static str {
-    use SourceAttemptState::*;
-    match value {
-        Proposed => "Proposed",
-        Admitted => "Admitted",
-        Patching => "Patching",
-        PatchApplied => "PatchApplied",
-        Verifying => "Verifying",
-        EvidenceSealed => "EvidenceSealed",
-        Rejected => "Rejected",
-        PatchConflict => "PatchConflict",
-        ExecutionFailed => "ExecutionFailed",
-        TimedOut => "TimedOut",
-        Cancelled => "Cancelled",
-        EvidenceIncomplete => "EvidenceIncomplete",
-        RevalidationRequired => "RevalidationRequired",
-    }
+    value.name()
 }
-fn state(value: &str) -> Result<SourceAttemptState, RestoreError> {
+pub(super) fn state(value: &str) -> Result<SourceAttemptState, RestoreError> {
     use SourceAttemptState::*;
     Ok(match value {
         "Proposed" => Proposed,

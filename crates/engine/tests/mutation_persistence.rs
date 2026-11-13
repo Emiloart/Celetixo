@@ -40,6 +40,7 @@ fn rejection() -> MutationRecord {
         resolved_attempt: None,
         state_before: None,
         lease_events_before: 0,
+        source_execution: None,
         administration: None,
         outcome: Err(EngineError::NotFound),
     }
@@ -118,6 +119,7 @@ fn complete_success_and_typed_rejections_roundtrip_without_infrastructure_outcom
         resolved_attempt: Some(0),
         state_before: Some(TransactionState::Analyzed),
         lease_events_before: 0,
+        source_execution: None,
         administration: None,
         outcome: Ok(MutationValue::Lease {
             expires_at_ms: 15,
@@ -154,6 +156,7 @@ fn complete_success_and_typed_rejections_roundtrip_without_infrastructure_outcom
                 TransactionState::Analyzed
             }),
             lease_events_before: 0,
+            source_execution: None,
             administration: None,
             outcome: Err(error),
         });
@@ -167,6 +170,7 @@ fn complete_success_and_typed_rejections_roundtrip_without_infrastructure_outcom
         resolved_attempt: Some(0),
         state_before: Some(TransactionState::Reserved),
         lease_events_before: 1,
+        source_execution: None,
         administration: None,
         outcome: Err(EngineError::InvalidLease),
     });
@@ -217,6 +221,7 @@ fn state_mutation_codecs_preserve_original_reasons_results_and_rejections() {
             resolved_attempt: Some(2),
             state_before: Some(TransactionState::Reserved),
             lease_events_before: 4,
+            source_execution: None,
             administration: None,
             outcome: Ok(MutationValue::State {
                 state: TransactionState::Executing,
@@ -229,6 +234,7 @@ fn state_mutation_codecs_preserve_original_reasons_results_and_rejections() {
             resolved_attempt: Some(2),
             state_before: Some(TransactionState::Executing),
             lease_events_before: 4,
+            source_execution: None,
             administration: None,
             outcome: Err(EngineError::IllegalTransition {
                 from: TransactionState::Executing,
@@ -241,6 +247,7 @@ fn state_mutation_codecs_preserve_original_reasons_results_and_rejections() {
             resolved_attempt: Some(2),
             state_before: Some(TransactionState::Executing),
             lease_events_before: 4,
+            source_execution: None,
             administration: None,
             outcome: Ok(MutationValue::State {
                 state: TransactionState::Aborted,
@@ -253,6 +260,7 @@ fn state_mutation_codecs_preserve_original_reasons_results_and_rejections() {
             resolved_attempt: None,
             state_before: None,
             lease_events_before: 0,
+            source_execution: None,
             administration: None,
             outcome: Err(EngineError::InvalidIntent("abort needs reason".into())),
         },
@@ -341,6 +349,7 @@ fn analysis_result_and_typed_original_errors_roundtrip_with_bounded_accesses() {
             resolved_attempt: Some(0),
             state_before: Some(TransactionState::Proposed),
             lease_events_before: 0,
+            source_execution: None,
             administration: None,
             outcome,
         };
@@ -462,6 +471,7 @@ fn original_proposal_codec_keeps_rejected_intent_fields_without_snapshot_lookup(
             resolved_attempt: None,
             state_before: None,
             lease_events_before: 0,
+            source_execution: None,
             administration: None,
             outcome: Err(EngineError::InvalidIntent(reason.into())),
         };

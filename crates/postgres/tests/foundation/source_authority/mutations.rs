@@ -3,6 +3,8 @@ use super::*;
 
 #[path = "mutations/administrative.rs"]
 mod administrative;
+#[path = "mutations/executor.rs"]
+mod executor;
 #[path = "mutations/policy.rs"]
 mod policy;
 

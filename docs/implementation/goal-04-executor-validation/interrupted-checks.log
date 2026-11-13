@@ -1,0 +1,36 @@
+COMMAND ["cargo", "test", "--locked", "--offline", "-p", "celetixo-postgres", "--test", "foundation", "--", "--ignored", "--skip", "migration_crash_child", "--skip", "source_authority::recovery::source_process_child", "--skip", "source_authority::lifecycle::mutations::executor::executor_replay_child", "--test-threads=1"]
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.15s
+     Running tests/foundation.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-checked-target/debug/deps/foundation-6bb3255d7381f1e0)
+
+running 87 tests
+test actual_repository_analysis_reopens_and_retains_engine_rejection_of_incomplete_impact ... ok
+test durable_payloads_cannot_forge_content_scope_format_or_manifest ... ok
+test immutable_catalogs_survive_actual_database_process_restart ... ok
+test migration_checksum_version_skew_and_concurrent_migrators_fail_closed ... ok
+test native_authority::commit_transport::actual_server_commit_reply_loss_reconciles_the_original_durable_receipt ... ok
+test native_authority::mutations::a_rejected_mutation_survives_before_repository_registration ... ok
+test native_authority::mutations::analysis_replies_survive_model_replacement_and_an_ambiguous_commit ... ok
+test native_authority::mutations::delayed_execution_does_not_publish_success_after_lease_expiry ... ok
+test native_authority::mutations::delayed_renewal_cannot_publish_after_original_lease_expiry ... ok
+test native_authority::mutations::duplicate_lease_mutations_use_one_atomic_reply_across_connections ... ok
+test native_authority::mutations::execution_and_cancellation_recover_original_results_after_abort ... ok
+test native_authority::mutations::independent_processes_recover_one_reply_for_one_lease_effect ...
+running 1 test
+
+running 1 test
+test native_authority::mutations::independent_processes_recover_one_reply_for_one_lease_effect ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 90 filtered out; finished in 4.67s
+
+test native_authority::mutations::independent_processes_recover_one_reply_for_one_lease_effect ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 90 filtered out; finished in 5.24s
+
+ok
+test native_authority::mutations::mutation_faults_roll_back_or_reconcile_without_a_second_effect ... ok
+test native_authority::mutations::mutation_rows_enforce_immutable_scope_actor_and_effect_bindings ... ok
+test native_authority::mutations::native_effects::delayed_patch_submission_cannot_publish_bindings_after_lease_expiry ... ok
+test native_authority::mutations::native_effects::delayed_revalidation_cannot_append_an_attempt_after_lease_expiry ... ok
+test native_authority::mutations::native_effects::native_mutation_faults_recover_each_original_effect_after_lost_response ... ok
+test native_authority::mutations::native_effects::native_reply_constraints_bind_exact_attempt_evidence_and_admitting_verifier ... ok
+test native_authority::mutations::native_effects::original_native_replies_survive_later_evidence_selection_and_revalidation ...

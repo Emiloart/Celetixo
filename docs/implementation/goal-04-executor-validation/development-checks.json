@@ -1,0 +1,282 @@
+{
+  "kind": "Retained development attempts and environment-failed full sequence; not final acceptance",
+  "attempts": [
+    {
+      "result_file": "executor-auth-focused.raw.result.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-engine",
+        "--test",
+        "source_attempts",
+        "mutation_recovery::",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 101,
+      "elapsed_seconds": 3.804,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "914ca8cca6e7b0ac8f3c3289d08b64db078856ccaa932de86cff1767a69b90a4"
+    },
+    {
+      "result_file": "executor-coordinator-first.raw.result.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-execution",
+        "--lib",
+        "coordinator",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 12.56,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "273b1af0f177da8592926d831aebcac121bcbc2af1eecf41a9d763ff9dc03c36"
+    },
+    {
+      "result_file": "executor-engine-initial.raw.result.json",
+      "command": [
+        "cargo",
+        "check",
+        "-p",
+        "celetixo-engine",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 12.718,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "7ae48b55edd547f01d7526ebaab9a375d95fdf0f8667bb995cde3d9edac5c7cc"
+    },
+    {
+      "result_file": "executor-engine-regression.raw.result.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-engine",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 63.835,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "bd56b0556af7ea72434cf01445ad658e079fcb9dd5e669bf7781bc9aeec12a7f"
+    },
+    {
+      "result_file": "executor-final-runner.raw.result.json",
+      "command": [
+        "python3",
+        "/home/emiloart/.local/share/celetixo-goal04/validation/source-sql/verify-executor-final.py"
+      ],
+      "exit_code": 101,
+      "elapsed_seconds": 234.849,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "8a2bc5a6ae82c1ee373b470dbdba8472637efb0419ab2d931784b69d0079e34c"
+    },
+    {
+      "result_file": "executor-focused-corrected-runner.raw.result.json",
+      "command": [
+        "python3",
+        "/home/emiloart/.local/share/celetixo-goal04/validation/source-sql/verify-executor-focused-corrected.py"
+      ],
+      "exit_code": 101,
+      "elapsed_seconds": 12.21,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "32d961b4309d7dd27531aa203b1231b223d886a6b3537e59ae46fb61998f8c07"
+    },
+    {
+      "result_file": "executor-focused-runner.raw.result.json",
+      "command": [
+        "python3",
+        "/home/emiloart/.local/share/celetixo-goal04/validation/source-sql/verify-executor-focused.py"
+      ],
+      "exit_code": 101,
+      "elapsed_seconds": 3.856,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "3611949e86d43563db1fe3d15fe0da9e3352f06f0f72aff0d9cd9fdf9879f4d8"
+    },
+    {
+      "result_file": "executor-focused-sql-corrected-runner.raw.result.json",
+      "command": [
+        "python3",
+        "/home/emiloart/.local/share/celetixo-goal04/validation/source-sql/verify-executor-focused-sql-corrected.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 31.263,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "d701170c8ffeb575f41ede2808336d2be35b599bd5420dafb3670dc556b53190"
+    },
+    {
+      "result_file": "executor-layout-first.raw.result.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-engine",
+        "--test",
+        "source_attempts",
+        "mutation_recovery::",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.844,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "b4e570d8bc7c11c801d1c7a7a2767b77181211fee3db6d41f74a824d795238c0"
+    },
+    {
+      "result_file": "executor-postgres-correct-config.raw.result.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-postgres",
+        "--test",
+        "foundation",
+        "source_authority::lifecycle::mutations::executor::",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 109.207,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "82be11978c0de056c00172e37c9d4d624298fd2b0fc02b67f5ec49aed66f7265"
+    },
+    {
+      "result_file": "executor-postgres-first.raw.result.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-postgres",
+        "--test",
+        "foundation",
+        "source_authority::lifecycle::mutations::executor::",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--test-threads=1"
+      ],
+      "exit_code": 101,
+      "elapsed_seconds": 43.875,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "28eb205d36b92a37b682b5e252a33fb3af0ab36fb4a527522d040ed97fbff2d0"
+    },
+    {
+      "result_file": "executor-postgres-guards-first.raw.result.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-postgres",
+        "--test",
+        "foundation",
+        "executor",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 135.647,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "c31d8da2fb7d0991caa847c32ed4ada6bb615bc87a0fb658ff97b42905071000"
+    },
+    {
+      "result_file": "executor-recovery-first.raw.result.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-engine",
+        "--test",
+        "source_attempts",
+        "mutation_recovery::",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 101,
+      "elapsed_seconds": 17.723,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "7820ebf95f791a2b6ac41631d2e71627cfd7027b50a324d0efac1da418f38b34"
+    },
+    {
+      "result_file": "executor-recovery-second.raw.result.json",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-engine",
+        "--test",
+        "source_attempts",
+        "mutation_recovery::",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.765,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "cce2b8292b75748c8c294ef1d4d1b37dc6ca7ae7484a797922e2fa2b113846e0"
+    },
+    {
+      "result_file": "executor-strict-clippy-first.raw.result.json",
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 101,
+      "elapsed_seconds": 18.321,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "fb8ede0be96e5b7caeca2c5af4621a84453f9c96ca163336756ef57c6080ca64"
+    },
+    {
+      "result_file": "executor-workspace-check-first.raw.result.json",
+      "command": [
+        "cargo",
+        "check",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 20.301,
+      "retained_malformed_artifacts": 0,
+      "periodic_filesystem_sync": true,
+      "raw_log_sha256": "28ca79c95c5da1ade12637a476ce0c2481328d4a4fecc5b321c9803bc235613a"
+    }
+  ],
+  "source_fixture_failures_retained_privately": true
+}

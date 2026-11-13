@@ -39,7 +39,8 @@ authority after expiry. A stored expired or revoked definition remains history.
 The subsequent [original mutation journal](goal-04-mutation-recovery.md) adds
 exact transaction/repository/administrative replies and schema v5. The validation
 below remains evidence for its original source lifecycle scope; use the newer
-record for mutation recovery results and remaining executor-transition work.
+record for mutation recovery results, followed by the [executor
+extension](goal-04-executor-recovery.md). Source commit/revalidation remains pending.
 
 ## Immutable graph and additive migration
 

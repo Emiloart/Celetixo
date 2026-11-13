@@ -1235,7 +1235,7 @@ fn encode_input(c: &mut Canonical, input: &WorkspaceInput) {
     }
 }
 
-fn encode_binding(c: &mut Canonical, b: &PatchBinding) {
+pub(crate) fn encode_binding(c: &mut Canonical, b: &PatchBinding) {
     c.str(b.scope.organization.as_str());
     c.str(b.scope.workspace.as_str());
     c.str(b.scope.repository.as_str());

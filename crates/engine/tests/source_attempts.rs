@@ -16,6 +16,9 @@ use celetixo_engine::source_patch::*;
 use celetixo_engine::transaction::*;
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "source_attempts/mutation_recovery.rs"]
+mod mutation_recovery;
+
 mod admission_persistence {
     use super::*;
 

@@ -238,10 +238,11 @@ The [original mutation journal](docs/implementation/goal-04-mutation-recovery.md
 provides typed keyed transaction, repository/model/policy and administrative
 outcomes. Reconcile a lost response with the same scoped actor, key and full
 original request; a diagnostic state view or a new request body is insufficient.
-Historical replies do not renew authority. Keyed executor transitions, source
-prepared commit/revalidation and remaining Goal 04 acceptance gates stay pending.
-Published schema migrations, including v5 after publication, are immutable;
-subsequent executor support requires an additive migration.
+Historical replies do not renew authority. The [executor extension](docs/implementation/goal-04-executor-recovery.md)
+adds keyed claim/patch/verification/finish results with additive schema v6. A
+replayed claim never authorizes materialization or another launch. Source prepared
+commit/revalidation and remaining Goal 04 acceptance gates stay pending. Published
+schema migrations 0001–0006 are immutable; subsequent changes require a new migration.
 
 ### Phase 7 — Real worker integration and evaluation
 

@@ -18,6 +18,9 @@ use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+#[path = "coordinator_tests/mutation_recovery.rs"]
+mod mutation_recovery;
+
 fn d(value: &str) -> Digest {
     Digest::of("finite-coordinator-reference/v1", value.as_bytes())
 }

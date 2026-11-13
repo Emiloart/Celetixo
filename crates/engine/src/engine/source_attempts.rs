@@ -67,6 +67,24 @@ pub enum SourceAttemptState {
 }
 
 impl SourceAttemptState {
+    pub fn name(self) -> &'static str {
+        use SourceAttemptState::*;
+        match self {
+            Proposed => "Proposed",
+            Admitted => "Admitted",
+            Patching => "Patching",
+            PatchApplied => "PatchApplied",
+            Verifying => "Verifying",
+            EvidenceSealed => "EvidenceSealed",
+            Rejected => "Rejected",
+            PatchConflict => "PatchConflict",
+            ExecutionFailed => "ExecutionFailed",
+            TimedOut => "TimedOut",
+            Cancelled => "Cancelled",
+            EvidenceIncomplete => "EvidenceIncomplete",
+            RevalidationRequired => "RevalidationRequired",
+        }
+    }
     pub fn is_terminal(self) -> bool {
         !matches!(
             self,
@@ -1340,7 +1358,10 @@ pub(super) fn authorization_digest(db: &Database, token: u64) -> Result<Digest, 
     Ok(c.finish("celetixo/source-authorization-provenance/v1"))
 }
 
-fn reconcile_attempt(db: &mut Database, key: &(Scope, SourceAttemptId)) -> Result<(), EngineError> {
+pub(super) fn reconcile_attempt(
+    db: &mut Database,
+    key: &(Scope, SourceAttemptId),
+) -> Result<(), EngineError> {
     let record = db.source_attempts.get(key).ok_or(EngineError::NotFound)?;
     if record.state.is_terminal() {
         return Ok(());

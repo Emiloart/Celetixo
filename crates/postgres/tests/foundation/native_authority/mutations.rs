@@ -5,6 +5,8 @@ use super::*;
 mod native_effects;
 #[path = "mutations/repository.rs"]
 mod repository;
+#[path = "mutations/upgrade.rs"]
+mod upgrade;
 
 fn reserve(transaction: &str, ttl_ms: u64) -> MutationRequest {
     MutationRequest::Reserve {
@@ -127,7 +129,7 @@ fn published_v4_upgrade_is_atomic_and_preserves_snapshot_data() {
                 .is_none()
         );
     }
-    assert_eq!(migrate(&mut client).unwrap().schema_version, 5);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 6);
     validate_schema(&mut client).unwrap();
     assert!(!migrate(&mut client).unwrap().newly_applied);
     let selected = expected.scope();

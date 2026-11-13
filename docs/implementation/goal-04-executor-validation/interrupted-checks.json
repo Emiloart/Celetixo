@@ -1,0 +1,13 @@
+{
+  "kind": "Interrupted resumed SQL attempt; no terminal process or final receipt",
+  "known_session_missing": 45542,
+  "fixture_container_exit_code": 255,
+  "complete_pass_claim": false,
+  "raw_log_sha256": "7c33f419f22ac66e496bc113eb439689c374b896d6f3bdabd2b6efdc3419fe53",
+  "source_files_unchanged": 255,
+  "next_action": "run the same 87 parent cases serially with durable exact-source per-case receipts",
+  "raw_retained_privately": true,
+  "public_log_sha256": "3cb63f751fb6b5481f9c8a93734227f37cfb5c9a3cb337f27ce31c50003003db",
+  "source_unchanged": true,
+  "terminal_success_receipt_present": false
+}

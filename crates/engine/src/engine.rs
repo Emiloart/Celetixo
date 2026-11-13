@@ -33,7 +33,8 @@ pub use commit_request::{CommitRequest, ReservationView};
 pub use mutation::{
     AdministrativeContext, AdministrativeMutation, AdministrativeResource, MutationActor,
     MutationKey, MutationRecord, MutationRequest, MutationResponse, MutationValue,
-    RepositoryMutation,
+    RepositoryMutation, SourceExecutorAction, SourceExecutorMutation, SourceMutationContext,
+    SourceMutationResult,
 };
 pub use source_attempts::{
     SourceAdmission, SourceAttemptError, SourceAttemptEvent, SourceAttemptOptions,

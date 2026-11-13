@@ -1,0 +1,57 @@
+{
+  "container_name": "celetixo-goal04-pg17-004dd2961319",
+  "running": true,
+  "version": "PostgreSQL 17.9 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "scram_rejects_invalid_password": true,
+  "host_socket_requires_scram": true,
+  "application_roles_are_nonprivileged": true,
+  "network_mode": "none",
+  "published_ports": [],
+  "data_bytes": 245822986,
+  "data_files": 8791,
+  "data_budget_bytes": 1073741824,
+  "backing_free_bytes": 2919497728,
+  "guard_is_hard_quota": false,
+  "settings": {
+    "fsync": "on",
+    "full_page_writes": "on",
+    "synchronous_commit": "on",
+    "data_checksums": "on"
+  },
+  "selected_database": "celetixo_executor_18128aba1e1b",
+  "migration_ledger": [
+    [
+      "1",
+      "0001_authority",
+      "aacc58cc8cf70224b8343074b68aafbebb57350cf5d963e4ddc0de296c091647"
+    ],
+    [
+      "2",
+      "0002_lifecycle_reconstruction",
+      "99789c46e55a38cd2f54e7433f58c7c5d12351a6a724e0dd9482b38d646a5d8e"
+    ],
+    [
+      "3",
+      "0003_native_lifecycle",
+      "607423e4399f40bcc95161983e64e1ca7922880e49277216eebde62033d99640"
+    ],
+    [
+      "4",
+      "0004_source_lifecycle",
+      "27f8a7f8824ca3b87e978810dcf1af9dd6bdda3a0a5029491644e72789a1ed27"
+    ],
+    [
+      "5",
+      "0005_mutation_recovery",
+      "cb36137693cf89d37b9ba13bad09cd28e667a69005348eae414fceb7e22cb60e"
+    ],
+    [
+      "6",
+      "0006_source_executor_mutations",
+      "18128aba1e1bed29e48f949ca3a8aa3b567f7af4a775217bc2b5880d2e5db561"
+    ]
+  ],
+  "authentication_storage": "SCRAM-SHA-256",
+  "kind": "Selected actual fixture settings, authentication results and migration ledger; complete operator output retained privately",
+  "raw_operator_output_sha256": "c1d5297c5d8519c842efaf5fabcf836d1ad14490a85ba7487bce621745349fb9"
+}

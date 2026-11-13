@@ -90,10 +90,11 @@ Source check results are synthetic; separate Linux T1 checks exercise the
 existing isolated runtime. Neither establishes S3 durability or production
 service identity.
 
-Keyed executor claim, patch-applied, verification-start and finish transitions
-remain next work. Existing executor operations still enforce current admission,
-claim and launch/workspace controls; their complete keyed original replies are
-not claimed here. Source prepared commit/revalidation, the broader independent
-generated-history SQL oracle, real event/workflow/object/analytics services,
+At this original milestone, keyed executor transitions remained pending. The
+subsequent [executor extension](goal-04-executor-recovery.md) adds their complete
+original replies while preserving current admission and launch/workspace controls.
+The original validation above retains its stated scope. Source prepared
+commit/revalidation, the broader independent generated-history SQL oracle,
+real event/workflow/object/analytics services,
 service transport, failover, backup/restore, host loss and measured load remain
 required by the unchanged Goal 04 contract.
