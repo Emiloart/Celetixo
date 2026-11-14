@@ -4,10 +4,12 @@
 //! semantic completeness, permission, Engine admission, or commit authority.
 
 mod intake;
+mod lifecycle;
 pub use intake::{
     CONTRACT_VERSION, MAX_WIRE_BYTES, ProtocolError, RequestDigest, ValidatedTaskIntent,
     decode_task_intent,
 };
+pub use lifecycle::{ValidatedLifecycleEvent, decode_lifecycle_event, validate_lifecycle_event};
 
 pub mod celetixo {
     pub mod orchestration {

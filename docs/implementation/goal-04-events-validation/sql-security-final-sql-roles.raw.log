@@ -1,0 +1,6 @@
+
+running 1 test
+test native_authority::events::event_database_roles_cannot_assume_engine_or_other_consumer_authority ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 2.64s
+

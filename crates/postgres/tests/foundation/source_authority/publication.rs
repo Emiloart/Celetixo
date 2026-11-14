@@ -60,6 +60,87 @@ fn ready_with_ttl(label: &str, ttl: u64) -> (Harness, Session, SourceCommitReque
 }
 
 #[test]
+#[ignore = "requires independent PostgreSQL event logins and retained source artifacts"]
+fn source_lifecycle_frames_replay_every_phase_and_original_commit_without_changing_truth() {
+    use crate::native_authority::events::service;
+    use celetixo_postgres::delivery::{EventDelivery, ServiceKind};
+    use celetixo_protocol::celetixo::platform::v1::{CommitProfile, LifecycleEventKind};
+    let (h, analyst, request) = ready("source-lifecycle-events");
+    let receipt = h
+        .engine
+        .commit_source_prepared(&h.owner, &analyst, h.scope(), request.clone())
+        .unwrap();
+    let before = h.authority.inspect_source(h.scope()).unwrap();
+    let publisher = service(
+        h.scope(),
+        "publisher",
+        ServiceKind::Publisher,
+        "source-event-publisher",
+    );
+    let consumer = service(
+        h.scope(),
+        "consumer",
+        ServiceKind::Consumer,
+        "source-event-consumer",
+    );
+    let claims = publisher
+        .claim(128, std::time::Duration::from_secs(60), 8)
+        .unwrap();
+    assert_eq!(claims.len() as u64, publisher.status().unwrap().pending);
+    assert_eq!(publisher.status().unwrap().unframed, 0);
+    let mut kinds = BTreeSet::new();
+    let mut phases = BTreeSet::new();
+    for claim in &claims {
+        let event = claim.event().event();
+        kinds.insert(event.event_kind);
+        if let Some(fact) = &event.source_attempt {
+            phases.insert(fact.state);
+        }
+        if let Some(fact) = &event.commit {
+            assert_eq!(fact.profile, CommitProfile::Source as i32);
+            assert_eq!(
+                fact.snapshot_digest,
+                receipt.publication_snapshot.0.as_bytes()
+            );
+            assert_eq!(fact.patch_digest, receipt.patch.0.as_bytes());
+        }
+    }
+    for kind in [
+        LifecycleEventKind::CommitRecorded,
+        LifecycleEventKind::TransactionStateChanged,
+        LifecycleEventKind::SourceAttemptStateChanged,
+        LifecycleEventKind::EngineMutationRecorded,
+        LifecycleEventKind::RepositoryAuthorityChanged,
+    ] {
+        assert!(kinds.contains(&(kind as i32)));
+    }
+    assert!(phases.len() >= 4);
+    let mut ordered = claims.iter().collect::<Vec<_>>();
+    ordered.sort_by_key(|claim| std::cmp::Reverse(claim.event().event().aggregate_sequence));
+    for claim in ordered {
+        assert!(!consumer.apply(claim.bytes()).unwrap().replayed);
+    }
+    let reopened = EventDelivery::connect(
+        connection("consumer", None),
+        h.scope().clone(),
+        ServiceKind::Consumer,
+        "source-event-consumer",
+    )
+    .unwrap();
+    for claim in &claims {
+        assert!(reopened.apply(claim.bytes()).unwrap().replayed);
+    }
+    assert!(consumer.missing_frames(128).unwrap().is_empty());
+    assert_eq!(h.authority.inspect_source(h.scope()).unwrap(), before);
+    assert_eq!(
+        h.engine
+            .commit_source_prepared(&h.owner, &analyst, h.scope(), request)
+            .unwrap(),
+        receipt
+    );
+}
+
+#[test]
 #[ignore = "requires the reviewed authenticated PostgreSQL fixture and local Linux artifact store"]
 fn source_publication_atomically_reopens_history_result_head_and_outbox() {
     let (h, analyst, request) = ready("source-published-reopen");
@@ -119,7 +200,7 @@ fn source_publication_atomically_reopens_history_result_head_and_outbox() {
         "outbox",
         "outbox_delivery",
     ] {
-        assert_eq!(sql.query_one(&format!("SELECT count(*) FROM celetixo.{table} WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text"),&[&a[0],&a[1],&a[2]]).unwrap().get::<_,i64>(0),1,"{table}");
+        assert_eq!(sql.query_one(&format!("SELECT count(*) FROM celetixo.{table} WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text{}",commit_event_filter(table)),&[&a[0],&a[1],&a[2]]).unwrap().get::<_,i64>(0),1,"{table}");
     }
     for table in ["source_commit_mutations", "source_committed_changes"] {
         let flags=sql.query_one("SELECT relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid=$1::text::regclass",&[&format!("celetixo.{table}")]).unwrap();

@@ -69,6 +69,30 @@ class Compatibility(unittest.TestCase):
         current = summarize((ROOT / "proto/descriptor.bin").read_bytes())
         self.assertEqual(len(current["messages"]["celetixo.orchestration.v1.TaskIntent"]), 16)
 
+    def test_enum_values_cannot_be_removed_renamed_renumbered_or_aliased(self):
+        baseline = summarize((ROOT / "proto/descriptor.bin").read_bytes())
+        name = "celetixo.platform.v1.TransactionLifecycleState"
+        self.assertEqual(len(baseline["enums"][name]), 9)
+        for kind in ["remove", "enum", "rename", "number", "alias"]:
+            with self.subTest(kind=kind):
+                current = copy.deepcopy(baseline)
+                entries = current["enums"][name]
+                if kind == "remove":
+                    entries.pop()
+                elif kind == "enum":
+                    del current["enums"][name]
+                elif kind == "alias":
+                    entries.append({"name": "ALIAS", "number": 1})
+                elif kind == "rename":
+                    entries[1]["name"] = "REPLACEMENT"
+                else:
+                    entries[1]["number"] = 99
+                with self.assertRaises(ValueError):
+                    compatible(baseline, current)
+        current = copy.deepcopy(baseline)
+        current["enums"][name].append({"name": "FUTURE", "number": 99})
+        compatible(baseline, current)
+
 
 if __name__ == "__main__":
     unittest.main()

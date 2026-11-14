@@ -1,0 +1,23 @@
+{
+  "container_name": "celetixo-goal04-pg17-64b089cb28b8",
+  "running": true,
+  "version": "PostgreSQL 17.9 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "settings": {
+    "fsync": "on",
+    "full_page_writes": "on",
+    "synchronous_commit": "on",
+    "listen_addresses": "",
+    "password_encryption": "scram-sha-256",
+    "data_checksums": "on"
+  },
+  "scram_rejects_invalid_password": true,
+  "host_socket_requires_scram": true,
+  "application_roles_are_nonprivileged": true,
+  "network_mode": "none",
+  "published_ports": [],
+  "data_bytes": 112910181,
+  "data_files": 2955,
+  "data_budget_bytes": 1073741824,
+  "backing_free_bytes": 7460511744,
+  "guard_is_hard_quota": false
+}

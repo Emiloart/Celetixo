@@ -1,6 +1,6 @@
 # Capability and Support Matrix
 
-**Status date:** 2026-11-12
+**Status date:** 2026-11-14
 **Repository scope reviewed:** Goal 03 acceptance plus Goal 04 native/source recovery and SQL lifecycle records linked below
 **Evidence basis:** Goal 02 contract/validation/benchmarks and Goal 03 execution/acceptance/benchmarks and [Goal 04 foundation validation](../implementation/goal-04-progress.md). Recheck the linked records before relying on this matrix after a code change.
 
@@ -63,6 +63,7 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 | Other Linux architectures | **Not validated** | No portability claim beyond recorded profile |
 | Distributed/multi-instance Engine | **Bounded native/source SQL commit profiles** | [Native SQL authority](../implementation/goal-04-native-sql-authority.md) supplies native commit and process races; [source SQL lifecycle](../implementation/goal-04-source-sql-authority.md) adds durable source recovery through receipts. [Source publication](../implementation/goal-04-source-publication.md) adds bounded source revision commit and original recovery; [fresh revalidation](../implementation/goal-04-source-revalidation.md) adds atomic fresh attempts and independent-process recovery. Production service deployment remains pending |
 | PostgreSQL durable state milestone 04.1 | **Accepted reviewed adapter profile** | [Acceptance audit](../implementation/goal-04-authority-acceptance.md): native/source state, exact outcomes, reservations/fences, schema v8, all prior upgrades and actual checked database restart/reopen. Subsequent [04.2 acceptance](../implementation/goal-04-commit-acceptance.md) supplies the scoped process/oracle proof; production service/operational acceptance remains pending |
+| Lifecycle events / JetStream 04.3 | **Implemented; selected real-service validation** | [Event record](../implementation/goal-04-events.md): schema v9 atomic facts, authenticated scoped publisher/inbox, three-node mutual TLS, process exits, leader/quorum loss, restart, retention and replay reconciliation. Full SQL regression and standalone worker operation remain open; no exactly-once messaging, production deployment or zero-loss guarantee |
 | Atomic commit milestone 04.2 | **Accepted reviewed SQL adapter profiles** | [Acceptance audit](../implementation/goal-04-commit-acceptance.md): native/source conditional revision advancement, durable exact outcomes, independent-process races/crashes and generated source histories against a separate interpreter. Full 04.3–04.7 service/security/operational acceptance remains pending |
 | Public multi-tenant deployment | **Target only** | ADR-0004 requirements are accepted, but production end-to-end isolation is not demonstrated |
 

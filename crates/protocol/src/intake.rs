@@ -69,14 +69,23 @@ pub fn decode_task_intent(bytes: &[u8]) -> Result<ValidatedTaskIntent, ProtocolE
 #[derive(Clone, Copy)]
 enum Kind {
     String,
+    Bytes,
+    Enum(&'static [u64]),
     Uint32,
     Uint64,
     Bool,
     Message(&'static [Field]),
 }
 type Field = (u32, Kind, bool);
-use Kind::{Bool, Message as Nested, String as Text, Uint32, Uint64};
+use Kind::{Bool, Bytes, Enum, Message as Nested, String as Text, Uint32, Uint64};
 include!("generated/strict_fields.rs");
+
+pub(crate) fn scan_lifecycle(bytes: &[u8]) -> Result<(), ProtocolError> {
+    if bytes.len() > MAX_WIRE_BYTES {
+        return Err(ProtocolError::PayloadTooLarge);
+    }
+    scan(bytes, LIFECYCLE_EVENT, &mut 0)
+}
 
 fn varint(bytes: &[u8], offset: &mut usize) -> Result<u64, ProtocolError> {
     let mut value = 0;
@@ -118,7 +127,7 @@ fn scan(bytes: &[u8], schema: &[Field], fields: &mut usize) -> Result<(), Protoc
             return Err(ProtocolError::DuplicateField(number));
         }
         match kind {
-            Text | Nested(_) => {
+            Text | Bytes | Nested(_) => {
                 if key & 7 != 2 {
                     return Err(ProtocolError::MalformedWire);
                 }
@@ -133,13 +142,14 @@ fn scan(bytes: &[u8], schema: &[Field], fields: &mut usize) -> Result<(), Protoc
                 }
                 offset = end;
             }
-            Uint32 | Uint64 | Bool => {
+            Uint32 | Uint64 | Bool | Enum(_) => {
                 if key & 7 != 0 {
                     return Err(ProtocolError::MalformedWire);
                 }
                 let value = varint(bytes, &mut offset)?;
                 if (matches!(kind, Uint32) && value > u64::from(u32::MAX))
                     || (matches!(kind, Bool) && value > 1)
+                    || (matches!(kind, Enum(values) if !values.contains(&value)))
                 {
                     return Err(ProtocolError::MalformedWire);
                 }
@@ -149,7 +159,7 @@ fn scan(bytes: &[u8], schema: &[Field], fields: &mut usize) -> Result<(), Protoc
     Ok(())
 }
 
-fn id(value: &str, field: &'static str) -> Result<(), ProtocolError> {
+pub(crate) fn id(value: &str, field: &'static str) -> Result<(), ProtocolError> {
     if value.is_empty()
         || value.len() > 256
         || value

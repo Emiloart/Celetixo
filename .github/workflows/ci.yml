@@ -68,7 +68,7 @@ jobs:
   postgres-foundation:
     name: Real PostgreSQL migration, restart and isolation
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       CARGO_BUILD_JOBS: "2"
       CARGO_INCREMENTAL: "0"
@@ -86,8 +86,17 @@ jobs:
         run: |
           python3 scripts/goal04/postgres_fixture.py start --root "$RUNNER_TEMP/celetixo-pg17"
           python3 scripts/goal04/postgres_fixture.py verify --root "$RUNNER_TEMP/celetixo-pg17"
+          python3 scripts/goal04/postgres_fixture.py prepare-events --root "$RUNNER_TEMP/celetixo-pg17"
+      - name: Provision and verify the pinned three-node mutual-TLS event fixture
+        run: |
+          python3 scripts/goal04/nats_fixture.py provision-tools --root "$RUNNER_TEMP/celetixo-nats" --tools "$RUNNER_TEMP/celetixo-nats-tools"
+          python3 scripts/goal04/nats_fixture.py start --root "$RUNNER_TEMP/celetixo-nats" --tools "$RUNNER_TEMP/celetixo-nats-tools"
+          python3 scripts/goal04/nats_fixture.py verify --root "$RUNNER_TEMP/celetixo-nats" --tools "$RUNNER_TEMP/celetixo-nats-tools"
       - name: Test the real database, including process death and actual database restart
-        run: CELETIXO_PG_TEST_CONFIG="$RUNNER_TEMP/celetixo-pg17/connection.json" cargo test --locked -p celetixo-postgres --test foundation -- --ignored --skip migration_crash_child --skip source_authority::recovery::source_process_child --skip source_authority::lifecycle::mutations::executor::executor_replay_child --skip source_authority::lifecycle::revalidation::source_revalidation_process_child --skip source_authority::lifecycle::publication::processes::source_commit_process_child --test-threads=1
+        run: CELETIXO_PG_TEST_CONFIG="$RUNNER_TEMP/celetixo-pg17/connection-events.json" CELETIXO_NATS_TEST_CONFIG="$RUNNER_TEMP/celetixo-nats/connection.json" cargo --config 'profile.test.package.celetixo-postgres.opt-level=0' test --locked -p celetixo-postgres --test foundation -- --ignored --skip migration_crash_child --skip source_authority::recovery::source_process_child --skip source_authority::lifecycle::mutations::executor::executor_replay_child --skip source_authority::lifecycle::revalidation::source_revalidation_process_child --skip source_authority::lifecycle::publication::processes::source_commit_process_child --skip event_process_checkpoint --test-threads=1
+      - name: Stop the owned event fixture and preserve its data
+        if: always()
+        run: python3 scripts/goal04/nats_fixture.py stop --root "$RUNNER_TEMP/celetixo-nats" --tools "$RUNNER_TEMP/celetixo-nats-tools"
       - name: Stop this fixture
         if: always()
         run: python3 scripts/goal04/postgres_fixture.py stop --root "$RUNNER_TEMP/celetixo-pg17"
@@ -118,11 +127,14 @@ jobs:
           --reviewed-public-input crates/engine/src/engine.rs=096233b8e4d4cdc2b53560e0d3280ab980244197bf0907f81a5fbcf12331fc19
           --reviewed-public-input crates/engine/src/engine/authority/records.rs=12e5c2af32fdccd19e0afd96ca73f7b7f222f71dbf6a05d5a2c88cedf5c2b546
           --reviewed-public-input crates/engine/src/engine/source_recovery.rs=1552093e377c74023caa1aaf702a116758b81d203735c074e62b4d26a98f658d
-          --reviewed-public-input crates/postgres/src/lib.rs=a511beb062d8cc1fdbf4d1098a2b9dd0da4b40fd08b1f5565b830b05481b6cb2
+          --reviewed-public-input crates/postgres/src/lib.rs=d2b103ff13583a1ffebac35aeeb48dae1804fe5b803f446b81fcc0bc87eb5d09
           --reviewed-public-input docs/implementation/goal-04-registration-validation/fixture.json=7af849f6ea540693cdecf457975ba468b550ae60a3d728a520a17504c9941d92
           --reviewed-public-input docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce
           --reviewed-public-input docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067
-          --reviewed-public-input scripts/goal04/postgres_fixture.py=1f6298b7fa3b0901ac99864cce7ab14cd2525225ae31604d74478c7bcd865d05 > /tmp/goal02-inspection.json
+          --reviewed-public-input scripts/goal04/postgres_fixture.py=306678b400cefdcb2e0cf831c45b9e239dec6a56e1c7ab8d7b941cb1d5005be6
+          --reviewed-public-input crates/postgres/tests/foundation/native_authority/events/nats.rs=322feb46fca6898da8a04db504b0812b532774b061888601a52844fcf84232ab
+          --reviewed-public-input docs/implementation/goal-04-events-validation/postgres-final-verify.json=09af2bfadbe231f43a44ede68ffbdda9327f8e7c7207a221af89827207d7e4c6
+          --reviewed-public-input docs/operations/local-event-delivery-runbook.md=baa50cb259dcc46db630631457a5951bf277aa6d1be26d05aad914526fec6489 > /tmp/goal02-inspection.json
       - name: Check reproducible benchmark harness
         run: cargo run --locked -p celetixo-repository --example repository_bench -- --copies 1 --iterations 1 --queries 3 > /tmp/goal02-benchmark-smoke.json
       - name: Check source patch measurement runner on this immutable tree
@@ -131,8 +143,11 @@ jobs:
           --reviewed-public-input crates/engine/src/engine.rs=096233b8e4d4cdc2b53560e0d3280ab980244197bf0907f81a5fbcf12331fc19
           --reviewed-public-input crates/engine/src/engine/authority/records.rs=12e5c2af32fdccd19e0afd96ca73f7b7f222f71dbf6a05d5a2c88cedf5c2b546
           --reviewed-public-input crates/engine/src/engine/source_recovery.rs=1552093e377c74023caa1aaf702a116758b81d203735c074e62b4d26a98f658d
-          --reviewed-public-input crates/postgres/src/lib.rs=a511beb062d8cc1fdbf4d1098a2b9dd0da4b40fd08b1f5565b830b05481b6cb2
+          --reviewed-public-input crates/postgres/src/lib.rs=d2b103ff13583a1ffebac35aeeb48dae1804fe5b803f446b81fcc0bc87eb5d09
           --reviewed-public-input docs/implementation/goal-04-registration-validation/fixture.json=7af849f6ea540693cdecf457975ba468b550ae60a3d728a520a17504c9941d92
           --reviewed-public-input docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce
           --reviewed-public-input docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067
-          --reviewed-public-input scripts/goal04/postgres_fixture.py=1f6298b7fa3b0901ac99864cce7ab14cd2525225ae31604d74478c7bcd865d05 > /tmp/goal03-patch-benchmark-smoke.json
+          --reviewed-public-input scripts/goal04/postgres_fixture.py=306678b400cefdcb2e0cf831c45b9e239dec6a56e1c7ab8d7b941cb1d5005be6
+          --reviewed-public-input crates/postgres/tests/foundation/native_authority/events/nats.rs=322feb46fca6898da8a04db504b0812b532774b061888601a52844fcf84232ab
+          --reviewed-public-input docs/implementation/goal-04-events-validation/postgres-final-verify.json=09af2bfadbe231f43a44ede68ffbdda9327f8e7c7207a221af89827207d7e4c6
+          --reviewed-public-input docs/operations/local-event-delivery-runbook.md=baa50cb259dcc46db630631457a5951bf277aa6d1be26d05aad914526fec6489 > /tmp/goal03-patch-benchmark-smoke.json

@@ -2,7 +2,9 @@
 
 `celetixo/**/*.proto` is the sole wire-schema source. ADR-0001 specifies required
 TaskIntent semantics; `scripts/protocol/check.py` checks their preservation. The
-current consumers are Rust message bindings and strict, unauthenticated intake.
+current consumers are Rust TaskIntent intake and lifecycle event bindings with
+strict decoding; the lifecycle consumer additionally checks scoped SQL authority
+and uses authenticated JetStream delivery.
 There is no RPC service or generated Go/Python consumer yet. Read the
 [protocol reference](../docs/reference/protocol.md) before extending the boundary.
 

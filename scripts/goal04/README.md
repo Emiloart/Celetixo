@@ -78,3 +78,21 @@ authentication, incorrect-password rejection, the host-visible SCRAM challenge,
 nonprivileged application roles and container network identity. It does not
 replace migration, multi-process race, crash/reconciliation, authorization,
 backup/restore or failover tests required by Goal 04.
+
+## Lifecycle delivery fixtures
+
+`postgres_fixture.py prepare-events --root /absolute/private/pg17` creates separate
+nonadministrative event logins and `connection-events.json`; it grants no Engine
+permissions. Scope/service bindings and table rights require explicit administration.
+
+`nats_fixture.py provision-tools`, `start`, `verify`, `status` and `stop` manage the
+owned three-node NATS 2.15.3 fixture. Supply explicit `--root` and `--tools` private
+paths after the operation. The provisioner verifies the pinned official archive,
+executable and Apache-2.0 license bytes. Brokers use separate client/route trust,
+mutual TLS, file JetStream storage with synchronous writes, bounded containers
+and an internal Docker network without published host ports. Stop retains data.
+
+The [event runbook](../../docs/operations/local-event-delivery-runbook.md) contains
+commands, private worker configuration, scoped grants and replay procedures. The
+[implementation record](../../docs/implementation/goal-04-events.md) distinguishes
+actual integration evidence from remaining validation.

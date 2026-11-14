@@ -95,7 +95,7 @@ fn v5_original_mutation_upgrade_preserves_rows_and_rolls_back_errors_and_process
             .get::<_, i64>(0),
         5
     );
-    assert_eq!(migrate(&mut client).unwrap().schema_version, 8);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 9);
     validate_schema(&mut client).unwrap();
     assert!(!migrate(&mut client).unwrap().newly_applied);
     let after:String=client.query_one("SELECT (to_jsonb(m)-ARRAY['raw_source_attempt_id','raw_source_admission_digest','resolved_source_attempt_id','source_admission_digest','source_state_before','source_executor_before','source_events_before','source_events_after','source_before_event_sequence','source_effect_event_sequence','result_source_state','result_source_event_sequence','result_source_executor_grant_id','source_commit_actor_digest','source_revalidation_actor_digest'])::text FROM celetixo.engine_mutations m",&[]).unwrap().get(0);

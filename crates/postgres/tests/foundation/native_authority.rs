@@ -9,6 +9,8 @@ use celetixo_engine::patch::{Change, Patch};
 use celetixo_engine::transaction::{TransactionIntent, TransactionState};
 use std::time::{Duration, Instant};
 
+#[path = "native_authority/events.rs"]
+pub(super) mod events;
 #[path = "native_authority/mutations.rs"]
 mod mutations;
 
@@ -260,7 +262,7 @@ impl Harness {
             self.scope().repository.as_str(),
         ];
         let mut owner = owner();
-        ["committed_changes","transaction_outcomes","operations","outbox","outbox_delivery","reservation_claims"].into_iter().map(|table|owner.query_one(&format!("SELECT count(*) FROM celetixo.{table} WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text"),&[&a[0],&a[1],&a[2]]).unwrap().get(0)).collect()
+        ["committed_changes","transaction_outcomes","operations","outbox","outbox_delivery","reservation_claims"].into_iter().map(|table|owner.query_one(&format!("SELECT count(*) FROM celetixo.{table} WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text{}",commit_event_filter(table)),&[&a[0],&a[1],&a[2]]).unwrap().get(0)).collect()
     }
 }
 
@@ -307,7 +309,7 @@ fn native_lifecycle_reopens_and_commits_receipt_operation_terminal_and_outbox_at
     let s = h.scope();
     owner().execute("UPDATE celetixo.outbox_delivery SET publication_attempts=7,claim_generation=2,published_at=clock_timestamp() WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text",&[&s.organization.as_str(),&s.workspace.as_str(),&s.repository.as_str()]).unwrap();
     assert_eq!(h.commit(request), Ok(receipt));
-    let row=owner().query_one("SELECT publication_attempts::text,claim_generation::text,published_at IS NOT NULL FROM celetixo.outbox_delivery WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text",&[&s.organization.as_str(),&s.workspace.as_str(),&s.repository.as_str()]).unwrap();
+    let row=owner().query_one(&format!("SELECT publication_attempts::text,claim_generation::text,published_at IS NOT NULL FROM celetixo.outbox_delivery WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text{}",commit_event_filter("outbox_delivery")),&[&s.organization.as_str(),&s.workspace.as_str(),&s.repository.as_str()]).unwrap();
     assert_eq!(row.get::<_, String>(0), "7");
     assert_eq!(row.get::<_, String>(1), "2");
     assert!(row.get::<_, bool>(2));

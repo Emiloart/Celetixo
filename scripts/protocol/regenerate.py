@@ -21,9 +21,12 @@ def strict_fields(descriptor):
     for name, fields in sorted(messages.items()):
         lines.append("const " + names[name] + ": &[Field] = &[")
         for field in fields:
-            kind = {9: "Text", 13: "Uint32", 4: "Uint64", 8: "Bool"}.get(field["type"])
+            kind = {9: "Text", 12: "Bytes", 13: "Uint32", 4: "Uint64", 8: "Bool"}.get(field["type"])
             if field["type"] == 11:
                 kind = "Nested(" + names[field["type_name"].lstrip(".")] + ")"
+            if field["type"] == 14:
+                entries = descriptor["enums"][field["type_name"].lstrip(".")]
+                kind = "Enum(&[" + ", ".join(str(entry["number"]) for entry in entries) + "])"
             if kind is None or field["label"] not in (1, 3):
                 raise ValueError("strict intake does not support the requested schema field")
             lines.append(f"    ({field['number']}, {kind}, {str(field['label'] == 3).lower()}),")

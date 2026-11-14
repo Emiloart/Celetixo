@@ -77,27 +77,51 @@ def field_info(raw):
     }
 
 
-def message_info(raw, prefix, output):
+def enum_info(raw, prefix, output):
+    value = fields(raw)
+    name = prefix + "." + string(value, 1)
+    if name in output:
+        raise ValueError("duplicate descriptor enum")
+    entries = []
+    for raw_entry in value.get(2, []):
+        entry = fields(raw_entry)
+        number = one(entry, 2)
+        if number is None or number > 0x7fffffff:
+            raise ValueError("strict intake requires nonnegative enum values")
+        entries.append({"name": string(entry, 1), "number": number})
+    if not entries or entries[0]["number"] != 0:
+        raise ValueError("proto3 enum must start with zero")
+    if len({entry["name"] for entry in entries}) != len(entries) or len({entry["number"] for entry in entries}) != len(entries):
+        raise ValueError("duplicate enum name/number or alias")
+    output[name] = entries
+
+
+def message_info(raw, prefix, output, enums):
     value = fields(raw)
     name = prefix + "." + string(value, 1)
     if name in output:
         raise ValueError("duplicate descriptor message")
     output[name] = sorted((field_info(item) for item in value.get(2, [])), key=lambda item: item["number"])
     for nested in value.get(3, []):
-        message_info(nested, name, output)
+        message_info(nested, name, output, enums)
+    for nested in value.get(4, []):
+        enum_info(nested, name, enums)
 
 
 def summarize(data):
     messages = {}
+    enums = {}
     files = []
     for raw in fields(data).get(1, []):
         value = fields(raw)
         files.append({"name": string(value, 1), "package": string(value, 2), "syntax": string(value, 12)})
-        if value.get(5) or value.get(6):
-            raise ValueError("enum/service additions require an expanded explicit compatibility checker")
+        if value.get(6):
+            raise ValueError("service additions require an expanded explicit compatibility checker")
+        for enum in value.get(5, []):
+            enum_info(enum, string(value, 2), enums)
         for message in value.get(4, []):
-            message_info(message, string(value, 2), messages)
-    return {"files": sorted(files, key=lambda item: item["name"]), "messages": dict(sorted(messages.items()))}
+            message_info(message, string(value, 2), messages, enums)
+    return {"files": sorted(files, key=lambda item: item["name"]), "messages": dict(sorted(messages.items())), "enums": dict(sorted(enums.items()))}
 
 
 def compatible(previous, current):
@@ -109,6 +133,17 @@ def compatible(previous, current):
     for file in previous["files"]:
         if file not in current["files"]:
             raise ValueError("published package/file/syntax changed: " + file["name"])
+    for name, entries in current.get("enums", {}).items():
+        by_number = {entry["number"]: entry for entry in entries}
+        by_name = {entry["name"]: entry for entry in entries}
+        if len(by_number) != len(entries) or len(by_name) != len(entries):
+            raise ValueError("duplicate enum name/number: " + name)
+    for name, entries in previous.get("enums", {}).items():
+        if name not in current.get("enums", {}):
+            raise ValueError("published enum removed: " + name)
+        new_entries = current["enums"][name]
+        if any(entry not in new_entries for entry in entries):
+            raise ValueError("published enum value removed, reused or changed: " + name)
     for name, old_fields in previous["messages"].items():
         if name not in current["messages"]:
             raise ValueError("published message removed: " + name)

@@ -218,6 +218,7 @@ fn terminal_and_outbox(
         .collect::<BTreeMap<_, _>>();
     let expected_ids = events.keys().copied().collect::<BTreeSet<_>>();
     for row in loader.rows(tx,"outbox","event_id::bytea,aggregate_kind,aggregate_id::text,aggregate_sequence::text,event_type::text,schema_version,payload_digest::bytea","aggregate_kind,aggregate_id,aggregate_sequence")? {
+        if row.get::<_,String>(4)=="LifecycleEvent" { continue; }
         let receipt=events.remove(&digest(&row,0)?).ok_or(AuthorityFailure::Integrity)?;
         if row.get::<_,String>(1)!="Repository" || row.get::<_,String>(2)!=loader.scope.repository.as_str() || number(&row,3)?!=receipt.revision.0 || row.get::<_,String>(4)!=EVENT_TYPE || row.get::<_,i32>(5)!=1 || digest(&row,6)?!=receipt.digest() {return Err(AuthorityFailure::Integrity);}
     }
@@ -228,7 +229,8 @@ fn terminal_and_outbox(
     for row in loader.rows(tx, "outbox_delivery", "event_id::bytea", "event_id")? {
         delivered.insert(digest(&row, 0)?);
     }
-    if delivered != expected_ids {
+    // Complete lifecycle/delivery associations are checked by events::load.
+    if !expected_ids.is_subset(&delivered) {
         return Err(AuthorityFailure::Integrity);
     }
     Ok(())

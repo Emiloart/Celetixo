@@ -373,6 +373,6 @@ fn assert_one_commit_rows(h: &Harness) {
         "outbox",
         "outbox_delivery",
     ] {
-        assert_eq!(database.query_one(&format!("SELECT count(*) FROM celetixo.{table} WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text"), &[&parameters[0], &parameters[1], &parameters[2]]).unwrap().get::<_, i64>(0), 1, "{table}");
+        assert_eq!(database.query_one(&format!("SELECT count(*) FROM celetixo.{table} WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text{}",commit_event_filter(table)), &[&parameters[0], &parameters[1], &parameters[2]]).unwrap().get::<_, i64>(0), 1, "{table}");
     }
 }

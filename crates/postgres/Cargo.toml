@@ -8,11 +8,17 @@ description = "Scoped PostgreSQL persistence foundation for the Rust Engineering
 
 [dependencies]
 celetixo-engine = { path = "../engine" }
+celetixo-protocol = { path = "../protocol" }
+prost.workspace = true
 postgres.workspace = true
 sha2.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+celetixo-events = { path = "../events" }
+async-nats = { version = "=0.52.0", default-features = false, features = ["jetstream", "ring", "nuid", "server_2_14"] }
+tokio = { version = "=1.54.0", features = ["rt-multi-thread", "macros", "time", "sync"] }
+futures-util = { version = "=0.3.34", default-features = false, features = ["std"] }
 celetixo-repository = { path = "../repository" }
 serde.workspace = true
 serde_json.workspace = true

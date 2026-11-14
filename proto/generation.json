@@ -6,11 +6,12 @@
   "generator_lock_sha256": "f1095ee9b034ba6e2ca8aae3638e77058f8b55017353fcf58a37100b4000d60a",
   "artifacts": {
     "crates/protocol/src/generated/celetixo.orchestration.v1.rs": "c335381a9c9dfe782a8c005257d6644d186764c38b4f00a3fd3a815fac7a50e2",
-    "crates/protocol/src/generated/celetixo.platform.v1.rs": "fb2f540badc41b63184a1c49c4e45d5cdc36fee0d9866d7fac9b24f09fdee03e",
-    "crates/protocol/src/generated/strict_fields.rs": "14bb453654c27813bd37ca88f2548a36056406c224a4fd27bb86c34f3701aa9f",
+    "crates/protocol/src/generated/celetixo.platform.v1.rs": "1e6789aff146d4b33453c0cc0320bca09b99332b6b1a76eb581c256002271e1c",
+    "crates/protocol/src/generated/strict_fields.rs": "66720f2860a14939a0c5f75becb481ec5b71bd9cae073100aca9b1d2b1c2de5d",
     "proto/celetixo/orchestration/v1/task_intent.proto": "fca7edb887b758a611f9d082d0d2c02623e8a60801fda15860894d72f0d2ee7a",
+    "proto/celetixo/platform/v1/lifecycle_event.proto": "8c17237b1df8ae918ebe2e68801c8a6d474629ef1f1adebfaadb2bd54c3a505d",
     "proto/celetixo/platform/v1/task_intent_envelope.proto": "04ccca3e89827dfd2968be563790e6f1cd9f6070714046620f7fe0917d9fec40",
-    "proto/descriptor.bin": "b839037c6c8551f23bab858267031356539237aca8cadb364464c86bbf158f80",
+    "proto/descriptor.bin": "4bf40e3ff569526b04b1915328baec4bbbcaced7a19335e7bfd20f156cc901b9",
     "proto/fixtures/task_intent_envelope.bin": "1ee413f37b9ddf76137010ce47473085a20b7fbeec21e067fd9d757c35410349"
   }
 }

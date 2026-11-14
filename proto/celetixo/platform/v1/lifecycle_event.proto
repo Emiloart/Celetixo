@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package celetixo.platform.v1;
+
+import "celetixo/platform/v1/task_intent_envelope.proto";
+
+// Notifications of durable Engine facts, never capabilities or commit commands.
+// Consumers authenticate the producer and reconcile authoritative state before
+// acting. A sequence is monotonic within an aggregate; gaps are permitted.
+message LifecycleEvent {
+  uint32 contract_version = 1;
+  ScopeSelector scope = 2;
+  bytes event_id = 3;
+  AggregateKind aggregate_kind = 4;
+  string aggregate_id = 5;
+  uint64 aggregate_sequence = 6;
+  LifecycleEventKind event_kind = 7;
+  bytes authority_payload_digest = 8;
+  string trace_id = 9;
+  // Exactly one matching fact is required. Separate fields allow strict intake
+  // to reject conflicting facts before a decoder can discard oneof members.
+  CommitRecorded commit = 10;
+  TransactionStateChanged transaction = 11;
+  SourceAttemptStateChanged source_attempt = 12;
+  EngineMutationRecorded mutation = 13;
+  RepositoryAuthorityChanged authority = 14;
+}
+
+enum AggregateKind {
+  AGGREGATE_KIND_UNSPECIFIED = 0;
+  AGGREGATE_KIND_REPOSITORY = 1;
+  AGGREGATE_KIND_TRANSACTION = 2;
+  AGGREGATE_KIND_SOURCE_ATTEMPT = 3;
+  AGGREGATE_KIND_MUTATION = 4;
+  AGGREGATE_KIND_AUTHORITY = 5;
+}
+
+enum LifecycleEventKind {
+  LIFECYCLE_EVENT_KIND_UNSPECIFIED = 0;
+  LIFECYCLE_EVENT_KIND_COMMIT_RECORDED = 1;
+  LIFECYCLE_EVENT_KIND_TRANSACTION_STATE_CHANGED = 2;
+  LIFECYCLE_EVENT_KIND_SOURCE_ATTEMPT_STATE_CHANGED = 3;
+  LIFECYCLE_EVENT_KIND_ENGINE_MUTATION_RECORDED = 4;
+  LIFECYCLE_EVENT_KIND_REPOSITORY_AUTHORITY_CHANGED = 5;
+}
+
+enum CommitProfile {
+  COMMIT_PROFILE_UNSPECIFIED = 0;
+  COMMIT_PROFILE_NATIVE = 1;
+  COMMIT_PROFILE_SOURCE = 2;
+}
+
+message CommitRecorded {
+  string transaction_id = 1;
+  uint64 revision = 2;
+  bytes snapshot_digest = 3;
+  bytes patch_digest = 4;
+  CommitProfile profile = 5;
+}
+
+enum TransactionLifecycleState {
+  TRANSACTION_LIFECYCLE_STATE_UNSPECIFIED = 0;
+  TRANSACTION_LIFECYCLE_STATE_PROPOSED = 1;
+  TRANSACTION_LIFECYCLE_STATE_ANALYZED = 2;
+  TRANSACTION_LIFECYCLE_STATE_RESERVED = 3;
+  TRANSACTION_LIFECYCLE_STATE_EXECUTING = 4;
+  TRANSACTION_LIFECYCLE_STATE_VALIDATING = 5;
+  TRANSACTION_LIFECYCLE_STATE_REVALIDATION_REQUIRED = 6;
+  TRANSACTION_LIFECYCLE_STATE_COMMITTED = 7;
+  TRANSACTION_LIFECYCLE_STATE_ABORTED = 8;
+}
+
+message TransactionStateChanged {
+  TransactionLifecycleState state = 1;
+  uint64 attempt = 2;
+  bytes base_snapshot_digest = 3;
+  uint64 lease_fence = 4;
+}
+
+enum SourceLifecycleState {
+  SOURCE_LIFECYCLE_STATE_UNSPECIFIED = 0;
+  SOURCE_LIFECYCLE_STATE_PROPOSED = 1;
+  SOURCE_LIFECYCLE_STATE_ADMITTED = 2;
+  SOURCE_LIFECYCLE_STATE_PATCHING = 3;
+  SOURCE_LIFECYCLE_STATE_PATCH_APPLIED = 4;
+  SOURCE_LIFECYCLE_STATE_VERIFYING = 5;
+  SOURCE_LIFECYCLE_STATE_EVIDENCE_SEALED = 6;
+  SOURCE_LIFECYCLE_STATE_REJECTED = 7;
+  SOURCE_LIFECYCLE_STATE_PATCH_CONFLICT = 8;
+  SOURCE_LIFECYCLE_STATE_EXECUTION_FAILED = 9;
+  SOURCE_LIFECYCLE_STATE_TIMED_OUT = 10;
+  SOURCE_LIFECYCLE_STATE_CANCELLED = 11;
+  SOURCE_LIFECYCLE_STATE_EVIDENCE_INCOMPLETE = 12;
+  SOURCE_LIFECYCLE_STATE_REVALIDATION_REQUIRED = 13;
+}
+
+message SourceAttemptStateChanged {
+  string transaction_id = 1;
+  uint64 transaction_attempt = 2;
+  SourceLifecycleState state = 3;
+  uint64 event_count = 4;
+  uint64 admission_fence = 5;
+}
+
+enum EngineMutationKind {
+  ENGINE_MUTATION_KIND_UNSPECIFIED = 0;
+  ENGINE_MUTATION_KIND_SOURCE_COMMIT = 1;
+  ENGINE_MUTATION_KIND_SOURCE_REVALIDATE = 2;
+  ENGINE_MUTATION_KIND_SOURCE_EXECUTOR = 3;
+  ENGINE_MUTATION_KIND_ADMINISTRATIVE = 4;
+  ENGINE_MUTATION_KIND_REPOSITORY = 5;
+  ENGINE_MUTATION_KIND_SUBMIT_PATCH = 6;
+  ENGINE_MUTATION_KIND_RECORD_EVIDENCE = 7;
+  ENGINE_MUTATION_KIND_REVALIDATE = 8;
+  ENGINE_MUTATION_KIND_PROPOSE = 9;
+  ENGINE_MUTATION_KIND_ANALYZE = 10;
+  ENGINE_MUTATION_KIND_RESERVE = 11;
+  ENGINE_MUTATION_KIND_RENEW = 12;
+  ENGINE_MUTATION_KIND_EXECUTE = 13;
+  ENGINE_MUTATION_KIND_ABORT = 14;
+}
+
+message EngineMutationRecorded {
+  EngineMutationKind kind = 1;
+  bytes request_digest = 2;
+  bytes outcome_digest = 3;
+  // Empty for repository/administrative mutations.
+  string transaction_id = 4;
+}
+
+message RepositoryAuthorityChanged {
+  uint64 revision = 1;
+  bytes snapshot_digest = 2;
+  // Digest of retained, scoped authoritative metadata; no credentials or model
+  // prompts are broadcast. Absence of a repository uses an empty snapshot.
+  bytes metadata_digest = 3;
+}

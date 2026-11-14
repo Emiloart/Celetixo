@@ -297,6 +297,42 @@ log_disconnections = off
             self.run(["docker", "stop", "--time", "30", self.name])
         return {"container_name": self.name, "running": False, "data_preserved": True}
 
+    def prepare_events(self, database=DATABASE):
+        """Create separate, nonprivileged event logins; no Engine grants here.
+
+        Scoped bindings and least-privilege table grants remain administrator
+        operations performed by the integration harness/deployment procedure.
+        """
+        if (not database or len(database)>63
+                or any(ch not in "abcdefghijklmnopqrstuvwxyz0123456789_" for ch in database)):
+            raise FixtureError("invalid explicit fixture database selector")
+        self.verify()
+        configuration = json.loads(private_read(self.root / "connection.json"))
+        configuration["database"] = database
+        for key in ["publisher", "consumer"]:
+            name = "celetixo_event_" + key
+            path = self.root / "secrets" / ("event-"+key+".password")
+            if not path.exists():
+                private_write(path, secrets.token_hex(32)+"\n")
+            password = private_read(path).strip()
+            self.secret_values.append(password)
+            exists = self.psql("SELECT count(*) FROM pg_roles WHERE rolname='"+name+"';",database="postgres").stdout.strip()
+            if exists == "0":
+                self.psql("CREATE ROLE "+name+" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD '"+password+"';",database="postgres")
+            attributes = self.psql("SELECT rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls FROM pg_roles WHERE rolname='"+name+"';",database="postgres").stdout.strip()
+            if attributes != "f":
+                raise FixtureError("event fixture login has unexpected administrative privileges")
+            self.psql("GRANT CONNECT ON DATABASE "+database+" TO "+name+";",database="postgres")
+            configuration["roles"][key] = {"user":name,"password_file":str(path)}
+        filename = "connection-events.json" if database == DATABASE else "connection-events-"+database+".json"
+        target = self.root / filename
+        if target.exists():
+            if json.loads(private_read(target)) != configuration:
+                raise FixtureError("retained event configuration differs")
+        else:
+            private_write(target,json.dumps(configuration,indent=2)+"\n")
+        return {"connection_file":str(target),"separate_event_logins":True,"engine_privileges_granted":False}
+
     def status(self):
         item = self.inspect()
         return {"container_name": self.name, "exists": item is not None,
@@ -376,8 +412,9 @@ log_disconnections = off
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation", choices=["start", "status", "verify", "stop", "restart"])
+    parser.add_argument("operation", choices=["start", "status", "verify", "stop", "restart", "prepare-events"])
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
+    parser.add_argument("--database", default=DATABASE)
     args = parser.parse_args()
     if os.getuid() == 0:
         raise FixtureError("run the operator fixture as a non-root user")
@@ -394,6 +431,8 @@ def main():
         if args.operation == "restart":
             fixture.stop()
             result = fixture.start()
+        elif args.operation == "prepare-events":
+            result = fixture.prepare_events(args.database)
         else:
             result = getattr(fixture, args.operation)()
         print(json.dumps(result, indent=2))

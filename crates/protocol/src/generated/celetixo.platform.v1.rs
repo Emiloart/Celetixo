@@ -23,3 +23,374 @@ pub struct TaskIntentEnvelope {
     #[prost(string, repeated, tag = "6")]
     pub required_capabilities: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct LifecycleEvent {
+    #[prost(uint32, tag = "1")]
+    pub contract_version: u32,
+    #[prost(message, optional, tag = "2")]
+    pub scope: ::core::option::Option<ScopeSelector>,
+    #[prost(bytes = "vec", tag = "3")]
+    pub event_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(enumeration = "AggregateKind", tag = "4")]
+    pub aggregate_kind: i32,
+    #[prost(string, tag = "5")]
+    pub aggregate_id: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "6")]
+    pub aggregate_sequence: u64,
+    #[prost(enumeration = "LifecycleEventKind", tag = "7")]
+    pub event_kind: i32,
+    #[prost(bytes = "vec", tag = "8")]
+    pub authority_payload_digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "9")]
+    pub trace_id: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "10")]
+    pub commit: ::core::option::Option<CommitRecorded>,
+    #[prost(message, optional, tag = "11")]
+    pub transaction: ::core::option::Option<TransactionStateChanged>,
+    #[prost(message, optional, tag = "12")]
+    pub source_attempt: ::core::option::Option<SourceAttemptStateChanged>,
+    #[prost(message, optional, tag = "13")]
+    pub mutation: ::core::option::Option<EngineMutationRecorded>,
+    #[prost(message, optional, tag = "14")]
+    pub authority: ::core::option::Option<RepositoryAuthorityChanged>,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct CommitRecorded {
+    #[prost(string, tag = "1")]
+    pub transaction_id: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "2")]
+    pub revision: u64,
+    #[prost(bytes = "vec", tag = "3")]
+    pub snapshot_digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(bytes = "vec", tag = "4")]
+    pub patch_digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(enumeration = "CommitProfile", tag = "5")]
+    pub profile: i32,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct TransactionStateChanged {
+    #[prost(enumeration = "TransactionLifecycleState", tag = "1")]
+    pub state: i32,
+    #[prost(uint64, tag = "2")]
+    pub attempt: u64,
+    #[prost(bytes = "vec", tag = "3")]
+    pub base_snapshot_digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, tag = "4")]
+    pub lease_fence: u64,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct SourceAttemptStateChanged {
+    #[prost(string, tag = "1")]
+    pub transaction_id: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "2")]
+    pub transaction_attempt: u64,
+    #[prost(enumeration = "SourceLifecycleState", tag = "3")]
+    pub state: i32,
+    #[prost(uint64, tag = "4")]
+    pub event_count: u64,
+    #[prost(uint64, tag = "5")]
+    pub admission_fence: u64,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct EngineMutationRecorded {
+    #[prost(enumeration = "EngineMutationKind", tag = "1")]
+    pub kind: i32,
+    #[prost(bytes = "vec", tag = "2")]
+    pub request_digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(bytes = "vec", tag = "3")]
+    pub outcome_digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag = "4")]
+    pub transaction_id: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct RepositoryAuthorityChanged {
+    #[prost(uint64, tag = "1")]
+    pub revision: u64,
+    #[prost(bytes = "vec", tag = "2")]
+    pub snapshot_digest: ::prost::alloc::vec::Vec<u8>,
+    #[prost(bytes = "vec", tag = "3")]
+    pub metadata_digest: ::prost::alloc::vec::Vec<u8>,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum AggregateKind {
+    Unspecified = 0,
+    Repository = 1,
+    Transaction = 2,
+    SourceAttempt = 3,
+    Mutation = 4,
+    Authority = 5,
+}
+impl AggregateKind {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "AGGREGATE_KIND_UNSPECIFIED",
+            Self::Repository => "AGGREGATE_KIND_REPOSITORY",
+            Self::Transaction => "AGGREGATE_KIND_TRANSACTION",
+            Self::SourceAttempt => "AGGREGATE_KIND_SOURCE_ATTEMPT",
+            Self::Mutation => "AGGREGATE_KIND_MUTATION",
+            Self::Authority => "AGGREGATE_KIND_AUTHORITY",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "AGGREGATE_KIND_UNSPECIFIED" => Some(Self::Unspecified),
+            "AGGREGATE_KIND_REPOSITORY" => Some(Self::Repository),
+            "AGGREGATE_KIND_TRANSACTION" => Some(Self::Transaction),
+            "AGGREGATE_KIND_SOURCE_ATTEMPT" => Some(Self::SourceAttempt),
+            "AGGREGATE_KIND_MUTATION" => Some(Self::Mutation),
+            "AGGREGATE_KIND_AUTHORITY" => Some(Self::Authority),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum LifecycleEventKind {
+    Unspecified = 0,
+    CommitRecorded = 1,
+    TransactionStateChanged = 2,
+    SourceAttemptStateChanged = 3,
+    EngineMutationRecorded = 4,
+    RepositoryAuthorityChanged = 5,
+}
+impl LifecycleEventKind {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "LIFECYCLE_EVENT_KIND_UNSPECIFIED",
+            Self::CommitRecorded => "LIFECYCLE_EVENT_KIND_COMMIT_RECORDED",
+            Self::TransactionStateChanged => "LIFECYCLE_EVENT_KIND_TRANSACTION_STATE_CHANGED",
+            Self::SourceAttemptStateChanged => "LIFECYCLE_EVENT_KIND_SOURCE_ATTEMPT_STATE_CHANGED",
+            Self::EngineMutationRecorded => "LIFECYCLE_EVENT_KIND_ENGINE_MUTATION_RECORDED",
+            Self::RepositoryAuthorityChanged => "LIFECYCLE_EVENT_KIND_REPOSITORY_AUTHORITY_CHANGED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "LIFECYCLE_EVENT_KIND_UNSPECIFIED" => Some(Self::Unspecified),
+            "LIFECYCLE_EVENT_KIND_COMMIT_RECORDED" => Some(Self::CommitRecorded),
+            "LIFECYCLE_EVENT_KIND_TRANSACTION_STATE_CHANGED" => Some(Self::TransactionStateChanged),
+            "LIFECYCLE_EVENT_KIND_SOURCE_ATTEMPT_STATE_CHANGED" => {
+                Some(Self::SourceAttemptStateChanged)
+            }
+            "LIFECYCLE_EVENT_KIND_ENGINE_MUTATION_RECORDED" => Some(Self::EngineMutationRecorded),
+            "LIFECYCLE_EVENT_KIND_REPOSITORY_AUTHORITY_CHANGED" => {
+                Some(Self::RepositoryAuthorityChanged)
+            }
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum CommitProfile {
+    Unspecified = 0,
+    Native = 1,
+    Source = 2,
+}
+impl CommitProfile {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "COMMIT_PROFILE_UNSPECIFIED",
+            Self::Native => "COMMIT_PROFILE_NATIVE",
+            Self::Source => "COMMIT_PROFILE_SOURCE",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "COMMIT_PROFILE_UNSPECIFIED" => Some(Self::Unspecified),
+            "COMMIT_PROFILE_NATIVE" => Some(Self::Native),
+            "COMMIT_PROFILE_SOURCE" => Some(Self::Source),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum TransactionLifecycleState {
+    Unspecified = 0,
+    Proposed = 1,
+    Analyzed = 2,
+    Reserved = 3,
+    Executing = 4,
+    Validating = 5,
+    RevalidationRequired = 6,
+    Committed = 7,
+    Aborted = 8,
+}
+impl TransactionLifecycleState {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "TRANSACTION_LIFECYCLE_STATE_UNSPECIFIED",
+            Self::Proposed => "TRANSACTION_LIFECYCLE_STATE_PROPOSED",
+            Self::Analyzed => "TRANSACTION_LIFECYCLE_STATE_ANALYZED",
+            Self::Reserved => "TRANSACTION_LIFECYCLE_STATE_RESERVED",
+            Self::Executing => "TRANSACTION_LIFECYCLE_STATE_EXECUTING",
+            Self::Validating => "TRANSACTION_LIFECYCLE_STATE_VALIDATING",
+            Self::RevalidationRequired => "TRANSACTION_LIFECYCLE_STATE_REVALIDATION_REQUIRED",
+            Self::Committed => "TRANSACTION_LIFECYCLE_STATE_COMMITTED",
+            Self::Aborted => "TRANSACTION_LIFECYCLE_STATE_ABORTED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "TRANSACTION_LIFECYCLE_STATE_UNSPECIFIED" => Some(Self::Unspecified),
+            "TRANSACTION_LIFECYCLE_STATE_PROPOSED" => Some(Self::Proposed),
+            "TRANSACTION_LIFECYCLE_STATE_ANALYZED" => Some(Self::Analyzed),
+            "TRANSACTION_LIFECYCLE_STATE_RESERVED" => Some(Self::Reserved),
+            "TRANSACTION_LIFECYCLE_STATE_EXECUTING" => Some(Self::Executing),
+            "TRANSACTION_LIFECYCLE_STATE_VALIDATING" => Some(Self::Validating),
+            "TRANSACTION_LIFECYCLE_STATE_REVALIDATION_REQUIRED" => Some(Self::RevalidationRequired),
+            "TRANSACTION_LIFECYCLE_STATE_COMMITTED" => Some(Self::Committed),
+            "TRANSACTION_LIFECYCLE_STATE_ABORTED" => Some(Self::Aborted),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SourceLifecycleState {
+    Unspecified = 0,
+    Proposed = 1,
+    Admitted = 2,
+    Patching = 3,
+    PatchApplied = 4,
+    Verifying = 5,
+    EvidenceSealed = 6,
+    Rejected = 7,
+    PatchConflict = 8,
+    ExecutionFailed = 9,
+    TimedOut = 10,
+    Cancelled = 11,
+    EvidenceIncomplete = 12,
+    RevalidationRequired = 13,
+}
+impl SourceLifecycleState {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "SOURCE_LIFECYCLE_STATE_UNSPECIFIED",
+            Self::Proposed => "SOURCE_LIFECYCLE_STATE_PROPOSED",
+            Self::Admitted => "SOURCE_LIFECYCLE_STATE_ADMITTED",
+            Self::Patching => "SOURCE_LIFECYCLE_STATE_PATCHING",
+            Self::PatchApplied => "SOURCE_LIFECYCLE_STATE_PATCH_APPLIED",
+            Self::Verifying => "SOURCE_LIFECYCLE_STATE_VERIFYING",
+            Self::EvidenceSealed => "SOURCE_LIFECYCLE_STATE_EVIDENCE_SEALED",
+            Self::Rejected => "SOURCE_LIFECYCLE_STATE_REJECTED",
+            Self::PatchConflict => "SOURCE_LIFECYCLE_STATE_PATCH_CONFLICT",
+            Self::ExecutionFailed => "SOURCE_LIFECYCLE_STATE_EXECUTION_FAILED",
+            Self::TimedOut => "SOURCE_LIFECYCLE_STATE_TIMED_OUT",
+            Self::Cancelled => "SOURCE_LIFECYCLE_STATE_CANCELLED",
+            Self::EvidenceIncomplete => "SOURCE_LIFECYCLE_STATE_EVIDENCE_INCOMPLETE",
+            Self::RevalidationRequired => "SOURCE_LIFECYCLE_STATE_REVALIDATION_REQUIRED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "SOURCE_LIFECYCLE_STATE_UNSPECIFIED" => Some(Self::Unspecified),
+            "SOURCE_LIFECYCLE_STATE_PROPOSED" => Some(Self::Proposed),
+            "SOURCE_LIFECYCLE_STATE_ADMITTED" => Some(Self::Admitted),
+            "SOURCE_LIFECYCLE_STATE_PATCHING" => Some(Self::Patching),
+            "SOURCE_LIFECYCLE_STATE_PATCH_APPLIED" => Some(Self::PatchApplied),
+            "SOURCE_LIFECYCLE_STATE_VERIFYING" => Some(Self::Verifying),
+            "SOURCE_LIFECYCLE_STATE_EVIDENCE_SEALED" => Some(Self::EvidenceSealed),
+            "SOURCE_LIFECYCLE_STATE_REJECTED" => Some(Self::Rejected),
+            "SOURCE_LIFECYCLE_STATE_PATCH_CONFLICT" => Some(Self::PatchConflict),
+            "SOURCE_LIFECYCLE_STATE_EXECUTION_FAILED" => Some(Self::ExecutionFailed),
+            "SOURCE_LIFECYCLE_STATE_TIMED_OUT" => Some(Self::TimedOut),
+            "SOURCE_LIFECYCLE_STATE_CANCELLED" => Some(Self::Cancelled),
+            "SOURCE_LIFECYCLE_STATE_EVIDENCE_INCOMPLETE" => Some(Self::EvidenceIncomplete),
+            "SOURCE_LIFECYCLE_STATE_REVALIDATION_REQUIRED" => Some(Self::RevalidationRequired),
+            _ => None,
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum EngineMutationKind {
+    Unspecified = 0,
+    SourceCommit = 1,
+    SourceRevalidate = 2,
+    SourceExecutor = 3,
+    Administrative = 4,
+    Repository = 5,
+    SubmitPatch = 6,
+    RecordEvidence = 7,
+    Revalidate = 8,
+    Propose = 9,
+    Analyze = 10,
+    Reserve = 11,
+    Renew = 12,
+    Execute = 13,
+    Abort = 14,
+}
+impl EngineMutationKind {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "ENGINE_MUTATION_KIND_UNSPECIFIED",
+            Self::SourceCommit => "ENGINE_MUTATION_KIND_SOURCE_COMMIT",
+            Self::SourceRevalidate => "ENGINE_MUTATION_KIND_SOURCE_REVALIDATE",
+            Self::SourceExecutor => "ENGINE_MUTATION_KIND_SOURCE_EXECUTOR",
+            Self::Administrative => "ENGINE_MUTATION_KIND_ADMINISTRATIVE",
+            Self::Repository => "ENGINE_MUTATION_KIND_REPOSITORY",
+            Self::SubmitPatch => "ENGINE_MUTATION_KIND_SUBMIT_PATCH",
+            Self::RecordEvidence => "ENGINE_MUTATION_KIND_RECORD_EVIDENCE",
+            Self::Revalidate => "ENGINE_MUTATION_KIND_REVALIDATE",
+            Self::Propose => "ENGINE_MUTATION_KIND_PROPOSE",
+            Self::Analyze => "ENGINE_MUTATION_KIND_ANALYZE",
+            Self::Reserve => "ENGINE_MUTATION_KIND_RESERVE",
+            Self::Renew => "ENGINE_MUTATION_KIND_RENEW",
+            Self::Execute => "ENGINE_MUTATION_KIND_EXECUTE",
+            Self::Abort => "ENGINE_MUTATION_KIND_ABORT",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "ENGINE_MUTATION_KIND_UNSPECIFIED" => Some(Self::Unspecified),
+            "ENGINE_MUTATION_KIND_SOURCE_COMMIT" => Some(Self::SourceCommit),
+            "ENGINE_MUTATION_KIND_SOURCE_REVALIDATE" => Some(Self::SourceRevalidate),
+            "ENGINE_MUTATION_KIND_SOURCE_EXECUTOR" => Some(Self::SourceExecutor),
+            "ENGINE_MUTATION_KIND_ADMINISTRATIVE" => Some(Self::Administrative),
+            "ENGINE_MUTATION_KIND_REPOSITORY" => Some(Self::Repository),
+            "ENGINE_MUTATION_KIND_SUBMIT_PATCH" => Some(Self::SubmitPatch),
+            "ENGINE_MUTATION_KIND_RECORD_EVIDENCE" => Some(Self::RecordEvidence),
+            "ENGINE_MUTATION_KIND_REVALIDATE" => Some(Self::Revalidate),
+            "ENGINE_MUTATION_KIND_PROPOSE" => Some(Self::Propose),
+            "ENGINE_MUTATION_KIND_ANALYZE" => Some(Self::Analyze),
+            "ENGINE_MUTATION_KIND_RESERVE" => Some(Self::Reserve),
+            "ENGINE_MUTATION_KIND_RENEW" => Some(Self::Renew),
+            "ENGINE_MUTATION_KIND_EXECUTE" => Some(Self::Execute),
+            "ENGINE_MUTATION_KIND_ABORT" => Some(Self::Abort),
+            _ => None,
+        }
+    }
+}

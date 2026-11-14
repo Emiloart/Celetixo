@@ -1,0 +1,894 @@
+{
+  "schema": "celetixo/published-v8-native-fixture/v1",
+  "source_commit": "9bdd1af451a864ba03de516bb0cd10b5fd53e3ab",
+  "binary_sha256": "11f5b4b403cd29bdc33cd8af1e055ea6bb934640a55630e0da5f863939c17ed1",
+  "source_test": "native_authority::native_lifecycle_reopens_and_commits_receipt_operation_terminal_and_outbox_atomically",
+  "scope": [
+    "pg-native-lifecycle-28963",
+    "workspace",
+    "repository"
+  ],
+  "insertion_order": [
+    "organizations",
+    "principals",
+    "workspaces",
+    "repositories",
+    "domain_payloads",
+    "engine_counters",
+    "reservation_fences",
+    "grants",
+    "outbox",
+    "snapshots",
+    "authority_publications",
+    "engine_model_heads",
+    "grant_permissions",
+    "outbox_delivery",
+    "repository_heads",
+    "transactions",
+    "attempts",
+    "access_provenance",
+    "committed_changes",
+    "evidence",
+    "operations",
+    "reservations",
+    "transaction_outcomes",
+    "attempt_checks",
+    "reference_evidence_admissions",
+    "reservation_events",
+    "reference_evidence_signers"
+  ],
+  "tables": {
+    "access_provenance": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "provenance_kind": "predicate",
+        "payload_digest": "\\x0e53d7988b9e04c1ac4f74f1bef7a86eb2bab1ce5e79bc3f2df9ead9e2c6fe70"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "provenance_kind": "derived",
+        "payload_digest": "\\x3350195f812e7ab7d23787f7986da3dfa56979e88ec277625d104324dbcea9b5"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "provenance_kind": "invariant",
+        "payload_digest": "\\x3350195f812e7ab7d23787f7986da3dfa56979e88ec277625d104324dbcea9b5"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "provenance_kind": "analysis",
+        "payload_digest": "\\x8f86fce6a236148beef6d1fca35090a24b659f64a664f07c2259155fefee93bf"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "provenance_kind": "effective",
+        "payload_digest": "\\x9a7f48de84f157e63e2ae93490d201b9fe750558a6168dcffffc1268a3a9045e"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "provenance_kind": "explicit",
+        "payload_digest": "\\x9a7f48de84f157e63e2ae93490d201b9fe750558a6168dcffffc1268a3a9045e"
+      }
+    ],
+    "attempt_checks": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "check_id": "verify",
+        "evidence_digest": "\\x7935d45d3a1cecfdf420cabe8bbbd0a9de49fe4767f4d690a7e87d8690286adf"
+      }
+    ],
+    "attempts": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "base_snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "candidate_snapshot_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "model_payload_digest": "\\x61bf2cea907ba53540496de7c070b35cb05d50987c6a294555032b04c028e421",
+        "analysis_payload_digest": "\\x6471b643a00008f4e1bab793356fa4a956116c20f242c7084008af66b716dfad",
+        "patch_digest": "\\xe94684f730ef1d57ed7b86e7b903a34d732d43bfe6b0b69bea81e77e1b276d7f",
+        "patch_payload_digest": "\\xe94684f730ef1d57ed7b86e7b903a34d732d43bfe6b0b69bea81e77e1b276d7f",
+        "model_generation": 1
+      }
+    ],
+    "authority_publications": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 1,
+        "observed_clock_ms": 1794659867798,
+        "authenticated_database_role": "celetixo_runtime_other",
+        "authenticated_database_role_oid": "16386",
+        "actor_kind": "EmbeddingAdministrator",
+        "requested_principal_id": null,
+        "requested_grant_id": null,
+        "requested_permission": null,
+        "snapshot_digest": null,
+        "recorded_at": "2026-11-14T12:37:47.840432+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 2,
+        "observed_clock_ms": 1794659868131,
+        "authenticated_database_role": "celetixo_runtime_other",
+        "authenticated_database_role_oid": "16386",
+        "actor_kind": "EmbeddingAdministrator",
+        "requested_principal_id": null,
+        "requested_grant_id": null,
+        "requested_permission": null,
+        "snapshot_digest": null,
+        "recorded_at": "2026-11-14T12:37:48.145531+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 14,
+        "observed_clock_ms": 1794659924456,
+        "authenticated_database_role": "celetixo_runtime_other",
+        "authenticated_database_role_oid": "16386",
+        "actor_kind": "EmbeddingAdministrator",
+        "requested_principal_id": null,
+        "requested_grant_id": null,
+        "requested_permission": null,
+        "snapshot_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "recorded_at": "2026-11-14T12:38:44.467089+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 3,
+        "observed_clock_ms": 1794659868437,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Register",
+        "snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "recorded_at": "2026-11-14T12:37:48.459049+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 4,
+        "observed_clock_ms": 1794659869451,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Propose",
+        "snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "recorded_at": "2026-11-14T12:37:49.481293+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 5,
+        "observed_clock_ms": 1794659873564,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Analyze",
+        "snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "recorded_at": "2026-11-14T12:37:53.639843+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 6,
+        "observed_clock_ms": 1794659878760,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Reserve",
+        "snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "recorded_at": "2026-11-14T12:37:58.841059+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 7,
+        "observed_clock_ms": 1794659885892,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Execute",
+        "snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "recorded_at": "2026-11-14T12:38:05.927035+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 8,
+        "observed_clock_ms": 1794659892289,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Execute",
+        "snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "recorded_at": "2026-11-14T12:38:12.426647+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 9,
+        "observed_clock_ms": 1794659898399,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "verifier",
+        "requested_grant_id": 2,
+        "requested_permission": "Verify",
+        "snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "recorded_at": "2026-11-14T12:38:18.699293+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 10,
+        "observed_clock_ms": 1794659909191,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Commit",
+        "snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "recorded_at": "2026-11-14T12:38:29.198904+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 11,
+        "observed_clock_ms": 1794659910730,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Commit",
+        "snapshot_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "recorded_at": "2026-11-14T12:38:31.02618+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 12,
+        "observed_clock_ms": 1794659919421,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Commit",
+        "snapshot_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "recorded_at": "2026-11-14T12:38:39.429258+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 13,
+        "observed_clock_ms": 1794659923244,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Commit",
+        "snapshot_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "recorded_at": "2026-11-14T12:38:43.250221+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 15,
+        "observed_clock_ms": 1794659927437,
+        "authenticated_database_role": "celetixo_runtime",
+        "authenticated_database_role_oid": "16385",
+        "actor_kind": "Session",
+        "requested_principal_id": "worker",
+        "requested_grant_id": 1,
+        "requested_permission": "Commit",
+        "snapshot_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "recorded_at": "2026-11-14T12:38:47.465067+00:00"
+      }
+    ],
+    "committed_changes": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "revision": 1,
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "snapshot_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "patch_digest": "\\xe94684f730ef1d57ed7b86e7b903a34d732d43bfe6b0b69bea81e77e1b276d7f",
+        "provenance_payload_digest": "\\x8f86fce6a236148beef6d1fca35090a24b659f64a664f07c2259155fefee93bf",
+        "receipt_payload_digest": "\\x72f2cec169d6dc69ffd03073bc089c602f924129ae9dbb191a6940d9318a6034"
+      }
+    ],
+    "domain_payloads": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "payload_format": "celetixo/snapshot/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f7279000000000000000800000000000000000000000000000008000000000000000100000000000000076669787475726500000000000000177075626c69632d70672d666f756e646174696f6e2f763100000000000000080000000000000001000000000000000800000000000000080000000000000008000000000000000000000000000000080000000000000001000000000000000800000000000000020000000000000008000000000000000300000000000000080000000000000004000000000000000800000000000000050000000000000008000000000000000600000000000000080000000000000007000000000000000800000000000000000000000000000008000000000000000000000000000000080000000000000000000000000000000800000000000000020000000000000001780000000000000008000000000000000100000000000000017900000000000000080000000000000002",
+        "created_at": "2026-11-14T12:37:48.438824+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x61bf2cea907ba53540496de7c070b35cb05d50987c6a294555032b04c028e421",
+        "payload_format": "celetixo/engineering-model-record/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f7279000000000000002058e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f600000000000000080000000000000001000000000000001066696e6974652d7265666572656e6365000000000000001373716c2d726567697374726174696f6e2f763100000000000000203cdb7d0b7ee524d9a7abcf27fcc0c45d08a961c234c938b904ba5a7d2aec2abe0000000000000008000000000000000000000000000000080000000000000000",
+        "created_at": "2026-11-14T12:37:48.448373+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\xaa097fcb7499ed90863e4e4af8d4ec0332a6a2ed0f5bad044b607a550b00fbb9",
+        "payload_format": "celetixo/native-intent-record/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f7279000000000000002058e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f600000000000000296e6174697665206c6966656379636c6520cebb00776974682065786163742070726f76656e616e63650000000000000008000000000000000000000000000000080000000000000001000000000000000178000000000000000800000000000000000000000000000008000000000000000100000000000000097072656669782f763100000000000000076675747572653a0000000000000008000000000000000000000000000000080000000000000001000000000000000676657269667900000000000000080000000000000001000000000000001c6e6f742d65786563757465642d7265666572656e63652d636865636b000000000000000c7265666572656e63652f76310000000000000020d711d2cfade9ebd6b5a83942305b7f0bcdd7caf284e70fb54cf52e3802b4ba040000000000000020842f87352be72ad72abe46357fc9337f2920a3a82fe16b1d1e17a46ac1be7b5000000000000000080000000000000000",
+        "created_at": "2026-11-14T12:37:49.452702+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x9a7f48de84f157e63e2ae93490d201b9fe750558a6168dcffffc1268a3a9045e",
+        "payload_format": "celetixo/access-set/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x0000000000000008000000000000000000000000000000080000000000000001000000000000000178000000000000000800000000000000000000000000000008000000000000000100000000000000097072656669782f763100000000000000076675747572653a",
+        "created_at": "2026-11-14T12:37:49.466156+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x6471b643a00008f4e1bab793356fa4a956116c20f242c7084008af66b716dfad",
+        "payload_format": "celetixo/impact-analysis-record/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f7279000000000000002058e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f600000000000000080000000000000001000000000000001066696e6974652d7265666572656e6365000000000000001373716c2d726567697374726174696f6e2f763100000000000000203cdb7d0b7ee524d9a7abcf27fcc0c45d08a961c234c938b904ba5a7d2aec2abe0000000000000008000000000000000000000000000000080000000000000000000000000000000800000000000000000000000000000008000000000000000000000000000000080000000000000000",
+        "created_at": "2026-11-14T12:37:53.570921+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x3350195f812e7ab7d23787f7986da3dfa56979e88ec277625d104324dbcea9b5",
+        "payload_format": "celetixo/access-set/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x00000000000000080000000000000000000000000000000800000000000000000000000000000008000000000000000000000000000000080000000000000000",
+        "created_at": "2026-11-14T12:37:53.580189+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x0e53d7988b9e04c1ac4f74f1bef7a86eb2bab1ce5e79bc3f2df9ead9e2c6fe70",
+        "payload_format": "celetixo/access-set/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x0000000000000008000000000000000000000000000000080000000000000000000000000000000800000000000000000000000000000008000000000000000100000000000000097072656669782f763100000000000000076675747572653a",
+        "created_at": "2026-11-14T12:37:53.588938+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x8f86fce6a236148beef6d1fca35090a24b659f64a664f07c2259155fefee93bf",
+        "payload_format": "celetixo/access-provenance-record/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f7279000000000000000161000000000000000800000000000000000000000000000008000000000000000000000000000000080000000000000001000000000000000178000000000000000800000000000000000000000000000008000000000000000100000000000000097072656669782f763100000000000000076675747572653a0000000000000008000000000000000000000000000000080000000000000000000000000000000800000000000000000000000000000008000000000000000000000000000000080000000000000000000000000000002058e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f600000000000000080000000000000001000000000000001066696e6974652d7265666572656e6365000000000000001373716c2d726567697374726174696f6e2f763100000000000000203cdb7d0b7ee524d9a7abcf27fcc0c45d08a961c234c938b904ba5a7d2aec2abe00000000000000080000000000000000",
+        "created_at": "2026-11-14T12:37:53.591669+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\xdfa916e0d78241ea4c4d32b798040bafea6dc7d21b20adbb412dcee0f59d10bd",
+        "payload_format": "celetixo/lease-event-record/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f7279000000000000000161000000000000000800000000000000000000000000000008000000000000000100000000000000080000000000000001000000000000000800000000000000000000000000000008000001a1da1087680000000000000006776f726b657200000000000000080000000000000001000000000000000178000000000000000841637175697265640000000000000008000001a1da125c28",
+        "created_at": "2026-11-14T12:37:58.778602+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\xe94684f730ef1d57ed7b86e7b903a34d732d43bfe6b0b69bea81e77e1b276d7f",
+        "payload_format": "celetixo/patch/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000002058e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f600000000000000080000000000000001000000000000000178000000000000000770726573656e7400000000000000080000000000000001000000000000000770726573656e740000000000000008000000000000000a",
+        "created_at": "2026-11-14T12:38:12.304944+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "payload_format": "celetixo/snapshot/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f7279000000000000000800000000000000010000000000000008000000000000000100000000000000076669787475726500000000000000177075626c69632d70672d666f756e646174696f6e2f763100000000000000080000000000000001000000000000000800000000000000080000000000000008000000000000000000000000000000080000000000000001000000000000000800000000000000020000000000000008000000000000000300000000000000080000000000000004000000000000000800000000000000050000000000000008000000000000000600000000000000080000000000000007000000000000000800000000000000000000000000000008000000000000000000000000000000080000000000000000000000000000000800000000000000020000000000000001780000000000000008000000000000000a00000000000000017900000000000000080000000000000002",
+        "created_at": "2026-11-14T12:38:12.309526+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x1f1e8803a4d40e0cc48677bb22cd487f975eab7a82699c9f4d067ac11b85146c",
+        "payload_format": "celetixo/verification-evidence-record/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f7279000000000000002058e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6000000000000000161000000000000000800000000000000000000000000000020f1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd80120000000000000020e94684f730ef1d57ed7b86e7b903a34d732d43bfe6b0b69bea81e77e1b276d7f0000000000000020e4f4cebb5a2168913286c9f34176170972cab6dbaebc3fb0a225317cd8f901e3000000000000000676657269667900000000000000080000000000000001000000000000001c6e6f742d65786563757465642d7265666572656e63652d636865636b000000000000000c7265666572656e63652f76310000000000000020d711d2cfade9ebd6b5a83942305b7f0bcdd7caf284e70fb54cf52e3802b4ba040000000000000020842f87352be72ad72abe46357fc9337f2920a3a82fe16b1d1e17a46ac1be7b50000000000000000800000000000000000000000000000008000000000000000000000000000000087665726966696572000000000000000c7265666572656e63652f7631000000000000000161000000000000000800000000000000000000000000000008000000000000000000000000000000080000000000000001000000000000000d646961676e6f7374696300cebb0000000000000008000000000000000100000000000000067374646f757400000000000000186170706c69636174696f6e2f6f637465742d73747265616d00000000000000046f6b00ff",
+        "created_at": "2026-11-14T12:38:18.623301+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\xea88b82d4560adc4512659789e503662085e5aded4e9942533e9e36c1e47c444",
+        "payload_format": "celetixo/transaction-reason-record/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f727900000000000000016100000000000000080000000000000000000000000000002161746f6d69632076616c69646174696f6e20616e64207075626c69636174696f6e",
+        "created_at": "2026-11-14T12:38:30.812199+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x80a9adb9634cabd72f3881fcb79057b58d93685f59812bad1e74d96dd7fed2b9",
+        "payload_format": "celetixo/lease-event-record/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f7279000000000000000161000000000000000800000000000000010000000000000008000000000000000100000000000000080000000000000001000000000000000800000000000000000000000000000008000001a1da11044a0000000000000006776f726b657200000000000000080000000000000001000000000000000178000000000000000852656c65617365640000000000000009636f6d6d6974746564",
+        "created_at": "2026-11-14T12:38:30.836972+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x72f2cec169d6dc69ffd03073bc089c602f924129ae9dbb191a6940d9318a6034",
+        "payload_format": "celetixo/commit-outcome-record/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f72790000000000000001610000000000000008000000000000000000000000000000084163636570746564000000000000000800000000000000010000000000000020f1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd80120000000000000020e94684f730ef1d57ed7b86e7b903a34d732d43bfe6b0b69bea81e77e1b276d7f",
+        "created_at": "2026-11-14T12:38:30.905675+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x38b566af980eb9cfae40a1b46f8d3078aa2b45242f4d61fa72357d34df074082",
+        "payload_format": "celetixo/commit-request/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f72790000000000000006776f726b6572000000000000000161000000000000000800000000000000000000000000000008000000000000000100000000000000080000000000000001000000000000002058e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f60000000000000020f1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd80120000000000000020e94684f730ef1d57ed7b86e7b903a34d732d43bfe6b0b69bea81e77e1b276d7f0000000000000020e4f4cebb5a2168913286c9f34176170972cab6dbaebc3fb0a225317cd8f901e30000000000000020aa097fcb7499ed90863e4e4af8d4ec0332a6a2ed0f5bad044b607a550b00fbb900000000000000080000000000000001000000000000000676657269667900000000000000207935d45d3a1cecfdf420cabe8bbbd0a9de49fe4767f4d690a7e87d8690286adf",
+        "created_at": "2026-11-14T12:38:30.933862+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "payload_digest": "\\x086cb2ec8e94261d572a46c815730f3da64012ac961fb0f4cbcf687145acb61a",
+        "payload_format": "celetixo/engineering-model-record/v1",
+        "payload_version": 1,
+        "payload_bytes": "\\x000000000000001970672d6e61746976652d6c6966656379636c652d32383936330000000000000009776f726b7370616365000000000000000a7265706f7369746f72790000000000000020f1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd801200000000000000080000000000000001000000000000001066696e6974652d7265666572656e6365000000000000001373716c2d726567697374726174696f6e2f763100000000000000203cdb7d0b7ee524d9a7abcf27fcc0c45d08a961c234c938b904ba5a7d2aec2abe0000000000000008000000000000000000000000000000080000000000000000",
+        "created_at": "2026-11-14T12:38:30.995738+00:00"
+      }
+    ],
+    "engine_counters": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "last_clock_ms": 1794659927437,
+        "next_session_grant": 2,
+        "next_executor_grant": 0,
+        "next_cleanup_grant": 0,
+        "next_artifact_store": 0
+      }
+    ],
+    "engine_model_heads": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "initial_snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "snapshot_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "model_generation": 1,
+        "model_payload_digest": "\\x086cb2ec8e94261d572a46c815730f3da64012ac961fb0f4cbcf687145acb61a",
+        "model_kind": "Reference",
+        "analysis_payload_digest": null,
+        "index_generation": null,
+        "runtime_profile": "native-reference-v1"
+      }
+    ],
+    "evidence": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "evidence_digest": "\\x7935d45d3a1cecfdf420cabe8bbbd0a9de49fe4767f4d690a7e87d8690286adf",
+        "evidence_kind": "Reference",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "evidence_payload_digest": "\\x1f1e8803a4d40e0cc48677bb22cd487f975eab7a82699c9f4d067ac11b85146c",
+        "verifier_grant_kind": "session",
+        "verifier_grant_id": 2
+      }
+    ],
+    "grant_permissions": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 1,
+        "permission": "Analyze"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 1,
+        "permission": "Cancel"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 1,
+        "permission": "Commit"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 1,
+        "permission": "Execute"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 1,
+        "permission": "ManageModel"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 1,
+        "permission": "Propose"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 1,
+        "permission": "Read"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 1,
+        "permission": "Register"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 1,
+        "permission": "Reserve"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 2,
+        "permission": "Verify"
+      }
+    ],
+    "grants": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 1,
+        "principal_id": "worker",
+        "generation": 14,
+        "active": false,
+        "expires_at_ms": null,
+        "payload_digest": null
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "grant_kind": "session",
+        "grant_id": 2,
+        "principal_id": "verifier",
+        "generation": 2,
+        "active": true,
+        "expires_at_ms": null,
+        "payload_digest": null
+      }
+    ],
+    "operations": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "operation_kind": "Commit",
+        "idempotency_key": "commit:a",
+        "request_digest": "\\x38b566af980eb9cfae40a1b46f8d3078aa2b45242f4d61fa72357d34df074082",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "outcome_kind": "Accepted",
+        "outcome_payload_digest": "\\x72f2cec169d6dc69ffd03073bc089c602f924129ae9dbb191a6940d9318a6034",
+        "recorded_at": "2026-11-14T12:38:30.939616+00:00",
+        "request_payload_digest": "\\x38b566af980eb9cfae40a1b46f8d3078aa2b45242f4d61fa72357d34df074082"
+      }
+    ],
+    "organizations": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "created_at": "2026-11-14T12:37:47.650443+00:00"
+      }
+    ],
+    "outbox": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "event_id": "\\x33032bfc7fa2489c20d97adea57bbe1a57f03979ca957a4f9089acd31d0db6e5",
+        "aggregate_kind": "Repository",
+        "aggregate_id": "repository",
+        "aggregate_sequence": 1,
+        "event_type": "NativeCommitRecorded",
+        "schema_version": 1,
+        "payload_digest": "\\x72f2cec169d6dc69ffd03073bc089c602f924129ae9dbb191a6940d9318a6034",
+        "created_at": "2026-11-14T12:38:30.929078+00:00"
+      }
+    ],
+    "outbox_delivery": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "event_id": "\\x33032bfc7fa2489c20d97adea57bbe1a57f03979ca957a4f9089acd31d0db6e5",
+        "publication_attempts": 7,
+        "published_at": "2026-11-14T12:38:42.834165+00:00",
+        "next_attempt_at": null,
+        "claim_generation": 2
+      }
+    ],
+    "principals": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "principal_id": "worker",
+        "created_at": "2026-11-14T12:37:47.799625+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "principal_id": "verifier",
+        "created_at": "2026-11-14T12:37:48.133566+00:00"
+      }
+    ],
+    "reference_evidence_admissions": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "evidence_digest": "\\x7935d45d3a1cecfdf420cabe8bbbd0a9de49fe4767f4d690a7e87d8690286adf",
+        "evidence_kind": "Reference",
+        "verifier_grant_kind": "session",
+        "verifier_grant_id": 2,
+        "admitted_at_ms": 1794659898399
+      }
+    ],
+    "reference_evidence_signers": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "evidence_digest": "\\x7935d45d3a1cecfdf420cabe8bbbd0a9de49fe4767f4d690a7e87d8690286adf",
+        "verifier_grant_id": 2
+      }
+    ],
+    "repositories": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "state_generation": 15,
+        "created_at": "2026-11-14T12:37:47.654485+00:00",
+        "authority_profile": "native-reference-v1"
+      }
+    ],
+    "repository_heads": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "revision": 1,
+        "snapshot_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "head_generation": 11
+      }
+    ],
+    "reservation_events": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "fence_generation": 1,
+        "event_sequence": 0,
+        "at_ms": 1794659878760,
+        "event_kind": "Acquired",
+        "payload_digest": "\\xdfa916e0d78241ea4c4d32b798040bafea6dc7d21b20adbb412dcee0f59d10bd"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "fence_generation": 1,
+        "event_sequence": 1,
+        "at_ms": 1794659910730,
+        "event_kind": "Released",
+        "payload_digest": "\\x80a9adb9634cabd72f3881fcb79057b58d93685f59812bad1e74d96dd7fed2b9"
+      }
+    ],
+    "reservation_fences": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "generation": 1
+      }
+    ],
+    "reservations": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "fence_generation": 1,
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "owner_grant_kind": "session",
+        "owner_grant_id": 1,
+        "acquired_at_ms": 1794659878760,
+        "expires_at_ms": 1794659998760,
+        "state": "Released"
+      }
+    ],
+    "snapshots": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "revision": 0,
+        "manifest_digest": "\\x362bc752dcf09c9640d21958df4e6fd942b55d09c4547f37e43c710fbd76bc3f",
+        "payload_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "created_at": "2026-11-14T12:37:48.44154+00:00"
+      },
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "snapshot_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "revision": 1,
+        "manifest_digest": "\\x362bc752dcf09c9640d21958df4e6fd942b55d09c4547f37e43c710fbd76bc3f",
+        "payload_digest": "\\xf1db39e1841f178b2c75a7d4f7d766bd229e741d20beae3e15d75f7481bd8012",
+        "created_at": "2026-11-14T12:38:12.311281+00:00"
+      }
+    ],
+    "transaction_outcomes": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "transaction_id": "a",
+        "attempt_number": 0,
+        "terminal_state": "Committed",
+        "outcome_payload_digest": "\\x72f2cec169d6dc69ffd03073bc089c602f924129ae9dbb191a6940d9318a6034",
+        "recorded_at": "2026-11-14T12:38:30.989159+00:00"
+      }
+    ],
+    "transactions": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "repository_id": "repository",
+        "transaction_id": "a",
+        "owner_principal_id": "worker",
+        "owner_grant_kind": "session",
+        "owner_grant_id": 1,
+        "state": "Committed",
+        "current_attempt": 0,
+        "original_snapshot_digest": "\\x58e63754d927ebe5957fc8d9a0cb6bb38a26789f15d1c7e932b2744dc9c785f6",
+        "intent_payload_digest": "\\xaa097fcb7499ed90863e4e4af8d4ec0332a6a2ed0f5bad044b607a550b00fbb9",
+        "generation": 11,
+        "last_reason": null,
+        "current_fence": null,
+        "last_reason_payload_digest": "\\xea88b82d4560adc4512659789e503662085e5aded4e9942533e9e36c1e47c444"
+      }
+    ],
+    "workspaces": [
+      {
+        "organization_id": "pg-native-lifecycle-28963",
+        "workspace_id": "workspace",
+        "created_at": "2026-11-14T12:37:47.652134+00:00"
+      }
+    ]
+  }
+}

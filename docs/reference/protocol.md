@@ -1,7 +1,7 @@
 # Protocol reference
 
-**Status:** canonical TaskIntent v1 messages and strict Rust intake implemented; no RPC service
-**Validation:** [Goal 04 foundation record](../implementation/goal-04-progress.md) (2026-11-11)
+**Status:** canonical TaskIntent and lifecycle event messages, strict Rust intake and scoped JetStream consumer implemented; no RPC service
+**Validation:** [Foundation](../implementation/goal-04-progress.md) and [event delivery](../implementation/goal-04-events.md) records (2026-11-14)
 **Authority:** ADR-0001 and ADR-0002, read with ADR-0003 and ADR-0004
 
 ## Canonical source and consumers
@@ -14,6 +14,7 @@ TaskIntent field and nested message from [ADR-0001 section 8](../adr/0001-celeti
 |---|---|---|
 | `celetixo.orchestration.v1.TaskIntent` | Generated Rust/prost bindings | Full task dependencies, reads/writes, invariants, impact/verification policy, budgets, retry/rollback/escalation and provenance |
 | `celetixo.platform.v1.TaskIntentEnvelope` and `ScopeSelector` | Generated Rust bindings and `celetixo_protocol::decode_task_intent` | Contract version, organization/workspace/repository selector, complete intent, idempotency key, trace ID and required capabilities |
+| `celetixo.platform.v1.LifecycleEvent` | Generated Rust, strict `decode_lifecycle_event`, SQL outbox/inbox and JetStream delivery | Scoped typed commit/transaction/source-attempt/mutation/authority facts, immutable payload digest, stable ID and aggregate sequence; no authority grant |
 
 The smaller Rust Engine `TransactionIntent` remains an in-process domain admission
 record. It is not a competing TaskIntent wire schema. No adapter currently executes
@@ -66,15 +67,27 @@ a published base descriptor when that Git revision contains one. Existing packag
 file, message, field name/number/type/repetition/default/oneof semantics cannot be
 removed or changed. V1 intentionally rejects removal even with reservations,
 because mandatory TaskIntent semantics must survive. Future generations must still
-reserve removed field numbers and names; never reuse their meaning. Enums/services
-are not supported by this initial checker and require an explicit checker extension
-before introduction. Wire checks cannot establish semantic compatibility by themselves.
+reserve removed field numbers and names; never reuse their meaning. The checker
+supports closed enums and preserves published names/numbers; it rejects aliases,
+negative values and missing zero entries. Services remain unsupported and require
+an explicit checker extension before introduction. Wire checks cannot establish semantic compatibility by themselves.
 
 CI includes integrity/ADR checks, negative compatibility mutations, pinned
 regeneration and strict Rust intake tests. Golden fixtures exercise all ADR fields;
 unknown nested fields, malformed payloads, version/capability rejection and request
 identity mutations have regression coverage. This is message-level validation, not
 an old/new deployed service or authenticated authorization test.
+
+## Lifecycle event semantics
+
+Exactly one typed fact must agree with event/aggregate kind. Attempts are
+zero-based; aggregate sequences are monotonic with possible gaps. Strict consumers
+reject unknown schema/enum values and preserve original bytes in quarantine. SQL
+consumers require exact immutable authoritative frames and current state bounds
+before derived effects; syntactic validity alone is insufficient. ACK follows
+durable inbox/effect commit. Stable event IDs survive retries beyond the finite
+broker deduplication window. See [event delivery](../implementation/goal-04-events.md)
+for actual fault evidence and limits. Events never decide commit.
 
 ## Remaining service boundary
 

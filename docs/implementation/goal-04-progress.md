@@ -2,10 +2,16 @@
 
 **Status:** [04.1 durable state](goal-04-authority-acceptance.md) and
 [04.2 atomic commit](goal-04-commit-acceptance.md) are accepted for the reviewed
-PostgreSQL adapters. Milestones 04.3–04.7 and the complete Goal 04 objective remain
-active and incomplete.
+PostgreSQL adapters. [04.3 event delivery](goal-04-events.md) is implemented with
+selected real PostgreSQL/NATS fault validation; its remaining regression and worker
+checks are explicit. The complete Goal 04 objective remains active and incomplete.
 
-The latest source-history proof records 552 workspace passes, 48 generated Engine
+The [event validation record](goal-04-events-validation/checks.json) records 556
+workspace passes, six selected real PostgreSQL parents, actual three-node broker
+fault recovery and strict build/protocol checks. It leaves the complete SQL suite
+and standalone worker process checks open.
+
+The preceding source-history proof records 552 workspace passes, 48 generated Engine
 source histories and 16 real PostgreSQL histories using independent commit
 processes, plus three related SQL recovery/race parents. Its exact scope and
 unrun checks are in [the final record](goal-04-source-history-validation/checks.json).
@@ -23,7 +29,7 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 |---|---|
 | 04.1 — PostgreSQL state and recovery | **Accepted for the reviewed PostgreSQL adapter.** [Acceptance audit](goal-04-authority-acceptance.md) maps the original criteria to normalized native/source state, exact outcomes, leases/fences, schema v8, all supported prior upgrades and actual checked restart/reopen. Full Goal 04 remains active. |
 | 04.2 — Multi-instance atomic commit | **Accepted for the reviewed PostgreSQL adapters.** [Acceptance audit](goal-04-commit-acceptance.md) maps conditional revision advancement, exact outcomes, independent-process native/source histories and crash ambiguity to actual evidence. Production service/transport and the original full-goal operations programme remain open. |
-| 04.3 — Transactional events | Native commits now insert a stable outbox fact atomically. No cross-service publisher, inbox consumer or real NATS integration yet. |
+| 04.3 — Transactional events | [Implemented, selected real integration validated](goal-04-events.md): typed lifecycle frames, fenced publisher, scoped SQL inbox/projections, three-node mutual-TLS JetStream, crash/replay/quorum/retention reconciliation. Full SQL regression and standalone worker checks remain open. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. The local writer/format is retained; the reader extension above does not establish S3 storage. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
@@ -45,9 +51,9 @@ fresh revalidation/cold reopen. The first interrupted SQL run is not a passing
 parent. Per-check build profiles and the later CI-only profile delta are explicit.
 Existing production Rust, canonical protocol and migrations 0001–0008 are unchanged.
 
-The next milestone is the complete 04.3 transactional lifecycle event path with
-real NATS JetStream, scoped authentication, durable publication/inbox recovery,
-replay/redelivery and bounded failure behavior. The original 04.4–04.7 workflow,
+The subsequent [04.3 event implementation](goal-04-events.md) adds the real
+JetStream path and selected fault/security evidence. Complete its remaining
+regression and worker operation checks, then proceed with 04.4 Temporal. The original 04.4–04.7 workflow,
 object storage, analytics/shared services and operational proof also remain active.
 
 ## Independent source commit processes
@@ -647,10 +653,9 @@ readiness, whole-goal completion or service-level performance claim is made.
 
 ## Next implementation boundary
 
-Implement 04.3: canonical lifecycle event contracts, recoverable outbox publication,
-real NATS JetStream, scoped service identity/authorization and idempotent consumers
-with replay, poison handling, backpressure and reconciliation. Publishing an event
-cannot create or reverse a commit. Then continue the original 04.4–04.7 workflow,
+Complete the remaining [04.3 checks](goal-04-events.md), then implement 04.4
+Temporal workflows against the same authoritative Engine path. Publishing an event
+cannot create or reverse a commit. Continue the original 04.4–04.7 workflow,
 object-store, analytics/shared-service and complete operational programme.
 
 The [full Goal 04 contract](goal-04.md) remains the objective. Reviewed SQL adapter

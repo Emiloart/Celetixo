@@ -1,8 +1,9 @@
-//! PostgreSQL catalogs and checked native lifecycle/commit authority.
-//! Complete captured-source recovery and network service deployment are pending.
+//! PostgreSQL catalogs, checked native/source authority and scoped event delivery.
+//! Network PostgreSQL service deployment remains a separate integration.
 //! Rust evaluates domain transitions; there is no memory fallback or SQL
 //! semantic decision service.
 mod authority;
+pub mod delivery;
 mod migrations;
 mod semantic;
 mod snapshots;

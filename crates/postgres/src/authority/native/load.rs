@@ -35,7 +35,6 @@ fn load_base(
             "source_rejections",
             "artifact_objects",
             "evidence_receipts",
-            "inbox",
             "source_analyses",
             "source_policy_catalog",
             "source_check_definitions",
@@ -63,7 +62,6 @@ fn load_base(
     } else {
         &[
             "artifact_objects",
-            "inbox",
             "committed_changes",
             "reference_evidence_admissions",
             "reference_evidence_signers",
@@ -300,6 +298,9 @@ fn load_base(
         return Err(AuthorityFailure::Integrity);
     }
     load_publication(tx, loader, generation, &records, profile)?;
+    if profile == LoadProfile::Native {
+        super::super::events::load(tx, loader, &records, None)?;
+    }
     Ok(records)
 }
 
@@ -607,6 +608,7 @@ fn load_terminal_and_outbox(
     }
     let mut events = BTreeMap::new();
     for row in loader.rows(tx,"outbox","event_id::bytea,aggregate_kind,aggregate_id::text,aggregate_sequence::text,event_type::text,schema_version,payload_digest::bytea","aggregate_kind,aggregate_id,aggregate_sequence")? {
+        if row.get::<_,String>(4)=="LifecycleEvent" { continue; }
         if row.get::<_,String>(1)!="Repository" || row.get::<_,String>(2)!=loader.scope.repository.as_str() || row.get::<_,String>(4)!=EVENT_TYPE || row.get::<_,i32>(5)!=1 {return Err(AuthorityFailure::UnsupportedProfile);}
         events.insert(number(&row,3)?,(digest(&row,0)?,digest(&row,6)?));
     }
@@ -629,7 +631,8 @@ fn load_terminal_and_outbox(
     for row in loader.rows(tx, "outbox_delivery", "event_id::bytea", "event_id")? {
         delivery.insert(digest(&row, 0)?);
     }
-    if delivery != expected_events {
+    // Complete lifecycle/delivery associations are checked by events::load.
+    if !expected_events.is_subset(&delivery) {
         return Err(AuthorityFailure::Integrity);
     }
     Ok(())

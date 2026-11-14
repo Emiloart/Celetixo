@@ -84,7 +84,7 @@ Continue the entire accepted goal from these remaining gates:
    administrative and all four executor transitions now have typed original-outcome
    paths. Preserve fresh executor validation and independent launch/workspace
    recovery; an old claim result cannot authorize another launch. Use a new
-   migration after published schema v8; never edit an applied or published checksum.
+   migration after published schema v9; never edit an applied or published checksum.
 3. Preserve the [04.2 atomic commit acceptance](goal-04-commit-acceptance.md):
    independent-process source histories, separate serial expectations, fresh
    attempts/checks and original outcome recovery. The public validation record
@@ -93,7 +93,8 @@ Continue the entire accepted goal from these remaining gates:
 4. Add authenticated versioned service boundaries from canonical Protobuf contracts,
    preserving complete TaskIntent and Rust Engine authority. The reviewed Unix
    embedding profile does not establish production network identity/transport.
-5. Implement 04.3–04.6: canonical transactional events/JetStream, Temporal workflows,
+5. Complete the remaining checks in [04.3 event delivery](goal-04-events.md), then
+   implement 04.4–04.6: Temporal workflows,
    verified immutable S3 storage/admission/governance, ClickHouse replay and scoped
    shared language/execution services. None becomes transaction truth.
 6. Execute 04.7: the real end-to-end service path, partitions/failover/crashes,

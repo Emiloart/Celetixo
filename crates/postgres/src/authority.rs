@@ -1,5 +1,6 @@
 //! Scoped PostgreSQL authority for checked native and captured-source lifecycles.
-//! Profile selection is explicit; source revision commits remain unsupported.
+//! Profile selection is explicit; checked native/source commits share atomic SQL
+//! publication with their lifecycle outbox facts.
 use crate::{StoreError, UnixConnection, migrations, semantic, snapshots, validate_schema};
 use celetixo_engine::engine::Permission;
 use celetixo_engine::engine::authority::{
@@ -16,6 +17,7 @@ const FILTER: &str =
     "organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text";
 const PROFILE: &str = "native-reference-v1";
 
+pub(crate) mod events;
 mod mutations;
 mod native;
 mod source;
@@ -344,11 +346,12 @@ impl Login {
         // authorization administrator, or expose either login to scope/ledger
         // mutation. Column-level privileges count too.
         for table in if self.administrative {
-            &["db_role_scopes", "schema_migrations"][..]
+            &["db_role_scopes", "schema_migrations", "event_service_roles"][..]
         } else {
             &[
                 "db_role_scopes",
                 "schema_migrations",
+                "event_service_roles",
                 "principals",
                 "grants",
                 "grant_permissions",
@@ -363,7 +366,7 @@ impl Login {
             if row.get::<_, bool>(0) {
                 return Err(AuthorityFailure::ScopeDenied);
             }
-            if *table == "db_role_scopes" {
+            if matches!(*table, "db_role_scopes" | "event_service_roles") {
                 let row=client.query_one("SELECT pg_catalog.has_table_privilege(session_user,$1,'SELECT') OR pg_catalog.has_any_column_privilege(session_user,$1,'SELECT')", &[&relation]).map_err(database)?;
                 if row.get::<_, bool>(0) {
                     return Err(AuthorityFailure::ScopeDenied);
@@ -430,6 +433,12 @@ fn lock_repository(
     scope: &Scope,
     update: bool,
 ) -> Result<u64, AuthorityFailure> {
+    if update {
+        crate::delivery::effects_lock(tx, scope, true).map_err(|error| match error {
+            crate::delivery::DeliveryError::Storage(error) => storage(error),
+            _ => AuthorityFailure::Protocol,
+        })?;
+    }
     let a = snapshots::scope_parameters(scope);
     let lock = if update { "UPDATE" } else { "SHARE" };
     let row = tx
@@ -509,7 +518,8 @@ fn publish_native(
         .ok_or(AuthorityFailure::CounterExhausted)?;
     publish_session_grants(tx, context, next, before, after)?;
     native::publish(tx, next, before, after)?;
-    publish_envelope(tx, context, login, generation, next, after, false)
+    publish_envelope(tx, context, login, generation, next, after, false)?;
+    events::publish_base(tx, next, before, after)
 }
 fn publish_session_grants(
     tx: &mut Transaction<'_>,

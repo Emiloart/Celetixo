@@ -20,6 +20,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             &[
                 root.join("proto/celetixo/orchestration/v1/task_intent.proto"),
                 root.join("proto/celetixo/platform/v1/task_intent_envelope.proto"),
+                root.join("proto/celetixo/platform/v1/lifecycle_event.proto"),
             ],
             &[root.join("proto")],
         )?;

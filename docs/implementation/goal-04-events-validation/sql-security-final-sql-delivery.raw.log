@@ -1,0 +1,6 @@
+
+running 1 test
+test native_authority::events::lifecycle_outbox_fences_replays_reorders_quarantines_and_preserves_engine_truth ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 33.49s
+

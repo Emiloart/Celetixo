@@ -390,7 +390,7 @@ fn check_history(history: History) {
         "outbox",
         "outbox_delivery",
     ] {
-        assert_eq!(sql.query_one(&format!("SELECT count(*) FROM celetixo.{table} WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text"),&[&parameters[0],&parameters[1],&parameters[2]]).unwrap().get::<_,i64>(0),2,"{table}");
+        assert_eq!(sql.query_one(&format!("SELECT count(*) FROM celetixo.{table} WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text{}",commit_event_filter(table)),&[&parameters[0],&parameters[1],&parameters[2]]).unwrap().get::<_,i64>(0),2,"{table}");
     }
 }
 

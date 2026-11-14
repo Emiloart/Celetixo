@@ -37,6 +37,7 @@ pub(in crate::authority) fn load(
     // This constructor recomputes Engine semantics, patch/plan/evidence bindings,
     // events, grants and lease history. Structural SQL loading cannot admit state.
     AuthorityState::from_source_records(records.clone(), limits).map_err(restore)?;
+    super::super::events::load(tx, &mut loader, &records.base, Some(&records))?;
     Ok(records)
 }
 

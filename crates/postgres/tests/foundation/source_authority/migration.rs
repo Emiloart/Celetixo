@@ -46,7 +46,7 @@ fn v6_source_publication_upgrade_is_atomic_and_preserves_the_published_ledger() 
             .get::<_, i64>(0),
         6
     );
-    assert_eq!(migrate(&mut client).unwrap().schema_version, 8);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 9);
     validate_schema(&mut client).unwrap();
     let after=client.query("SELECT version,migration_name,migration_sha256 FROM celetixo.schema_migrations WHERE version<=6 ORDER BY version",&[]).unwrap()
         .into_iter().map(|row|(row.get::<_,i64>(0),row.get::<_,String>(1),row.get::<_,Vec<u8>>(2))).collect::<Vec<_>>();
@@ -106,7 +106,7 @@ fn v3_source_upgrade_preserves_legacy_artifact_associations_and_rolls_back_fault
             .get::<_, i64>(0),
         3
     );
-    assert_eq!(migrate(&mut client).unwrap().schema_version, 8);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 9);
     validate_schema(&mut client).unwrap();
     assert!(!migrate(&mut client).unwrap().newly_applied);
     let row=client.query_one("SELECT original.object_digest=content.object_digest,original.byte_length=content.byte_length,original.registration_id=location.registration_id,original.locator_payload_digest=location.locator_payload_digest,location.locator_kind,store.definition_payload_digest IS NULL FROM celetixo.artifact_objects AS original JOIN celetixo.artifact_contents AS content USING (organization_id,workspace_id,repository_id,object_digest) JOIN celetixo.artifact_locations AS location USING (organization_id,workspace_id,repository_id,object_digest,registration_id) JOIN celetixo.artifact_store_registrations AS store USING (organization_id,workspace_id,repository_id,registration_id)",&[]).unwrap();
@@ -181,7 +181,7 @@ fn v7_source_revalidation_upgrade_preserves_published_rows_and_rolls_back_failur
             .get::<_, i64>(0),
         7
     );
-    assert_eq!(migrate(&mut client).unwrap().schema_version, 8);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 9);
     validate_schema(&mut client).unwrap();
     let after=client.query("SELECT version,migration_name,migration_sha256 FROM celetixo.schema_migrations WHERE version<=7 ORDER BY version",&[]).unwrap().into_iter().map(|r|(r.get::<_,i64>(0),r.get::<_,String>(1),r.get::<_,Vec<u8>>(2))).collect::<Vec<_>>();
     assert_eq!(after, before);

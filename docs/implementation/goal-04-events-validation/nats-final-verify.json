@@ -1,0 +1,13 @@
+{
+  "bounded_nodes": 3,
+  "separate_route_ca": true,
+  "broker_mounts_only_own_keys": true,
+  "denied_tls_probes": {
+    "wrong_ca": true,
+    "wrong_hostname": true,
+    "missing_client_certificate": true,
+    "client_certificate_at_route": true
+  },
+  "connection_file": "/home/emiloart/.local/share/celetixo-goal04/nats-three-node-v5/connection.json",
+  "stream_replication_and_recovery": "requires actual integration tests"
+}

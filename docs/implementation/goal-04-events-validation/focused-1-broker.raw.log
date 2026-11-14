@@ -1,0 +1,8 @@
+    Finished `test` profile [optimized] target(s) in 0.13s
+     Running tests/foundation.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/foundation-8df36ed3dd233239)
+
+running 1 test
+test native_authority::events::nats::real_jetstream_puback_redelivery_poison_retention_reconciliation_and_scoped_roles ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 91.38s
+
