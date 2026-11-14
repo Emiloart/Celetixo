@@ -1,0 +1,8 @@
+?   	github.com/Emiloart/Celetixo/services/orchestration/cmd/celetixo-temporal	[no test files]
+?   	github.com/Emiloart/Celetixo/services/orchestration/cmd/celetixo-temporal-probe	[no test files]
+?   	github.com/Emiloart/Celetixo/services/orchestration/gen/orchestrationv1	[no test files]
+?   	github.com/Emiloart/Celetixo/services/orchestration/gen/platformv1	[no test files]
+ok  	github.com/Emiloart/Celetixo/services/orchestration/operatorfile	0.007s
+ok  	github.com/Emiloart/Celetixo/services/orchestration/protocol	0.019s
+ok  	github.com/Emiloart/Celetixo/services/orchestration/temporalauth	0.023s
+ok  	github.com/Emiloart/Celetixo/services/orchestration/temporalhost	0.057s

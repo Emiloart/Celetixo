@@ -1,0 +1,25 @@
+{
+  "kind": "Default Engine credential-policy admission of all tracked/staged publication files; not universal secret detection",
+  "file_count_before_self": 627,
+  "reviews": [
+    "crates/engine/src/engine.rs=096233b8e4d4cdc2b53560e0d3280ab980244197bf0907f81a5fbcf12331fc19",
+    "crates/engine/src/engine/authority/records.rs=12e5c2af32fdccd19e0afd96ca73f7b7f222f71dbf6a05d5a2c88cedf5c2b546",
+    "crates/engine/src/engine/source_recovery.rs=1552093e377c74023caa1aaf702a116758b81d203735c074e62b4d26a98f658d",
+    "crates/postgres/src/lib.rs=d2b103ff13583a1ffebac35aeeb48dae1804fe5b803f446b81fcc0bc87eb5d09",
+    "crates/postgres/tests/foundation/native_authority/events/nats.rs=322feb46fca6898da8a04db504b0812b532774b061888601a52844fcf84232ab",
+    "docs/implementation/goal-04-events-validation/postgres-final-verify.json=09af2bfadbe231f43a44ede68ffbdda9327f8e7c7207a221af89827207d7e4c6",
+    "docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce",
+    "docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067",
+    "docs/implementation/goal-04-registration-validation/fixture.json=7af849f6ea540693cdecf457975ba468b550ae60a3d728a520a17504c9941d92",
+    "docs/operations/local-event-delivery-runbook.md=baa50cb259dcc46db630631457a5951bf277aa6d1be26d05aad914526fec6489",
+    "scripts/goal04/postgres_fixture.py=306678b400cefdcb2e0cf831c45b9e239dec6a56e1c7ab8d7b941cb1d5005be6",
+    "scripts/goal04/temporal_fixture.py=d2252a7c515898b0bfe651ec637c1e9c9fca4a393d00b4d99a583541fee9d08b"
+  ],
+  "exit_code": 0,
+  "helper_sha256": "3084c5fd8b8ad6efe0fd7bd660896d6faf14094555874d10405cecaf4da47a8a",
+  "credential_policy_unchanged": true,
+  "exact_review_reason": "temporal_fixture.py generates random passwords at runtime; the flagged assignment contains executable source text, not a credential. Its entire path/content is pinned; modified bytes/path are rejected.",
+  "known_private_fixture_material_absent": true,
+  "output": "Every changed/new public input admitted; exact reviewed bytes/path mutations rejected.",
+  "scope": "Publication candidate only; private configurations, keys and passwords excluded."
+}

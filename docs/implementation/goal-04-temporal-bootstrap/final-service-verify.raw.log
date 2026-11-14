@@ -1,0 +1,41 @@
+{
+  "schema": "celetixo/local-temporal-fixture/v1",
+  "running": true,
+  "server_version": "1.32.1",
+  "postgres": "17.9",
+  "namespace": "celetixo-69a62fc3976dd167c24bff2b2b1fd6045f05b36e056f5ef08f3de9c919da44fe",
+  "internal_network": true,
+  "host_ports_published": false,
+  "separate_internode_ca": true,
+  "server_mount_has_only_own_keys": true,
+  "rpc_checks": [
+    {
+      "checks_passed": 1,
+      "component": "temporal-probe",
+      "mode": "health"
+    },
+    {
+      "checks_passed": 4,
+      "component": "temporal-probe",
+      "mode": "worker"
+    },
+    {
+      "checks_passed": 5,
+      "component": "temporal-probe",
+      "mode": "client"
+    },
+    {
+      "checks_passed": 1,
+      "component": "temporal-probe",
+      "mode": "unmapped"
+    }
+  ],
+  "tls_denials": [
+    "wrong_ca",
+    "wrong_hostname",
+    "missing_client_certificate",
+    "tls12",
+    "client_certificate_at_internode"
+  ],
+  "claim": "Coordination bootstrap only; no Engine workflow acceptance"
+}

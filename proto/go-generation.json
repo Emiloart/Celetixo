@@ -1,0 +1,20 @@
+{
+  "schema": "celetixo/go-protocol-generation/v1",
+  "go_version": "go1.26.11",
+  "protoc_binary_sha256": "2dc9c631782f1c9b80b6dddd27f6402d5a23a073f0dd1ac6ca82acbf8a0f0719",
+  "protoc_gen_go_version": "v1.36.11",
+  "inputs": {
+    "proto/celetixo/orchestration/v1/task_intent.proto": "fca7edb887b758a611f9d082d0d2c02623e8a60801fda15860894d72f0d2ee7a",
+    "proto/celetixo/platform/v1/lifecycle_event.proto": "8c17237b1df8ae918ebe2e68801c8a6d474629ef1f1adebfaadb2bd54c3a505d",
+    "proto/celetixo/platform/v1/task_intent_envelope.proto": "04ccca3e89827dfd2968be563790e6f1cd9f6070714046620f7fe0917d9fec40",
+    "scripts/protocol/provision_go.py": "774fa8ab1e860b46bc2ad62557b660ce6300b418625c97b7fce72cb4ee8d9b33",
+    "scripts/protocol/regenerate_go.py": "086d16e36e85bbb7fd4335631045993cfa723275f009aa1e229e9744bb6d9b0f",
+    "services/orchestration/go.mod": "b911ae68dd3801ee73ae0037a6e11c5e4d53da6a4e46b95b36914e46fe173647",
+    "services/orchestration/go.sum": "6375d28c63f4aaed76d7314dd2edd6d395effe8fc35ab2f9d41f090ec4ebbaf6"
+  },
+  "outputs": {
+    "services/orchestration/gen/orchestrationv1/task_intent.pb.go": "71ec16cc4ff71ebc1e0147e3b298b550e214e02f94ea98bd2afc685fc5a02564",
+    "services/orchestration/gen/platformv1/lifecycle_event.pb.go": "31d3798d0af9480a0e45506de355a74f70c84e5b5ffe301e14738c70b6ae6907",
+    "services/orchestration/gen/platformv1/task_intent_envelope.pb.go": "d7c912e1f74e8fcdb2f1b3ac59e38ec65ad8470e85c49936b37637c11b3f08ac"
+  }
+}

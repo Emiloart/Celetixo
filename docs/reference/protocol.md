@@ -1,6 +1,6 @@
 # Protocol reference
 
-**Status:** canonical TaskIntent and lifecycle event messages, strict Rust intake and scoped JetStream consumer implemented; no RPC service
+**Status:** canonical Rust/Go messages, strict intake and scoped JetStream consumer implemented; no Engine RPC service
 **Validation:** [Foundation](../implementation/goal-04-progress.md) and [event delivery](../implementation/goal-04-events.md) records (2026-11-14)
 **Authority:** ADR-0001 and ADR-0002, read with ADR-0003 and ADR-0004
 
@@ -12,15 +12,18 @@ TaskIntent field and nested message from [ADR-0001 section 8](../adr/0001-celeti
 
 | Contract | Implemented consumer | Scope |
 |---|---|---|
-| `celetixo.orchestration.v1.TaskIntent` | Generated Rust/prost bindings | Full task dependencies, reads/writes, invariants, impact/verification policy, budgets, retry/rollback/escalation and provenance |
+| `celetixo.orchestration.v1.TaskIntent` | Generated Rust/prost and Go bindings | Full task dependencies, reads/writes, invariants, impact/verification policy, budgets, retry/rollback/escalation and provenance |
 | `celetixo.platform.v1.TaskIntentEnvelope` and `ScopeSelector` | Generated Rust bindings and `celetixo_protocol::decode_task_intent` | Contract version, organization/workspace/repository selector, complete intent, idempotency key, trace ID and required capabilities |
 | `celetixo.platform.v1.LifecycleEvent` | Generated Rust, strict `decode_lifecycle_event`, SQL outbox/inbox and JetStream delivery | Scoped typed commit/transaction/source-attempt/mutation/authority facts, immutable payload digest, stable ID and aggregate sequence; no authority grant |
 
 The smaller Rust Engine `TransactionIntent` remains an in-process domain admission
 record. It is not a competing TaskIntent wire schema. No adapter currently executes
-this wire request against the Engine. There are no gRPC services, deployed RPC
-endpoints, Go/Python bindings, schema registry or workload-identity service in this
-foundation. Their absence must not be hidden by successful message decoding.
+this wire request against the Engine. There are no Celetixo Engine gRPC services,
+deployed Engine RPC endpoints, Python bindings, schema registry or workload-identity service in this
+foundation. Go bindings and bounded original-wire checks now derive from the same
+canonical descriptors. The [Temporal bootstrap](../implementation/goal-04-orchestration.md)
+uses these messages in a synthetic coordination probe; it does not execute them
+against the Engine. Missing service capabilities must not be inferred from decoding.
 
 ## Strict intake and identity
 

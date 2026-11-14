@@ -65,10 +65,50 @@ jobs:
       - name: Test strict Rust intake
         run: cargo test --locked -p celetixo-protocol
 
+  temporal-foundation:
+    name: Real scoped Temporal bootstrap and workflow recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GOTOOLCHAIN: local
+      GOMAXPROCS: "2"
+      GOFLAGS: -p=2
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Provision the exact Go compiler and canonical generator
+        run: |
+          python3 scripts/protocol/provision_go.py --cache-dir "$RUNNER_TEMP/celetixo-tools"
+          python3 scripts/protocol/provision.py --cache-dir "$RUNNER_TEMP/celetixo-tools"
+      - name: Verify module content, canonical Go bindings and all Go packages
+        working-directory: services/orchestration
+        run: |
+          celetixo_go="$RUNNER_TEMP/celetixo-tools/go1.26.11/go/bin/go"
+          "$celetixo_go" mod download
+          "$celetixo_go" mod verify
+          python3 ../../scripts/protocol/regenerate_go.py --offline --cache-dir "$RUNNER_TEMP/celetixo-tools" --check
+          test -z "$("$RUNNER_TEMP/celetixo-tools/go1.26.11/go/bin/gofmt" -l .)"
+          "$celetixo_go" test -trimpath -buildvcs=false -mod=readonly ./...
+          "$celetixo_go" vet -trimpath -buildvcs=false -mod=readonly ./...
+          "$celetixo_go" build -trimpath -buildvcs=false -mod=readonly -o "$RUNNER_TEMP/celetixo-temporal" ./cmd/celetixo-temporal
+          "$celetixo_go" build -trimpath -buildvcs=false -mod=readonly -o "$RUNNER_TEMP/celetixo-temporal-probe" ./cmd/celetixo-temporal-probe
+      - name: Prepare the isolated Temporal database and service fixture
+        run: |
+          docker pull postgres@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
+          python3 scripts/goal04/temporal_fixture.py prepare --root "$RUNNER_TEMP/celetixo-temporal-fixture" --binary "$RUNNER_TEMP/celetixo-temporal" --probe "$RUNNER_TEMP/celetixo-temporal-probe"
+          python3 scripts/goal04/temporal_fixture.py start --root "$RUNNER_TEMP/celetixo-temporal-fixture"
+          python3 scripts/goal04/temporal_fixture.py verify --root "$RUNNER_TEMP/celetixo-temporal-fixture"
+      - name: Recover the original synthetic workflow run after worker and service restart
+        run: python3 scripts/goal04/temporal_workflow_smoke.py --root "$RUNNER_TEMP/celetixo-temporal-fixture"
+      - name: Stop only the owned fixture and retain its data
+        if: always()
+        run: python3 scripts/goal04/temporal_fixture.py stop --root "$RUNNER_TEMP/celetixo-temporal-fixture"
+
   postgres-foundation:
     name: Real PostgreSQL migration, restart and isolation
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # The retained local full SQL regression took about 80 minutes.
+    timeout-minutes: 120
     env:
       CARGO_BUILD_JOBS: "2"
       CARGO_INCREMENTAL: "0"
@@ -132,6 +172,7 @@ jobs:
           --reviewed-public-input docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce
           --reviewed-public-input docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067
           --reviewed-public-input scripts/goal04/postgres_fixture.py=306678b400cefdcb2e0cf831c45b9e239dec6a56e1c7ab8d7b941cb1d5005be6
+          --reviewed-public-input scripts/goal04/temporal_fixture.py=d2252a7c515898b0bfe651ec637c1e9c9fca4a393d00b4d99a583541fee9d08b
           --reviewed-public-input crates/postgres/tests/foundation/native_authority/events/nats.rs=322feb46fca6898da8a04db504b0812b532774b061888601a52844fcf84232ab
           --reviewed-public-input docs/implementation/goal-04-events-validation/postgres-final-verify.json=09af2bfadbe231f43a44ede68ffbdda9327f8e7c7207a221af89827207d7e4c6
           --reviewed-public-input docs/operations/local-event-delivery-runbook.md=baa50cb259dcc46db630631457a5951bf277aa6d1be26d05aad914526fec6489 > /tmp/goal02-inspection.json
@@ -148,6 +189,7 @@ jobs:
           --reviewed-public-input docs/implementation/goal-04-foundation/followup.log=4795cb329924987a0270bd0f27b6595b805f7c8c704cb000e6d586d26a2931ce
           --reviewed-public-input docs/implementation/goal-04-foundation/image-selection.json=6afd19611e1f7b7dfddd98aceadf986af0449e47732de1b7e3401423cf070067
           --reviewed-public-input scripts/goal04/postgres_fixture.py=306678b400cefdcb2e0cf831c45b9e239dec6a56e1c7ab8d7b941cb1d5005be6
+          --reviewed-public-input scripts/goal04/temporal_fixture.py=d2252a7c515898b0bfe651ec637c1e9c9fca4a393d00b4d99a583541fee9d08b
           --reviewed-public-input crates/postgres/tests/foundation/native_authority/events/nats.rs=322feb46fca6898da8a04db504b0812b532774b061888601a52844fcf84232ab
           --reviewed-public-input docs/implementation/goal-04-events-validation/postgres-final-verify.json=09af2bfadbe231f43a44ede68ffbdda9327f8e7c7207a221af89827207d7e4c6
           --reviewed-public-input docs/operations/local-event-delivery-runbook.md=baa50cb259dcc46db630631457a5951bf277aa6d1be26d05aad914526fec6489 > /tmp/goal03-patch-benchmark-smoke.json

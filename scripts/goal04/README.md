@@ -1,5 +1,10 @@
 # Goal 04 operator fixtures
 
+The [Temporal runbook](../../docs/operations/local-temporal-runbook.md) covers
+`temporal_fixture.py` and the synthetic SDK workflow recovery smoke. They reuse
+the private PostgreSQL profile below, with distinct Temporal databases/roles and
+separate frontend/internode mutual TLS. Neither grants Engine authority.
+
 `postgres_fixture.py` starts the reviewed PostgreSQL 17 distribution for local
 integration tests. It executes trusted database tooling and never repository
 hooks, source programs or build scripts. It does not establish production

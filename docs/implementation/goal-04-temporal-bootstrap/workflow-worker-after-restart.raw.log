@@ -1,0 +1,6 @@
+{"checks_passed":1,"component":"temporal-probe","mode":"sdk-worker-ready"}
+{"component":"temporal-sdk","error_type":"*serviceerror.PermissionDenied","rpc":"/temporal.api.workflowservice.v1.WorkflowService/ShutdownWorker","status":"PermissionDenied"}
+{"component":"temporal-sdk","error_type":"*serviceerror.Canceled","rpc":"/temporal.api.workflowservice.v1.WorkflowService/PollWorkflowTaskQueue","status":"Canceled"}
+{"component":"temporal-sdk","error_type":"*serviceerror.Canceled","rpc":"/temporal.api.workflowservice.v1.WorkflowService/PollWorkflowTaskQueue","status":"Canceled"}
+{"component":"temporal-sdk","error_type":"*serviceerror.Canceled","rpc":"/temporal.api.workflowservice.v1.WorkflowService/PollActivityTaskQueue","status":"Canceled"}
+{"checks_passed":1,"component":"temporal-probe","mode":"sdk-worker-stopped"}

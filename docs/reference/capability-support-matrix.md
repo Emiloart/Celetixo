@@ -66,6 +66,7 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 | Lifecycle events / JetStream 04.3 | **Accepted reviewed local profile** | [Acceptance audit](../implementation/goal-04-events-acceptance.md): schema v9 atomic facts, scoped publisher/inbox, three-node mutual TLS, process exits, quorum loss, retention/replay, combined 107-parent SQL coverage and standalone worker readiness/shutdown. No single green full SQL run, exactly-once messaging, production deployment or zero-loss guarantee |
 | Atomic commit milestone 04.2 | **Accepted reviewed SQL adapter profiles** | [Acceptance audit](../implementation/goal-04-commit-acceptance.md): native/source conditional revision advancement, durable exact outcomes, independent-process races/crashes and generated source histories against a separate interpreter. Full 04.3–04.7 service/security/operational acceptance remains pending |
 | Public multi-tenant deployment | **Target only** | ADR-0004 requirements are accepted, but production end-to-end isolation is not demonstrated |
+| Temporal coordination bootstrap | **Bounded local validation; 04.4 incomplete** | [Frozen checks](../implementation/goal-04-temporal-bootstrap/checks.json): canonical Go intake, scoped TLS host, real role/transport denials, original synthetic run recovery after worker/service restart and recorded-history replay. No Engine side-effect, cancellation-race, deployment upgrade or complete 04.4 acceptance claim |
 
 ## 5. Evidence and operational support
 

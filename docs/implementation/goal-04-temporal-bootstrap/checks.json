@@ -1,0 +1,294 @@
+{
+  "schema": "celetixo/temporal-bootstrap-validation/v1",
+  "status": "Verified local coordination bootstrap; full 04.4 and Goal 04 remain active",
+  "parent_commit": "ba29befe6d52dbfe3320f3602f3e03b4b03c8952",
+  "goal_contract_sha256": "339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "toolchain": {
+    "go": "1.26.11",
+    "server": "1.32.1",
+    "sdk": "1.49.0",
+    "api": "1.63.5",
+    "protobuf": "1.36.11",
+    "postgres": "17.9"
+  },
+  "source_manifest": "source-manifest.json",
+  "artifact_sha256": {
+    "host": "e3132ef329bb25805112dfcca3be86b30de69c802fd2fce7fa7cbe3b8573f7f9",
+    "probe": "e347ace8aafb3ffa07b2876c54a97e3c1b5d8ed6724693676e2862dbac89d18f"
+  },
+  "build_environment": {
+    "GOTOOLCHAIN": "local",
+    "GOMAXPROCS": "2",
+    "GOFLAGS": "-p=2",
+    "CGO_ENABLED": "0",
+    "GOCACHE": "Persistent operator-owned build cache; compiler scratch on disk",
+    "flags": [
+      "-trimpath",
+      "-buildvcs=false",
+      "-mod=readonly"
+    ]
+  },
+  "checks": [
+    {
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/tools/go1.26.11/go/bin/go",
+        "build",
+        "-trimpath",
+        "-buildvcs=false",
+        "-mod=readonly",
+        "-o",
+        "/home/emiloart/.local/share/celetixo-goal04/tools/celetixo-temporal-host-final",
+        "./cmd/celetixo-temporal"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 9.494,
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "frozen_sources_unchanged": true,
+      "check_passed": true,
+      "raw_log": "final-sdk-build-host.raw.log"
+    },
+    {
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/tools/go1.26.11/go/bin/go",
+        "build",
+        "-trimpath",
+        "-buildvcs=false",
+        "-mod=readonly",
+        "-o",
+        "/home/emiloart/.local/share/celetixo-goal04/tools/celetixo-temporal-probe-final",
+        "./cmd/celetixo-temporal-probe"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 2.536,
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "frozen_sources_unchanged": true,
+      "check_passed": true,
+      "raw_log": "final-sdk-build-probe.raw.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/protocol/regenerate_go.py",
+        "--offline",
+        "--cache-dir",
+        "/home/emiloart/.local/share/celetixo-goal04/tools",
+        "--check"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 7.372,
+      "raw_log_sha256": "7e7e93fc219998e62eb73bf6475a2148e4ee60a8cb086ee858d1c9f687298526",
+      "frozen_sources_unchanged": true,
+      "check_passed": true,
+      "raw_log": "final-sdk-generation-check.raw.log"
+    },
+    {
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/tools/go1.26.11/go/bin/gofmt",
+        "-l",
+        "."
+      ],
+      "exit_code": 0,
+      "duration_seconds": 0.064,
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "frozen_sources_unchanged": true,
+      "check_passed": true,
+      "raw_log": "final-sdk-gofmt.raw.log"
+    },
+    {
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/tools/go1.26.11/go/bin/go",
+        "test",
+        "-count=1",
+        "-trimpath",
+        "-buildvcs=false",
+        "-mod=readonly",
+        "./..."
+      ],
+      "exit_code": 0,
+      "duration_seconds": 7.922,
+      "raw_log_sha256": "ea9980bb07511c22da4431c42a0f2422ca333a95524a10d57cd016bf680e1125",
+      "frozen_sources_unchanged": true,
+      "check_passed": true,
+      "raw_log": "final-sdk-test.raw.log"
+    },
+    {
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/tools/go1.26.11/go/bin/go",
+        "vet",
+        "-trimpath",
+        "-buildvcs=false",
+        "-mod=readonly",
+        "./..."
+      ],
+      "exit_code": 0,
+      "duration_seconds": 3.391,
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "frozen_sources_unchanged": true,
+      "check_passed": true,
+      "raw_log": "final-sdk-vet.raw.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/goal04/temporal_fixture.py",
+        "prepare",
+        "--root",
+        "/home/emiloart/.local/share/celetixo-goal04/t35",
+        "--binary",
+        "/home/emiloart/.local/share/celetixo-goal04/tools/celetixo-temporal-host-final",
+        "--probe",
+        "/home/emiloart/.local/share/celetixo-goal04/tools/celetixo-temporal-probe-final",
+        "--module-cache",
+        "/home/emiloart/.local/share/celetixo-goal04/go-module-cache"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 14.381,
+      "raw_log_sha256": "9b93e1b9ca0e2ee9481a7159108b29308b470ffd47f1b486b603e10493f3ec21",
+      "raw_log": "final-service-prepare.raw.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/goal04/temporal_fixture.py",
+        "start",
+        "--root",
+        "/home/emiloart/.local/share/celetixo-goal04/t35"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 5.397,
+      "raw_log_sha256": "cac6bfebf858e40b268a0d8ed6f49fefe4b05a5a154ed9935bb24402b5ffefa6",
+      "raw_log": "final-service-start.raw.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/goal04/temporal_fixture.py",
+        "verify",
+        "--root",
+        "/home/emiloart/.local/share/celetixo-goal04/t35"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 7.369,
+      "raw_log_sha256": "27ae96bc63f78da87b98aef6a4fa2eecf5681a5004fcedaff0fe704b4cb9e3b0",
+      "raw_log": "final-service-verify.raw.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/goal04/temporal_workflow_smoke.py",
+        "--root",
+        "/home/emiloart/.local/share/celetixo-goal04/t35"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 8.749,
+      "raw_log_sha256": "5c8dca6c9c18dc52d7f19c22a5a608a45006eeb0bb05d3b40f00337b17b3da4f",
+      "raw_log": "final-service-workflow-recovery.raw.log"
+    },
+    {
+      "command": [
+        "/home/emiloart/.local/share/celetixo-goal04/tools/go1.26.11/go/bin/go",
+        "mod",
+        "verify"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 18.819,
+      "raw_log_sha256": "b4537ed75f533f993f371954de47e42a793b8e5b0587577de7e27fb3e50696bd",
+      "frozen_sources_unchanged": true,
+      "check_passed": true,
+      "raw_log": "unchanged-input-module-verify.raw.log",
+      "input_note": "Dependencies and CI workflow unchanged since this check; source-specific final checks above use the later corrected SDK probe."
+    },
+    {
+      "command": [
+        "python3",
+        ".github/scripts/check-workflows.py",
+        "--offline",
+        "--cache-dir",
+        "/home/emiloart/.local/share/celetixo-goal04/tools/workflow-lint"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 0.179,
+      "raw_log_sha256": "0e516b46b7afa0af0b7ab175684692544002bc76756ecfd8b9222a25f89a6214",
+      "raw_log": "final-public-workflows.raw.log"
+    }
+  ],
+  "initial_rejected_probe": {
+    "command": [
+      "python3",
+      "scripts/goal04/temporal_workflow_smoke.py",
+      "--root",
+      "/home/emiloart/.local/share/celetixo-goal04/t34"
+    ],
+    "exit_code": 1,
+    "duration_seconds": 27.025,
+    "raw_log_sha256": "b644b0859d3643e16b69af48a939d5141f9d415a35f1a634806eabdfd0c06ccf",
+    "raw_log": "initial-workflow-failure.raw.log"
+  },
+  "synthetic_workflow": {
+    "schema": "celetixo/temporal-coordination-smoke/v1",
+    "workflow_id": "coordination-d7a419c752b64605a3647356f71336fb",
+    "original_run_id": "01a1dadd-2f5d-76e8-9e9c-48b8f8acdad9",
+    "canonical_fixture_sha256": "1ee413f37b9ddf76137010ce47473085a20b7fbeec21e067fd9d757c35410349",
+    "binary_sha256": "e347ace8aafb3ffa07b2876c54a97e3c1b5d8ed6724693676e2862dbac89d18f",
+    "host_sha256": "e3132ef329bb25805112dfcca3be86b30de69c802fd2fce7fa7cbe3b8573f7f9",
+    "checks": [
+      {
+        "check": "start",
+        "exit_code": 0,
+        "duration_seconds": 0.066,
+        "raw_log_sha256": "797ad07b0ffc51b4d45eca7f2cb17ec663e612366f29d5c52a85b2e7b6a2d1d0"
+      },
+      {
+        "check": "checkpoint-before",
+        "exit_code": 0,
+        "duration_seconds": 0.047,
+        "raw_log_sha256": "62b4cdc58a881b4e10ac9bc0cb3f08d1c814445c1a5cd2e48e630e88b6d4f619"
+      },
+      {
+        "check": "worker-sigkill",
+        "exit_code": -9,
+        "raw_log_sha256": "c8229ec84dfc1b4672332c8b5d80d6f9832f60beff037a9e47a0147a609a5612"
+      },
+      {
+        "check": "temporal-and-postgres-stop-restart",
+        "duration_seconds": 7.204,
+        "data_retained": true
+      },
+      {
+        "check": "checkpoint-after",
+        "exit_code": 0,
+        "duration_seconds": 0.075,
+        "raw_log_sha256": "62b4cdc58a881b4e10ac9bc0cb3f08d1c814445c1a5cd2e48e630e88b6d4f619"
+      },
+      {
+        "check": "complete-original-run",
+        "exit_code": 0,
+        "duration_seconds": 0.099,
+        "raw_log_sha256": "f7d080229d4c7acf9524c9e8bda0321bb47a7dfd52078260762ecb6c456b9994"
+      },
+      {
+        "check": "replay-recorded-history",
+        "exit_code": 0,
+        "duration_seconds": 0.117,
+        "raw_log_sha256": "913cd4c5560e341535299401fc03505fc98e4b723e411d12b23e39954d2f3abd"
+      },
+      {
+        "check": "worker-sigterm",
+        "exit_code": 0,
+        "raw_log_sha256": "0a41a75452d905a11189bb30f48fc24281f884ac3dd67c9774f1000ffe64fcbd"
+      }
+    ],
+    "private_log_directory": "/home/emiloart/.local/share/celetixo-goal04/t35/logs/workflow-1a01bd85e6c45b86",
+    "boundary": "Synthetic coordination only; no Engine side effect, domain retries/cancellation or complete 04.4 claim"
+  },
+  "private_configuration_and_credentials_published": false,
+  "unrun": [
+    "Hosted CI",
+    "Authenticated Rust Engine RPC and actual Engine workflow effects",
+    "Timeout after successful Engine side effect, cancellation races and deployment/version changes",
+    "Production identity/revocation, HA, partitions, failover, host power loss, backup/restore and load",
+    "04.5 S3/governance, 04.6 ClickHouse/shared services, 04.7 integrated operations"
+  ],
+  "claim_boundary": "The activity only hashes canonical public fixture bytes. No Engine admission, execution, evidence, reservation or commit is performed."
+}
