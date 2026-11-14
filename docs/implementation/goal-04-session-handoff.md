@@ -11,7 +11,8 @@ and [04.1i checked source codecs](goal-04-source-codecs.md), followed by
 [original transaction/repository/admin outcomes](goal-04-mutation-recovery.md) and
 [original executor transitions](goal-04-executor-recovery.md),
 [source publication](goal-04-source-publication.md) and
-[fresh source revalidation](goal-04-source-revalidation.md).
+[fresh source revalidation](goal-04-source-revalidation.md) and
+[independent source commit process proof](goal-04-source-processes.md).
 [Milestone 04.1 is accepted](goal-04-authority-acceptance.md) for the reviewed
 PostgreSQL adapter. Goal 04 is not complete; preserve the entire accepted
 [seven-milestone objective](goal-04.md). Its contract SHA-256 remains
@@ -84,9 +85,10 @@ Continue the entire accepted goal from these remaining gates:
    paths. Preserve fresh executor validation and independent launch/workspace
    recovery; an old claim result cannot authorize another launch. Use a new
    migration after published schema v8; never edit an applied or published checksum.
-3. Extend multi-instance source commit, authorization/index/policy/evidence/fence
-   rechecks and fault recovery; retain atomic history/head/outcome/outbox and exact
-   original requests. Expand independent generated histories and shrinking against
+3. Extend the verified same-transaction source commit process races/crashes to
+   distinct-source-transaction histories; retain current authorization, semantic,
+   evidence/fence checks and atomic history/head/outcome/outbox with exact original
+   requests. Expand independent generated histories and shrinking against
    SQL and complete source-path proof before claiming 04.2 accepted.
 4. Add authenticated versioned service boundaries from canonical Protobuf contracts,
    preserving complete TaskIntent and Rust Engine authority. The reviewed Unix

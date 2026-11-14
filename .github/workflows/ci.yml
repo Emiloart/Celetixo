@@ -80,7 +80,7 @@ jobs:
           python3 scripts/goal04/postgres_fixture.py start --root "$RUNNER_TEMP/celetixo-pg17"
           python3 scripts/goal04/postgres_fixture.py verify --root "$RUNNER_TEMP/celetixo-pg17"
       - name: Test the real database, including process death and actual database restart
-        run: CELETIXO_PG_TEST_CONFIG="$RUNNER_TEMP/celetixo-pg17/connection.json" cargo test --locked -p celetixo-postgres --test foundation -- --ignored --skip migration_crash_child --skip source_authority::recovery::source_process_child --skip source_authority::lifecycle::mutations::executor::executor_replay_child --skip source_authority::lifecycle::revalidation::source_revalidation_process_child --test-threads=1
+        run: CELETIXO_PG_TEST_CONFIG="$RUNNER_TEMP/celetixo-pg17/connection.json" cargo test --locked -p celetixo-postgres --test foundation -- --ignored --skip migration_crash_child --skip source_authority::recovery::source_process_child --skip source_authority::lifecycle::mutations::executor::executor_replay_child --skip source_authority::lifecycle::revalidation::source_revalidation_process_child --skip source_authority::lifecycle::publication::processes::source_commit_process_child --test-threads=1
       - name: Stop this fixture
         if: always()
         run: python3 scripts/goal04/postgres_fixture.py stop --root "$RUNNER_TEMP/celetixo-pg17"

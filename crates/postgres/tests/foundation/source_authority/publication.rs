@@ -5,6 +5,9 @@ use super::*;
 #[path = "publication_checks.rs"]
 mod checks;
 
+#[path = "publication_processes.rs"]
+mod processes;
+
 fn ready(label: &str) -> (Harness, Session, SourceCommitRequest) {
     ready_with_ttl(label, 300_000)
 }

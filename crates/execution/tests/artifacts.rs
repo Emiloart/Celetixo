@@ -6,7 +6,7 @@ use celetixo_engine::source_evidence::{
 };
 use celetixo_execution::artifacts::{
     ArtifactStoreEvent, ArtifactStoreInitializationEvent, ArtifactStoreLimits,
-    LocalSourceArtifactStore,
+    LocalSourceArtifactReader, LocalSourceArtifactStore,
 };
 use std::fs;
 use std::io;
@@ -130,6 +130,97 @@ fn persistent_reopen_and_exact_duplicate_put_preserve_objects_and_scope_retentio
         )
         .is_err(),
         "create cannot adopt existing directory"
+    );
+}
+
+#[test]
+fn independent_readers_verify_new_objects_without_acquiring_or_releasing_writer_ownership() {
+    let parent = tempfile::tempdir().unwrap();
+    let path = parent.path().join("objects");
+    let limits = ArtifactStoreLimits::default();
+    let writer = LocalSourceArtifactStore::create(&path, scope(), retention(), limits).unwrap();
+    let first = writer.put_bytes("first", "text/plain", b"first").unwrap();
+    let readers = [
+        LocalSourceArtifactReader::open(&path, scope(), retention(), limits).unwrap(),
+        LocalSourceArtifactReader::open(&path, scope(), retention(), limits).unwrap(),
+    ];
+    let second = writer.put_bytes("second", "text/plain", b"second").unwrap();
+    for reader in &readers {
+        assert_eq!(reader.retention_policy(), retention());
+        assert_eq!(reader.read(&scope(), first.content, 5).unwrap(), b"first");
+        assert_eq!(reader.read(&scope(), second.content, 6).unwrap(), b"second");
+        assert_eq!(
+            reader.read(&scope(), second.content, 5),
+            Err(SourceArtifactError::Limit)
+        );
+        let mut foreign = scope();
+        foreign.repository = RepositoryId::new("foreign").unwrap();
+        assert_eq!(
+            reader.read(&foreign, first.content, 5),
+            Err(SourceArtifactError::Scope)
+        );
+    }
+    drop(readers);
+    assert!(LocalSourceArtifactStore::open(&path, scope(), retention(), limits).is_err());
+    let reader = LocalSourceArtifactReader::open(&path, scope(), retention(), limits).unwrap();
+    drop(writer);
+    let reopened_writer =
+        LocalSourceArtifactStore::open(&path, scope(), retention(), limits).unwrap();
+    let third = reopened_writer
+        .put_bytes("third", "text/plain", b"third")
+        .unwrap();
+    assert_eq!(reader.read(&scope(), third.content, 5).unwrap(), b"third");
+}
+
+#[test]
+fn independent_reader_checks_exact_header_limits_and_rejects_object_or_root_substitution() {
+    let parent = tempfile::tempdir().unwrap();
+    let path = parent.path().join("objects");
+    let limits = ArtifactStoreLimits::default();
+    let writer = LocalSourceArtifactStore::create(&path, scope(), retention(), limits).unwrap();
+    let reference = writer
+        .put_bytes("evidence", "text/plain", b"evidence")
+        .unwrap();
+    let mut foreign = scope();
+    foreign.workspace = WorkspaceId::new("foreign").unwrap();
+    assert!(LocalSourceArtifactReader::open(&path, foreign, retention(), limits).is_err());
+    assert!(
+        LocalSourceArtifactReader::open(&path, scope(), Digest::of("other", b"retention"), limits)
+            .is_err()
+    );
+    assert!(
+        LocalSourceArtifactReader::open(
+            &path,
+            scope(),
+            retention(),
+            ArtifactStoreLimits {
+                max_objects: limits.max_objects + 1,
+                ..limits
+            }
+        )
+        .is_err()
+    );
+    let reader = LocalSourceArtifactReader::open(&path, scope(), retention(), limits).unwrap();
+    let object = object_path(&writer, reference.content);
+    fs::set_permissions(&object, fs::Permissions::from_mode(0o600)).unwrap();
+    fs::write(&object, b"tampered").unwrap();
+    fs::set_permissions(&object, fs::Permissions::from_mode(0o444)).unwrap();
+    assert_eq!(
+        reader.read(&scope(), reference.content, 64),
+        Err(SourceArtifactError::Integrity)
+    );
+    assert!(LocalSourceArtifactReader::open(&path, scope(), retention(), limits).is_err());
+    let retained = parent.path().join("retained");
+    fs::rename(&path, &retained).unwrap();
+    fs::create_dir(&path).unwrap();
+    assert_eq!(
+        reader.read(&scope(), reference.content, 64),
+        Err(SourceArtifactError::Integrity)
+    );
+    assert!(
+        retained
+            .join(format!("{}.artifact", reference.content))
+            .exists()
     );
 }
 

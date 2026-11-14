@@ -63,7 +63,7 @@ pub struct ReconciliationReport {
 }
 
 #[cfg(target_os = "linux")]
-pub use linux::LocalSourceArtifactStore;
+pub use linux::{LocalSourceArtifactReader, LocalSourceArtifactStore};
 
 #[cfg(target_os = "linux")]
 mod linux {
@@ -87,6 +87,56 @@ mod linux {
         header: Vec<u8>,
         temporary: Option<TempDir>,
         counter: Mutex<u64>,
+    }
+
+    /// Independent access to immutable local objects, without writer ownership.
+    /// Each read retains the store's scope, inode, digest, bounds and persistence
+    /// checks. This grants no Engine capability or distributed storage guarantee.
+    pub struct LocalSourceArtifactReader {
+        store: LocalSourceArtifactStore,
+    }
+
+    impl LocalSourceArtifactReader {
+        pub fn open(
+            path: impl AsRef<Path>,
+            scope: Scope,
+            retention: Digest,
+            limits: ArtifactStoreLimits,
+        ) -> Result<Self, SourceArtifactError> {
+            limits.validate()?;
+            let path = absolute(path.as_ref())?;
+            let root = open_absolute(&path)?;
+            // No mutation API exposes this private view. Exclusive flock stays
+            // mandatory for every writer and its aggregate budget accounting.
+            let store = LocalSourceArtifactStore {
+                header: header_bytes(&scope, retention, limits),
+                scope,
+                retention,
+                limits,
+                root,
+                path,
+                temporary: None,
+                counter: Mutex::new(0),
+            };
+            store.validate_root()?;
+            store.census()?;
+            store.confirm_initialization(&mut |_| Ok(()))?;
+            Ok(Self { store })
+        }
+    }
+
+    impl SourceArtifactReader for LocalSourceArtifactReader {
+        fn read(
+            &self,
+            scope: &Scope,
+            address: Digest,
+            max_bytes: u64,
+        ) -> Result<Vec<u8>, SourceArtifactError> {
+            self.store.read(scope, address, max_bytes)
+        }
+        fn retention_policy(&self) -> Digest {
+            self.store.retention_policy()
+        }
     }
 
     impl LocalSourceArtifactStore {

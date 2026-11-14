@@ -5,11 +5,12 @@ reviewed PostgreSQL adapter. Milestone 04.2 is partially implemented; its remain
 source process/oracle proofs and the later service/operational milestones remain
 open. The complete Goal 04 objective is active.
 
-The latest implementation is [fresh source revalidation](goal-04-source-revalidation.md)
-at `0918af9`. Its frozen-source validation records 548 ordinary workspace passes,
-10 actual Linux T1 cases and 14 selected SQL parents. Seven supplemental SQL
-parents complete the [04.1 audit](goal-04-authority-acceptance.md). Earlier bounded
-implementation and validation records remain linked below.
+The latest implementation is [independent source commit processes](goal-04-source-processes.md):
+550 ordinary workspace passes, 10 actual Linux T1 cases and two selected SQL
+parents cover same-transaction key races and before/after process-exit recovery.
+The [04.1 acceptance audit](goal-04-authority-acceptance.md) remains separately
+bound to its implementation and 21 selected SQL parents. Earlier bounded records
+remain linked below.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -22,12 +23,24 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 | Milestone | Current evidence / remaining work |
 |---|---|
 | 04.1 — PostgreSQL state and recovery | **Accepted for the reviewed PostgreSQL adapter.** [Acceptance audit](goal-04-authority-acceptance.md) maps the original criteria to normalized native/source state, exact outcomes, leases/fences, schema v8, all supported prior upgrades and actual checked restart/reopen. Full Goal 04 remains active. |
-| 04.2 — Multi-instance atomic commit | Partial native implementation in 04.1h: SQL CAS, exact prepared results, process races and local commit-response/crash recovery. Complete source path, broad distributed failure proof and service transport remain pending. |
+| 04.2 — Multi-instance atomic commit | **Partial.** Native SQL CAS/original outcomes and [source commit process races/crashes](goal-04-source-processes.md) are verified for their named cases. Distinct-source-transaction process histories, broader source oracle equivalence, distributed failure proof and service transport remain pending. |
 | 04.3 — Transactional events | Native commits now insert a stable outbox fact atomically. No cross-service publisher, inbox consumer or real NATS integration yet. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
-| 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. Existing local Goal 03 storage is unchanged. |
+| 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. The local writer/format is retained; the reader extension above does not establish S3 storage. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
 | 04.7 — End-to-end operational proof | Pending: complete real-service path, multi-instance/fault/security/load tests, backup/restore drills and measured operational baselines. |
+
+## Independent source commit processes
+
+[The bounded process proof](goal-04-source-processes.md) adds independent local
+artifact readers while preserving exclusive writer ownership and all existing
+read verification. Two selected PostgreSQL parents check same/changed original
+keys on one source transaction and process exits before/after commit. Each scope
+retains one revision/history, terminal outcome and outbox/delivery fact.
+
+[Checks](goal-04-source-process-validation/checks.json) record 550 workspace passes,
+10 actual T1 regressions, strict Clippy, formatting and workflow validation.
+The full 04.2 source history/oracle and remaining service/operational work stay open.
 
 ## Milestone 04.1 acceptance
 

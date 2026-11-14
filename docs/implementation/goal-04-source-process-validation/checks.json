@@ -1,0 +1,220 @@
+{
+  "kind": "Bounded local independent source commit process and artifact-reader validation; not complete 04.2 or Goal 04 acceptance",
+  "date": "2026-11-14T09:46:36.371431+00:00",
+  "parent_commit": "bff4a2f5336f2527691213c9924acd4226e2c05b",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "cargo": "cargo 1.94.1 (29ea6fb6a 2026-03-24)",
+  "goal_contract_sha256": "339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743",
+  "published_migrations_0001_through_0008_unchanged": true,
+  "workspace": {
+    "passed": 550,
+    "ignored": 117
+  },
+  "actual_linux_t1": {
+    "passed": 10,
+    "ignored": 0
+  },
+  "selected_postgres_parent_cases": 2,
+  "postgres_cases_cover": [
+    "Same original key in two independent Engine processes",
+    "Distinct original keys on one source transaction",
+    "Process exit before SQL commit rolls back the complete scope",
+    "Process exit after SQL commit recovers one exact durable receipt"
+  ],
+  "postgres_environment": "Reviewed PostgreSQL 17.9 SCRAM Unix-socket fixture, restricted runtime/admin roles, network none, no ports, fsync/full_page_writes/synchronous_commit/checksums enabled",
+  "source_check_evidence_in_postgres_cases": "Synthetic finite fixture; independent retained-object verification and database/process behavior are real",
+  "test_environment": {
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC"
+  },
+  "clippy_profile": "default symbols; separate cached target",
+  "source_files": 282,
+  "source_unchanged_during_final_checks": true,
+  "checks": [
+    {
+      "name": "race",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "source_authority::lifecycle::publication::processes::independent_source_commit_processes_recover_one_revision_for_same_or_distinct_keys",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 54.091,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "ea530131e6799da0b4268f38a6901a7020751591478af9ef30f1d3abacec63ba",
+      "source_binding": "same unchanged sources; focused run completed before this manifest was recorded"
+    },
+    {
+      "name": "crash",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "source_authority::lifecycle::publication::processes::source_commit_process_exit_before_or_after_publication_recovers_exact_original_effect",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 45.813,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "682dbd6f479c09e1fd5233c814e576f18ec790d3a79bf88b7c9b0feadcde1610"
+    },
+    {
+      "name": "workspace",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--offline"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 38.077,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "a6e11b7c6eebfad3f807cab314172ce96fc3535610ab2cc3298fec7bfec9a722"
+    },
+    {
+      "name": "clippy",
+      "receipt": {
+        "command": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--offline",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 8.841,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "c095ee69d42de1a91cd307d587d53a468118ab94a10ec51542d55a67d757c54b"
+    },
+    {
+      "name": "t1",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-execution",
+          "--test",
+          "oci",
+          "--test",
+          "source_flow",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 63.574,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "fbfd24dbd79f704c6191f6fe05d7f3c8542b5bd3ce5b5ada998cc4694ac21766"
+    },
+    {
+      "name": "fmt",
+      "receipt": {
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 1.603,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "workflows",
+      "receipt": {
+        "command": [
+          "python3",
+          ".github/scripts/check-workflows.py",
+          "--offline"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.192,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "0e516b46b7afa0af0b7ab175684692544002bc76756ecfd8b9222a25f89a6214"
+    },
+    {
+      "name": "diff",
+      "receipt": {
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.167,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "published_log_sha256": "0ec741d80dae090470453ef03d6ba5109deba691cab1d00f5ae2aa13d4533383",
+  "log_normalization": "Private path prefixes replaced and trailing whitespace normalized; retained original hashes recorded per check.",
+  "unrun": [
+    "Full PostgreSQL suite",
+    "Complete distinct-source-transaction process histories and generated source oracle",
+    "Hosted CI for this revision",
+    "Whole-repository index and patch benchmark smoke (unchanged indexing path; earlier optional inspection interruption remains separately recorded)",
+    "Unchanged real rust-analyzer probe and canonical protocol checks",
+    "NATS/Temporal/S3/ClickHouse/shared-service and full operational acceptance"
+  ],
+  "claims_exclude": [
+    "S3 or distributed artifact durability/retention",
+    "Actual T1 source commit race (T1 regressions were run separately)",
+    "Host-loss, failover or backup/restore proof",
+    "Complete 04.2 or Goal 04 acceptance"
+  ]
+}
