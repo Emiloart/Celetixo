@@ -67,6 +67,7 @@ T1 is not a microVM and shares the host kernel. The validated profile excludes m
 | Atomic commit milestone 04.2 | **Accepted reviewed SQL adapter profiles** | [Acceptance audit](../implementation/goal-04-commit-acceptance.md): native/source conditional revision advancement, durable exact outcomes, independent-process races/crashes and generated source histories against a separate interpreter. Full 04.3–04.7 service/security/operational acceptance remains pending |
 | Public multi-tenant deployment | **Target only** | ADR-0004 requirements are accepted, but production end-to-end isolation is not demonstrated |
 | Temporal coordination bootstrap | **Bounded local validation; 04.4 incomplete** | [Frozen checks](../implementation/goal-04-temporal-bootstrap/checks.json): canonical Go intake, scoped TLS host, real role/transport denials, original synthetic run recovery after worker/service restart and recorded-history replay. No Engine side-effect, cancellation-race, deployment upgrade or complete 04.4 acceptance claim |
+| Prepared Engine outcome lookup | **In-process native/source APIs; bounded SQL validation** | [Checks](../implementation/goal-04-prepared-outcome/checks.json): fresh owner authority, exact original receipts/rejections, request substitution and revoked-owner denial; cold SQL recovery with unchanged durable state. No RPC or Temporal side-effect claim |
 
 ## 5. Evidence and operational support
 

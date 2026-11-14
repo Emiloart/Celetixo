@@ -66,6 +66,44 @@ pub struct ReservationView {
 }
 
 impl Engine {
+    /// Resolve only the original outcome under fresh owner Commit authority.
+    /// `None` means no recorded outcome, not permission to retry or commit.
+    /// The outer error reports authentication/request mismatch; an inner error
+    /// is the original durable domain rejection. No transition is evaluated.
+    pub fn prepared_commit_outcome(
+        &self,
+        session: &Session,
+        scope: &Scope,
+        request: &CommitRequest,
+    ) -> Result<Option<Result<CommitReceipt, EngineError>>, EngineError> {
+        if request.evidence.len() > authority::NativeRecordLimits::default().entries {
+            return Err(EngineError::InvalidIntent(
+                "commit outcome request exceeds recovery limits".into(),
+            ));
+        }
+        self.store
+            .session(session, scope, Permission::Commit)
+            .read(|db| {
+                self.authorize(db, session, scope, Permission::Commit)?;
+                let tx = db
+                    .transactions
+                    .get(&(scope.clone(), request.transaction.clone()))
+                    .ok_or(EngineError::NotFound)?;
+                if request.authorization_grant != session.token || tx.owner != session.principal {
+                    return Err(EngineError::Unauthorized);
+                }
+                recorded_outcome(
+                    db,
+                    scope,
+                    &request.transaction,
+                    tx.attempt().number,
+                    session.principal(),
+                    &request.key,
+                    Some(request),
+                )
+            })
+    }
+
     pub fn reservation(
         &self,
         session: &Session,
@@ -163,6 +201,34 @@ impl Engine {
             Some(&request),
         )
     }
+}
+
+/// The same identity comparison serves effectful replay and read-only recovery,
+/// including the retained in-memory legacy operation form.
+pub(super) fn recorded_outcome(
+    db: &Database,
+    scope: &Scope,
+    transaction: &TransactionId,
+    current_attempt: u64,
+    principal: &PrincipalId,
+    key: &IdempotencyKey,
+    request: Option<&CommitRequest>,
+) -> Result<Option<Result<CommitReceipt, EngineError>>, EngineError> {
+    let Some(record) = db.operations.get(&(scope.clone(), key.clone())) else {
+        return Ok(None);
+    };
+    let attempt = request.map_or(current_attempt, |request| request.attempt);
+    let recorded_digest = record
+        .request
+        .as_ref()
+        .map(|recorded| recorded.digest(scope, principal));
+    if record.transaction != *transaction
+        || record.attempt != attempt
+        || recorded_digest != request.map(|request| request.digest(scope, principal))
+    {
+        return Err(EngineError::IdempotencyConflict);
+    }
+    Ok(Some(record.outcome.clone()))
 }
 
 pub(super) fn validate_request(

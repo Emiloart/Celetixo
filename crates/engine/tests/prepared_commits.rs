@@ -203,6 +203,12 @@ fn exact_request_reconciles_lost_response_and_expired_lease_without_second_advan
     h.ready("a", "x", 10, true);
     let request = h.request("a", "commit:a");
     assert_eq!(
+        h.engine
+            .prepared_commit_outcome(&h.worker, h.scope(), &request),
+        Ok(None)
+    );
+    assert_eq!(h.engine.current(&h.worker, h.scope()).unwrap(), h.base);
+    assert_eq!(
         h.engine.commit_prepared_with_fault(
             &h.worker,
             h.scope(),
@@ -212,7 +218,14 @@ fn exact_request_reconciles_lost_response_and_expired_lease_without_second_advan
         Err(EngineError::ResponseLost)
     );
     h.admin.advance_time(200).unwrap();
+    let resolved = h
+        .engine
+        .prepared_commit_outcome(&h.worker, h.scope(), &request)
+        .unwrap()
+        .unwrap()
+        .unwrap();
     let receipt = h.commit(request.clone()).unwrap();
+    assert_eq!(resolved, receipt);
     assert_eq!(receipt.revision, Revision(1));
     assert_eq!(h.commit(request.clone()).unwrap(), receipt);
     assert_eq!(
@@ -220,6 +233,11 @@ fn exact_request_reconciles_lost_response_and_expired_lease_without_second_advan
         Revision(1)
     );
     h.admin.revoke(&h.worker).unwrap();
+    assert_eq!(
+        h.engine
+            .prepared_commit_outcome(&h.worker, h.scope(), &request),
+        Err(EngineError::Unauthorized)
+    );
     assert_eq!(h.commit(request), Err(EngineError::Unauthorized));
 }
 
@@ -287,8 +305,18 @@ fn changed_evidence_cannot_reassign_a_rejected_request_key() {
         Err(EngineError::MissingEvidence(h.check.id().clone()))
     );
     h.verify("a");
+    assert_eq!(
+        h.engine
+            .prepared_commit_outcome(&h.worker, h.scope(), &request),
+        Ok(Some(rejection.clone()))
+    );
     assert_eq!(h.commit(request), rejection);
     let changed = h.request("a", "sticky");
+    assert_eq!(
+        h.engine
+            .prepared_commit_outcome(&h.worker, h.scope(), &changed),
+        Err(EngineError::IdempotencyConflict)
+    );
     assert_eq!(h.commit(changed), Err(EngineError::IdempotencyConflict));
     let accepted = h.commit(h.request("a", "fresh-request")).unwrap();
     assert_eq!(accepted.revision, Revision(1));
@@ -319,6 +347,10 @@ fn malformed_or_unauthorized_requests_do_not_poison_an_owners_operation_key() {
         .unwrap();
     let mut forged = request.clone();
     forged.authorization_grant = other_proposal.proposal_grant_id;
+    assert_eq!(
+        h.engine.prepared_commit_outcome(&other, h.scope(), &forged),
+        Err(EngineError::Unauthorized)
+    );
     assert_eq!(
         h.engine.commit_prepared(&other, h.scope(), forged),
         Err(EngineError::Unauthorized)

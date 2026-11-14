@@ -457,6 +457,16 @@ fn native_sql_faults_roll_back_or_reconcile_exactly_once() {
     let mut h = Harness::new("native-lifecycle-faults");
     h.ready("a", "x", 10, true);
     let request = h.request("a", "uncertain");
+    let before_lookup = h.backend.inspect_registration(h.scope()).unwrap();
+    assert_eq!(
+        h.engine
+            .prepared_commit_outcome(&h.worker, h.scope(), &request),
+        Ok(None)
+    );
+    assert_eq!(
+        h.backend.inspect_registration(h.scope()).unwrap(),
+        before_lookup
+    );
     for fault in [
         CommitFault::BeforeValidation,
         CommitFault::DuringValidation,
@@ -506,7 +516,19 @@ fn native_sql_faults_roll_back_or_reconcile_exactly_once() {
         Err(authority_error(AuthorityFailure::CommitIndeterminate))
     );
     h.reopen();
+    let before_lookup = h.backend.inspect_registration(h.scope()).unwrap();
+    let resolved = h
+        .engine
+        .prepared_commit_outcome(&h.worker, h.scope(), &request)
+        .unwrap()
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        h.backend.inspect_registration(h.scope()).unwrap(),
+        before_lookup
+    );
     let receipt = h.commit(request.clone()).unwrap();
+    assert_eq!(resolved, receipt);
     assert_eq!(h.commit(request), Ok(receipt));
     assert_eq!(h.counts(), vec![1, 1, 1, 1, 1, 0]);
 }

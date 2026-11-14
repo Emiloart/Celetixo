@@ -164,7 +164,7 @@ jobs:
       - name: Inspect exact repository tree through the Engine
         run: >-
           cargo run --locked -p celetixo-repository --example inspect_repository -- . --git-tree "$(git rev-parse HEAD)" --changed crates/engine/src/engine.rs
-          --reviewed-public-input crates/engine/src/engine.rs=096233b8e4d4cdc2b53560e0d3280ab980244197bf0907f81a5fbcf12331fc19
+          --reviewed-public-input crates/engine/src/engine.rs=3f2194fee88336255c212fb7166b5d3fe33ebaee9269181555b18ec1f6c6df75
           --reviewed-public-input crates/engine/src/engine/authority/records.rs=12e5c2af32fdccd19e0afd96ca73f7b7f222f71dbf6a05d5a2c88cedf5c2b546
           --reviewed-public-input crates/engine/src/engine/source_recovery.rs=1552093e377c74023caa1aaf702a116758b81d203735c074e62b4d26a98f658d
           --reviewed-public-input crates/postgres/src/lib.rs=d2b103ff13583a1ffebac35aeeb48dae1804fe5b803f446b81fcc0bc87eb5d09
@@ -181,7 +181,7 @@ jobs:
       - name: Check source patch measurement runner on this immutable tree
         run: >-
           cargo run --locked -p celetixo-execution --example source_patch_bench -- . "$(git rev-parse HEAD)" --iterations 1
-          --reviewed-public-input crates/engine/src/engine.rs=096233b8e4d4cdc2b53560e0d3280ab980244197bf0907f81a5fbcf12331fc19
+          --reviewed-public-input crates/engine/src/engine.rs=3f2194fee88336255c212fb7166b5d3fe33ebaee9269181555b18ec1f6c6df75
           --reviewed-public-input crates/engine/src/engine/authority/records.rs=12e5c2af32fdccd19e0afd96ca73f7b7f222f71dbf6a05d5a2c88cedf5c2b546
           --reviewed-public-input crates/engine/src/engine/source_recovery.rs=1552093e377c74023caa1aaf702a116758b81d203735c074e62b4d26a98f658d
           --reviewed-public-input crates/postgres/src/lib.rs=d2b103ff13583a1ffebac35aeeb48dae1804fe5b803f446b81fcc0bc87eb5d09

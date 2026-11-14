@@ -1,0 +1,8 @@
+    Finished `test` profile [optimized] target(s) in 0.41s
+     Running tests/foundation.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/foundation-8df36ed3dd233239)
+
+running 1 test
+test source_authority::lifecycle::publication::source_publication_rolls_back_precommit_failure_and_recovers_lost_database_response ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 69.82s
+

@@ -7,6 +7,30 @@ mod artifacts;
 use artifacts::ArtifactPreparation;
 
 impl Engine {
+    /// Read the exact original source publication outcome without artifact I/O
+    /// or mutation. Fresh owner Commit authority is required; historical analyst,
+    /// executor and storage grants need not remain live to read an old result.
+    /// `None` is absence of a recorded outcome, never permission to retry.
+    pub fn prepared_source_commit_outcome(
+        &self,
+        owner: &Session,
+        scope: &Scope,
+        request: &SourceCommitRequest,
+    ) -> Result<Option<Result<SourceCommitReceipt, EngineError>>, EngineError> {
+        self.store
+            .session(owner, scope, Permission::Commit)
+            .read(|db| {
+                self.authorize(db, owner, scope, Permission::Commit)?;
+                if request.binding.scope != *scope
+                    || request.binding.principal != owner.principal
+                    || request.authorization_grant != owner.token
+                {
+                    return Err(EngineError::Unauthorized);
+                }
+                original_result(db, scope, &session_actor(owner), request)
+            })
+    }
+
     pub fn commit_source_prepared(
         &self,
         owner: &Session,
@@ -175,7 +199,8 @@ fn original_result(
     )) else {
         return Ok(None);
     };
-    if record.request != MutationRequest::SourceCommit(Box::new(request.clone())) {
+    if !matches!(&record.request, MutationRequest::SourceCommit(recorded) if recorded.as_ref() == request)
+    {
         return Err(EngineError::IdempotencyConflict);
     }
     receipt_result(record.outcome.clone())

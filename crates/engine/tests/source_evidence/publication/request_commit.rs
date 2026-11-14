@@ -19,6 +19,17 @@ fn source_commit_publishes_one_revision_analysis_history_and_original_reply() {
         .inspect_source_records(&scope(), Default::default())
         .unwrap();
     let reads = h.reader.reads.load(Ordering::SeqCst);
+    assert_eq!(
+        h.engine
+            .prepared_source_commit_outcome(&h.observer, &scope(), &request),
+        Err(EngineError::Unauthorized)
+    );
+    assert_eq!(
+        h.engine
+            .prepared_source_commit_outcome(&h.owner, &scope(), &request),
+        Ok(None)
+    );
+    assert_eq!(h.reader.reads.load(Ordering::SeqCst), reads);
     let receipt = commit(&h, &analyst, request.clone()).unwrap();
     assert!(h.reader.reads.load(Ordering::SeqCst) > reads);
     assert_eq!(receipt.publication_snapshot, request.publication_snapshot);
@@ -69,15 +80,40 @@ fn source_commit_publishes_one_revision_analysis_history_and_original_reply() {
     h.admin.revoke_source_artifact_store(&h.storage).unwrap();
     h.admin.advance_time(10_001).unwrap();
     h.reader.unavailable.store(true, Ordering::SeqCst);
+    let before_lookup = h
+        .admin
+        .inspect_source_records(&scope(), Default::default())
+        .unwrap();
+    assert_eq!(
+        h.engine
+            .prepared_source_commit_outcome(&h.owner, &scope(), &request),
+        Ok(Some(Ok(receipt.clone())))
+    );
+    assert_eq!(
+        h.admin
+            .inspect_source_records(&scope(), Default::default())
+            .unwrap(),
+        before_lookup
+    );
     assert_eq!(commit(&h, &analyst, request.clone()).unwrap(), receipt);
     assert_eq!(h.reader.reads.load(Ordering::SeqCst), reads);
     let mut changed = request.clone();
     changed.fence += 1;
     assert_eq!(
+        h.engine
+            .prepared_source_commit_outcome(&h.owner, &scope(), &changed),
+        Err(EngineError::IdempotencyConflict)
+    );
+    assert_eq!(
         commit(&h, &analyst, changed),
         Err(EngineError::IdempotencyConflict)
     );
     h.admin.revoke(&h.owner).unwrap();
+    assert_eq!(
+        h.engine
+            .prepared_source_commit_outcome(&h.owner, &scope(), &request),
+        Err(EngineError::Unauthorized)
+    );
     assert_eq!(
         commit(&h, &analyst, request),
         Err(EngineError::Unauthorized)
@@ -284,6 +320,16 @@ fn a_rejected_raw_request_keeps_its_original_result_and_does_not_poison_a_new_ke
         commit(&h, &analyst, rejected.clone()),
         Err(EngineError::CommitRequestMismatch)
     );
+    assert_eq!(
+        h.engine
+            .prepared_source_commit_outcome(&h.owner, &scope(), &rejected),
+        Ok(Some(Err(EngineError::CommitRequestMismatch)))
+    );
+    assert_eq!(
+        h.engine
+            .prepared_source_commit_outcome(&h.owner, &scope(), &request),
+        Err(EngineError::IdempotencyConflict)
+    );
     let after = h
         .admin
         .inspect_source_records(&scope(), Default::default())
@@ -297,6 +343,21 @@ fn a_rejected_raw_request_keeps_its_original_result_and_does_not_poison_a_new_ke
     fresh.key = IdempotencyKey::new("fresh-source-commit").unwrap();
     let receipt = commit(&h, &analyst, fresh).unwrap();
     let reads = h.reader.reads.load(Ordering::SeqCst);
+    let before_lookup = h
+        .admin
+        .inspect_source_records(&scope(), Default::default())
+        .unwrap();
+    assert_eq!(
+        h.engine
+            .prepared_source_commit_outcome(&h.owner, &scope(), &rejected),
+        Ok(Some(Err(EngineError::CommitRequestMismatch)))
+    );
+    assert_eq!(
+        h.admin
+            .inspect_source_records(&scope(), Default::default())
+            .unwrap(),
+        before_lookup
+    );
     assert_eq!(
         commit(&h, &analyst, rejected),
         Err(EngineError::CommitRequestMismatch)

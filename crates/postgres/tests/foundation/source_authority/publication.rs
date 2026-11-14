@@ -253,6 +253,12 @@ fn source_publication_rolls_back_precommit_failure_and_recovers_lost_database_re
             )
             .unwrap();
         let before = h.authority.inspect_source(h.scope()).unwrap();
+        assert_eq!(
+            h.engine
+                .prepared_source_commit_outcome(&h.owner, h.scope(), &request),
+            Ok(None)
+        );
+        assert_eq!(h.authority.inspect_source(h.scope()).unwrap(), before);
         let result = engine.commit_source_prepared(&session, &analyst, h.scope(), request.clone());
         if stage == AuthorityStage::BeforeCommit {
             assert_eq!(
@@ -269,6 +275,26 @@ fn source_publication_rolls_back_precommit_failure_and_recovers_lost_database_re
             );
             let after = h.authority.inspect_source(h.scope()).unwrap();
             assert_eq!(after.records.history.len(), 1);
+            // A cold Engine resolves the exact durable reply without attaching
+            // an artifact reader or authenticating the historical analyst.
+            let (resolver, resolver_admin) =
+                Engine::with_authority_backend(Arc::new(super::super::authority()));
+            let resolver_owner = resolver_admin
+                .authenticate_existing_session(
+                    h.scope(),
+                    request.authorization_grant,
+                    |principal, selected| {
+                        assert_eq!(principal, h.owner.principal());
+                        assert_eq!(selected, h.scope());
+                        Ok(())
+                    },
+                )
+                .unwrap();
+            assert_eq!(
+                resolver.prepared_source_commit_outcome(&resolver_owner, h.scope(), &request),
+                Ok(Some(Ok(after.records.history[0].receipt.clone())))
+            );
+            assert_eq!(h.authority.inspect_source(h.scope()).unwrap(), after);
             let receipt = h
                 .engine
                 .commit_source_prepared(

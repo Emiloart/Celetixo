@@ -1,0 +1,146 @@
+{
+  "schema": "celetixo/prepared-outcome-validation/v1",
+  "status": "Read-only exact Engine outcomes validated; full 04.4 and Goal 04 incomplete",
+  "parent_commit": "da644bba010ea063c5596b155a7b8ad33eaea7c7",
+  "goal_contract_sha256": "339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "postgres": "17.9, schema 9; retained local Unix-SCRAM fixture",
+  "source_manifest": "source-manifest.json",
+  "build_environment": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+    "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+    "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true",
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC",
+    "CELETIXO_PG_TEST_CONFIG": "Operator-private local fixture config; not published"
+  },
+  "checks": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-engine",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 266.734,
+      "raw_log_sha256": "72187883f735252371d7ca7a9eb15557aca992e3f38dbdba70d857765825dbaf",
+      "raw_log": "engine.raw.log"
+    },
+    {
+      "command": [
+        "cargo",
+        "--config",
+        "profile.test.package.celetixo-postgres.opt-level=0",
+        "test",
+        "-p",
+        "celetixo-postgres",
+        "--test",
+        "foundation",
+        "native_authority::native_sql_faults_roll_back_or_reconcile_exactly_once",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 171.937,
+      "raw_log_sha256": "baac3f6a71668e171525f6a35be6f2cfe4db63ba79425b32692125f85dda3c81",
+      "raw_log": "sql-native.raw.log"
+    },
+    {
+      "command": [
+        "cargo",
+        "--config",
+        "profile.test.package.celetixo-postgres.opt-level=0",
+        "test",
+        "-p",
+        "celetixo-postgres",
+        "--test",
+        "foundation",
+        "source_authority::lifecycle::publication::source_publication_rolls_back_precommit_failure_and_recovers_lost_database_response",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 70.346,
+      "raw_log_sha256": "47c1826266a2ecf3eb55ccddeca0bf7cf45f2a68f6587db906a03eefa8d513b4",
+      "raw_log": "sql-source.raw.log"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "celetixo-engine",
+        "--test",
+        "source_evidence",
+        "publication::request::commit::a_rejected_raw_request_keeps_its_original_result_and_does_not_poison_a_new_key",
+        "--locked",
+        "--offline",
+        "--",
+        "--exact"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 0.183,
+      "raw_log_sha256": "22549488bc5c36f76a0417e5895b20527b81dd60077ef750e2ff186a2cf4dc60",
+      "raw_log": "source-rejection-exact.raw.log"
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "-p",
+        "celetixo-engine",
+        "-p",
+        "celetixo-postgres",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 0.262,
+      "raw_log_sha256": "6a981e4e2a0c9af6dead9afee0224555ade213f42082f62ec9b38c4d1fc0dd36",
+      "raw_log": "clippy-final.raw.log"
+    },
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 1.472,
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_log": "format-final.raw.log"
+    }
+  ],
+  "source_timing": "Engine package and SQL parents ran before adding assertions to the existing recorded-source-rejection test. Production source unchanged; additional exact test and final Clippy/format use final sources.",
+  "excluded_observation": "An initial mistyped exact source-test selector executed zero tests. Its private log is retained and is not counted; corrected selector explicitly confirmed one passing test.",
+  "unrun": [
+    "Full opt-in PostgreSQL suite (two affected fault/recovery parents run)",
+    "Full workspace tests (Engine package and affected PostgreSQL targets run)",
+    "Authenticated Engine RPC and actual Temporal Engine effects, retries/cancellation/version behavior",
+    "Hosted CI",
+    "Original Goal 04.5\u201304.7 acceptance programme"
+  ],
+  "claim_boundary": "Only Engine read-only exact original-outcome resolution; absence is not authorization, success or permission to retry."
+}

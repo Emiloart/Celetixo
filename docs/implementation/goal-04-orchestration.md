@@ -49,6 +49,31 @@ restart. This is not a production workload-identity or revocation service.
 
 ## Reproduction and next acceptance boundary
 
+### Engine outcome reconciliation
+
+The Engine now exposes `prepared_commit_outcome` and
+`prepared_source_commit_outcome` for read-only recovery of an exact prepared
+request. Fresh owner Commit authority is required. The result distinguishes an
+absent record, the original accepted receipt, the original domain rejection and
+an authorization/request-identity error. Absence supplies no permission to retry.
+Lookup neither evaluates a transition nor reads source artifact bodies. Historical
+source results remain readable without live analyst, executor or storage grants;
+revoking the owner's grant denies lookup. Changed requests under the original key
+reject. Native commit replay and lookup share the same identity comparison.
+
+[Frozen checks](goal-04-prepared-outcome/checks.json) record 361 Engine package
+tests, two exact real PostgreSQL fault/recovery parents, an additional exact
+recorded-source-rejection check, strict Engine/PostgreSQL Clippy and formatting.
+The full package run preceded the additional test assertions; production inputs
+were unchanged. Both SQL parents check that lookup leaves durable state unchanged.
+The source parent resolves a lost response through a cold Engine without attaching
+an artifact reader or authenticating the historical analyst. The additional check
+preserves an original rejection after a separate successful publication. These
+in-process APIs are a dependency for activities; authenticated RPC and actual
+Temporal effects remain pending.
+
+### Temporal host and workflow probe
+
 The [local Temporal runbook](../operations/local-temporal-runbook.md) covers pinned
 tooling, explicit provisioning, role separation, TLS checks, retained data and
 the synthetic workflow recovery probe. The fixture runs on a private internal

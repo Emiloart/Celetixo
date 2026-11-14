@@ -1,0 +1,516 @@
+   Compiling digest v0.11.3
+   Compiling thiserror v2.0.21
+   Compiling sha2 v0.11.0
+   Compiling celetixo-engine v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/engine)
+    Finished `test` profile [optimized] target(s) in 4m 22s
+     Running unittests src/lib.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/celetixo_engine-5df514d30fe49ede)
+
+running 59 tests
+test access::tests::analysis_binding_includes_version_configuration_completeness_and_dependencies ... ok
+test access::tests::compatibility_matrix_is_directional_and_deterministic ... ok
+test access::tests::union_retains_explicit_and_derived_dependencies ... ok
+test access::tests::predicates_detect_phantom_members_and_invariants_detect_scoped_writes ... ok
+test access::tests::invariant_checks_values_missing_inputs_and_overflow ... ok
+test engine::authority::tests::authentication_runs_outside_state_callbacks_and_rechecks_revocation_after_success ... ok
+test engine::authority::tests::checked_reconstruction_rejects_private_bases_model_substitution_and_forged_candidates ... ok
+test engine::authority::tests::all_native_phases_and_binary_cancellation_reason_reopen_without_sanitizing_history ... ok
+test engine::authority::tests::evidence_replacement_does_not_reconstruct_an_old_rejected_request_from_current_selection ... ok
+test engine::authority::tests::incomplete_model_remains_incomplete_after_native_reopen ... ok
+test engine::authority::tests::scoped_backend_rejects_missing_repeated_misbound_or_unconfirmed_evaluation ... ok
+test engine::authority::tests::scoped_restore_budgets_and_backward_clock_fail_closed_and_expiry_is_retained ... ok
+test engine::authority::tests::backend_runs_existing_commit_gate_and_publishes_rejections_before_acknowledging ... ok
+test engine::authority::tests::read_only_clock_observation_does_not_invent_expiry_history ... ok
+test engine::authority::tests::terminal_history_missing_evidence_or_receipt_and_cyclic_dependencies_cannot_reopen ... ok
+test engine::runtime::tests::copied_records_restore_neither_capabilities_nor_readers ... ok
+test engine::authority::tests::reopened_state_retains_original_requests_attempts_receipts_and_requires_fresh_authentication ... ok
+test engine::runtime::tests::revocation_drops_adapter_resources_outside_state_and_runtime_locks ... ok
+test engine::runtime::tests::revocation_releases_the_reader_and_keeps_the_registration_record ... ok
+test engine::commit_request::tests::fence_exhaustion_and_conflict_do_not_partially_acquire_or_consume_a_generation ... ok
+test engine::runtime::tests::scoped_grant_id_alias_cannot_rebind_an_existing_opaque_session ... ok
+test engine::state_access::tests::journal_stage_failure_cannot_publish_a_partial_domain_transition ... ok
+test engine::source_cleanup::tests::cleanup_is_scoped_store_bound_revocable_and_expiring ... ok
+test engine::state_access::tests::panicking_update_leaves_original_state_and_poisoned_store_fails_closed ... ok
+test engine::runtime::tests::unavailable_runtime_cannot_partially_publish_a_registration ... ok
+test engine::state_access::tests::rejected_outcomes_can_retain_state_and_publication_precedes_acknowledgement ... ok
+test engine::state_access::tests::unwinding_never_publishes_or_implicitly_commits_on_drop ... ok
+test engine::state_access::tests::publication_failure_withholds_success_and_rejection_without_exposing_staged_state ... ok
+test evidence::tests::evidence_digest_includes_diagnostics_artifacts_provenance_and_outcome ... ok
+test evidence::tests::check_digest_includes_command_configuration_environment_and_toolchain ... ok
+test evidence::tests::inconsistent_status_missing_capture_and_invalid_provenance_fail_closed ... ok
+test evidence::tests::exact_bindings_reject_each_stale_or_mismatched_input ... ok
+test ids::tests::identifiers_reject_empty_or_ambiguous_values ... ok
+test ids::tests::digests_bind_domain_and_unambiguous_bytes ... ok
+test patch::tests::add_delete_update_and_wrong_before_images ... ok
+test patch::tests::empty_and_noop_patches_are_rejected ... ok
+test patch::tests::digest_binds_base_before_images_keys_and_values ... ok
+test persistence::metadata::tests::binary_reason_keeps_exact_controls_and_checks_context_digest_and_limits ... ok
+test persistence::outcome::tests::conflict_records_preserve_typed_provenance_and_reject_invalid_predicates_and_order ... ok
+test persistence::outcome::tests::independent_frozen_outcome_and_provenance_layouts_preserve_exact_values ... ok
+test persistence::outcome::tests::all_supported_native_rejections_roundtrip_without_display_or_debug_interpretation ... ok
+test persistence::outcome::tests::rehashed_truncation_unknown_tags_context_substitution_and_resource_amplification_reject ... ok
+test source_evidence::tests::a_large_plan_can_seal_all_check_definition_references ... ok
+test source_evidence::tests::execution_object_has_no_recursive_address_and_still_binds_every_other_object ... ok
+test source_evidence::tests::invalid_status_times_duplicates_and_artifact_labels_reject ... ok
+test persistence::metadata::tests::all_lease_events_roundtrip_and_reject_forged_tags_invalid_values_and_budgets ... ok
+test source_evidence::tests::seal_order_is_deterministic_and_context_outcome_and_object_changes_are_bound ... ok
+test source_patch::report_integrity_tests::replay_rejects_a_self_consistent_but_wrong_resulting_snapshot ... ok
+test source_publication::tests::analysis::exact_publication_analysis_round_trips_with_an_independent_layout ... ok
+test source_patch::report_integrity_tests::replay_rejects_tampered_report_fields_and_digest_binds_actual_retained_payloads ... ok
+test source_publication::tests::analysis::every_publication_selector_is_checked_after_rehashing ... ok
+test source_publication::tests::publication_preserves_verified_manifest_bytes_modes_state_and_original_identities ... ok
+test source_publication::tests::analysis::old_application_and_incomplete_analysis_cannot_describe_publication ... ok
+test source_publication::tests::valid_but_substituted_application_or_successor_metadata_fails_independent_replay ... ok
+test source_publication::tests::revision_exhaustion_rejects_publication_without_changing_the_application_contract ... ok
+test source_publication::tests::wrong_immutable_base_scope_revision_and_content_cannot_select_a_publication_candidate ... ok
+test transaction::tests::terminals_cannot_be_revived_and_paths_are_explicit ... ok
+test source_publication::tests::analysis::malformed_publication_records_and_combined_dependency_budgets_fail_closed ... ok
+test source_evidence::tests::aggregate_metadata_is_bounded_before_sealing ... ok
+
+test result: ok. 59 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/administrative_recovery.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/administrative_recovery-de1493cc5198aa78)
+
+running 5 tests
+test administrator_and_session_keys_are_distinct_and_changed_admin_inputs_cannot_reuse_a_key ... ok
+test allocation_faults_roll_back_or_reconcile_one_original_id_for_every_resource ... ok
+test invalid_original_options_and_corrupt_administrative_context_fail_closed ... ok
+test historical_grants_cannot_restore_expired_authority_or_reattach_a_revoked_reader ... ok
+test all_administrative_original_results_survive_revocation_and_a_fresh_embedding ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adversarial.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/adversarial-a5561b026f9caf49)
+
+running 9 tests
+test ordinary_analysis_permission_cannot_replace_authoritative_model_facts ... ok
+test aborted_work_rejects_late_verification_and_cannot_commit ... ok
+test a_stale_before_image_is_atomic_and_cannot_install_a_candidate ... ok
+test caller_declared_invariant_scopes_expand_dependencies_and_reject_invalidated_inputs ... ok
+test prefix_reads_expand_declared_dependencies_and_bind_the_full_analysis ... ok
+test reverse_impact_reaches_transitive_consumers ... ok
+test same_principal_with_a_different_capability_cannot_use_the_lease ... ok
+test verifier_attribution_cannot_substitute_for_verifier_authorization ... ok
+test stale_evidence_cannot_follow_a_transaction_into_a_new_revalidation_attempt ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/engine_transactions.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/engine_transactions-e3d13d5b92df3931)
+
+running 23 tests
+test actual_invariants_reject_bad_patches_and_derive_undeclared_dependencies ... ok
+test all_required_checks_must_be_present_and_transaction_dependencies_must_have_committed ... ok
+test abort_is_terminal_and_releases_coordination_scopes_with_an_auditable_reason ... ok
+test cancellation_and_revocation_schedules_have_one_authoritative_outcome ... ok
+test compatible_same_snapshot_transactions_require_fresh_attempt_evidence_and_preserve_both_writes ... ok
+test concurrent_write_skew_is_rejected_even_when_write_reservations_are_disjoint ... ok
+test illegal_order_wrong_snapshot_and_undeclared_write_are_rejected_atomically ... ok
+test idempotent_success_and_rejection_have_stable_outcomes_and_keys_cannot_be_reassigned ... ok
+test incomplete_or_changed_analysis_never_becomes_safe_empty_impact ... ok
+test exact_evidence_gate_rejects_each_mismatch_before_it_can_authorize_a_commit ... ok
+test leases_use_one_monotonic_clock_and_expired_work_cannot_renew_or_commit ... ok
+test invalidated_read_is_explained_with_both_transactions_revision_and_analysis_provenance ... ok
+test missing_failed_and_incomplete_evidence_cannot_pass_the_gate ... ok
+test independent_engine_handles_race_at_one_gate_without_losing_compatible_writes ... ok
+test predicate_phantoms_and_invariant_scope_overlap_are_conflicts ... ok
+test reservation_requires_proposal_ownership_even_with_other_scoped_permissions ... ok
+test multiple_revision_advances_preserve_prior_attempts_and_require_fresh_evidence_each_time ... ok
+test named_commit_failures_leave_no_partial_publication_and_lost_response_recovers_one_outcome ... ok
+test revoked_verifier_cannot_authorize_a_new_commit_with_previously_recorded_evidence ... ok
+test scoped_capabilities_fail_closed_for_foreign_stores_scopes_and_revocation ... ok
+test workers_cannot_change_model_or_sign_their_own_evidence ... ok
+test zero_and_overflowing_lease_times_fail_without_state_changes ... ok
+test write_write_reservation_prevents_partial_acquisition_and_stale_writer_cannot_rebase_over_committed_value ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/input_admission.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/input_admission-0257e2a237ecc4cf)
+
+running 5 tests
+test malformed_policy_cannot_authorize_an_input ... ok
+test finite_patterns_cover_binary_provider_material_keys_and_credential_urls ... ok
+test policy_identity_binds_reviewed_inputs_and_is_delivery_order_independent ... ok
+test existing_program_variables_and_public_placeholders_remain_accepted ... ok
+test reviewed_public_exceptions_require_exact_path_and_exact_content ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/lifecycle_persistence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/lifecycle_persistence-a76415c47708f238)
+
+running 9 tests
+test access_and_reference_patch_preserve_v1_identity_and_full_value_range ... ok
+test impact_records_retain_complete_and_incomplete_states_and_require_external_generation ... ok
+test evidence_envelopes_retain_original_evidence_identity_and_all_binary_artifacts ... ok
+test commit_request_reconstruction_checks_context_order_tags_and_budgets ... ok
+test independently_encoded_frozen_layouts_survive_checked_reconstruction ... ok
+test native_intent_roundtrip_preserves_every_native_field_and_constructor_rules ... ok
+test noncanonical_access_patch_and_evidence_order_cannot_be_hidden_by_rehashing ... ok
+test restored_evidence_data_does_not_replace_fresh_scoped_verifier_authority ... ok
+test every_truncated_prefix_rehashed_malformed_and_resource_amplification_input_rejects ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/model_histories.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/model_histories-9ad73223fb30230b)
+
+running 4 tests
+test declared_invariant_scopes_depend_on_their_graph_inputs ... ok
+test phantom_insertions_and_shared_read_dependencies_have_distinct_outcomes ... ok
+test shrinking_preserves_and_minimizes_an_injected_faulty_oracle_mismatch ... ok
+test deterministic_generated_histories_match_independent_oracle ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.71s
+
+     Running tests/mutation_persistence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/mutation_persistence-e4d8fefab60ea8b8)
+
+running 14 tests
+test administrative::independent_administrator_header_has_no_fabricated_principal_grant_or_transaction ... ok
+test complete_success_and_typed_rejections_roundtrip_without_infrastructure_outcomes ... ok
+test administrative::rejected_original_grant_options_keep_invalid_tiers_resources_and_unresolved_selectors ... ok
+test independent_frozen_layout_preserves_a_rejected_request_without_a_snapshot_or_transaction ... ok
+test analysis_result_and_typed_original_errors_roundtrip_with_bounded_accesses ... ok
+test original_proposal_codec_keeps_rejected_intent_fields_without_snapshot_lookup ... ok
+test administrative::all_admin_requests_and_original_contexts_roundtrip_with_bounded_typed_outcomes ... ok
+test native_effects::original_native_inputs_bind_raw_snapshot_patch_and_full_verification_fields ... ok
+test request_and_outcome_context_substitution_rehashed_corruption_and_trailing_fields_reject ... ok
+test native_effects::original_native_rejections_keep_before_images_invariants_and_mismatched_evidence ... ok
+test zero_grants_inconsistent_outcome_contexts_and_decode_limits_fail_closed ... ok
+test state_mutation_codecs_preserve_original_reasons_results_and_rejections ... ok
+test repository::original_source_analysis_requests_preserve_their_own_unregistered_bindings ... ok
+test repository::original_repository_codecs_preserve_invalid_models_and_require_no_transaction ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/mutation_recovery.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/mutation_recovery-66cc1c8f8a2b0915)
+
+running 20 tests
+test actor_scoped_keys_and_fresh_authorization_prevent_poisoning_or_revocation_replay ... ok
+test administrative_revocation_replay_does_not_append_another_lease_event ... ok
+test cancellation_preserves_original_bad_reason_and_checks_its_own_permission ... ok
+test concurrent_duplicates_have_one_transition_and_different_requests_cannot_share_a_key ... ok
+test backend_failure_before_or_after_evaluation_never_falls_back_or_publishes_only_the_lease ... ok
+test exact_lease_retries_preserve_the_first_expiry_and_never_restore_expired_authority ... ok
+test incomplete_analysis_is_an_original_rejection_and_reserves_no_lease ... ok
+test execution_and_cancellation_replies_are_historical_and_do_not_restore_authority ... ok
+test analysis_original_accesses_and_errors_survive_model_changes_and_terminal_state ... ok
+test native_effects::normalized_recovery_rejects_substituted_patch_bindings_and_evidence_results ... ok
+test normalized_recovery_keeps_execution_and_cancellation_receipts_after_terminal_state ... ok
+test native_effects::rejected_patch_and_revalidation_requests_keep_their_original_bodies ... ok
+test normalized_reopen_retains_original_results_and_rejects_corrupt_history_bindings ... ok
+test native_effects::conflicting_revalidation_keeps_complete_original_report_after_abort_and_reopen ... ok
+test rejected_original_bodies_survive_later_registration_and_key_substitution_rejects ... ok
+test repository::original_registration_and_model_replies_survive_new_heads_and_cold_reopen ... ok
+test repository::repository_authorization_and_failure_do_not_consume_a_key_or_publish_a_head ... ok
+test proposal_original_inputs_and_results_survive_registration_and_later_transitions ... ok
+test native_effects::original_patch_and_evidence_replies_do_not_reselect_stale_evidence_after_revalidation ... ok
+test oversized_original_input_does_not_reserve_a_key_or_cancel_a_transaction ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/persistence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/persistence-46816e25fca283e0)
+
+running 4 tests
+test decoded_values_still_require_constructor_invariants_and_canonical_order ... ok
+test layered_binary_snapshot_restores_exact_identity_and_full_integer_range ... ok
+test resource_limits_prevent_oversized_and_collection_amplification_decoding ... ok
+test corrupted_truncated_appended_and_invalid_identity_bytes_reject_even_when_rehashed ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/prepared_commits.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/prepared_commits-138fb948140efbab)
+
+running 7 tests
+test canonical_request_identity_binds_every_semantic_field_and_excludes_only_the_key ... ok
+test exact_request_reconciles_lost_response_and_expired_lease_without_second_advancement ... ok
+test changed_evidence_cannot_reassign_a_rejected_request_key ... ok
+test proposal_attribution_survives_a_new_lease_grant_for_the_same_principal ... ok
+test disjoint_fences_remain_valid_and_revalidation_requires_new_exact_attempt_data ... ok
+test malformed_or_unauthorized_requests_do_not_poison_an_owners_operation_key ... ok
+test released_fence_and_changed_request_cannot_authorize_a_replacement_commit ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/repository.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/repository-2652f87c452f5d9e)
+
+running 13 tests
+test constructor_rejects_dangling_dependencies_checks_and_missing_provenance ... ok
+test analysis_operations_enforce_organization_workspace_repository_store_and_revocation_scope ... ok
+test changed_analyzer_coverage_invalidates_old_transactions_and_new_admission ... ok
+test engine_queries_transitive_impact_checks_and_exact_registered_artifact ... ok
+test contracts_bind_exact_snapshot_scope_index_configuration_facts_and_coverage ... ok
+test index_install_uses_artifact_compare_and_swap_and_preserves_revision ... ok
+test incomplete_source_analysis_is_queryable_but_cannot_admit_or_commit ... ok
+test concurrent_analysis_replacements_have_one_atomic_compare_and_swap_winner ... ok
+test integer_model_patch_and_revalidation_paths_cannot_mutate_source_repositories ... ok
+test legacy_registration_cannot_disguise_any_captured_input_layer_as_integer_state ... ok
+test predicate_membership_covers_isolated_entities_during_query_and_admission ... ok
+test source_analysis_rejects_unknown_explicit_and_invariant_identities ... ok
+test source_registration_requires_both_scoped_registration_and_model_authority ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/semantic_persistence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/semantic_persistence-da82c95501d4de96)
+
+running 8 tests
+test complete_and_incomplete_analysis_reconstruction_preserves_all_facts ... ok
+test cycles_transitive_impact_and_every_completeness_form_survive_model_reconstruction ... ok
+test frozen_formats_preserve_previous_analysis_identity_and_new_model_context ... ok
+test analysis_rejects_unknown_elements_invalid_gaps_and_duplicate_or_reordered_sets ... ok
+test decoding_budgets_cover_nested_collections_fields_and_length_amplification ... ok
+test model_rejects_invalid_provenance_tags_identities_and_noncanonical_dependency_sets ... ok
+test snapshot_scope_and_generation_are_external_requirements_not_payload_choices ... ok
+test truncation_digest_substitution_and_trailing_data_reject_for_both_domains ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/snapshots.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/snapshots-3442be842c125a71)
+
+running 13 tests
+test canonical_paths_reject_traversal_absolute_and_ambiguous_representations ... ok
+test duplicate_or_structurally_impossible_inputs_reject_in_either_order ... ok
+test binary_modes_symlinks_submodules_generated_and_mounted_inputs_are_bound ... ok
+test effective_view_keeps_layer_precedence_and_rejects_external_aliases ... ok
+test git_base_does_not_hide_dirty_layers_and_absence_is_not_empty_content ... ok
+test every_valid_manifest_metadata_and_state_input_affects_identity ... ok
+test invalid_modes_references_base_deletions_and_environment_reject ... ok
+test length_delimited_encoding_distinguishes_field_boundaries ... ok
+test manifest_address_preserves_capture_provenance_without_reference_state ... ok
+test successor_is_a_new_immutable_identity_and_requires_one_revision_step ... ok
+test order_independent_capture_preserves_staged_unstaged_and_editor_views ... ok
+test tombstones_allow_file_directory_replacement_without_ambiguous_live_inputs ... ok
+test unsupported_or_incomplete_capture_cannot_construct_a_snapshot ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/source_artifact_persistence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_artifact_persistence-817fa77301dcba70)
+
+running 4 tests
+test logical_reference_addresses_separate_store_name_and_media_from_physical_bytes ... ok
+test malformed_reference_and_receipt_budgets_cannot_enter_the_metadata_graph ... ok
+test original_receipt_assessments_have_frozen_addresses_and_preserve_binary_reasons ... ok
+test rehashed_receipts_reject_unknown_tags_duplicate_or_unsorted_sets_and_wrong_context ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/source_attempts.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_attempts-79fddae736864256)
+
+running 37 tests
+test a_mandatory_dependency_promotes_an_optional_check_without_losing_provenance ... ok
+test admission_and_legal_execution_flow_preserve_authoritative_source_and_revision ... ok
+test admission_persistence::historical_admission_replays_exact_layout_after_revocation_and_expiry ... ok
+test admission_persistence::every_admission_dependency_and_historical_grant_is_bound ... ok
+test admission_persistence::malformed_admission_and_large_checked_dependencies_fail_with_explicit_budgets ... ok
+test cancellation_expiry_and_revocation_prevent_continuation ... ok
+test candidate_credential_admission_covers_changed_and_unchanged_effective_files ... ok
+test complete_source_reconstruction::invalid_submitted_attempt_and_identity_collision_keep_original_requests_and_outcomes ... ok
+test complete_source_reconstruction::expired_unreconciled_attempt_and_same_tick_revocation_preserve_history ... ok
+test complete_source_reconstruction::orphaned_substituted_and_weakened_source_graphs_reject ... ok
+test complete_source_reconstruction::replaced_heads_retain_original_policy_analysis_and_exact_optional_selection ... ok
+test incomplete_analysis_never_becomes_execution_safe_through_a_small_patch ... ok
+test idempotency_preserves_one_attempt_and_rejects_conflicting_or_parallel_work ... ok
+test invariant_scopes_reach_sibling_dependencies_and_cannot_be_omitted_from_plan ... ok
+test complete_source_reconstruction::source_transaction_and_execution_states_reopen_without_synthesizing_native_patches ... ok
+test mutation_recovery::invalid_finish_expiry_reconciliation_and_revocation_keep_original_history ... ok
+test mutation_recovery::layout::original_source_request_and_reply_layouts_bind_every_field_and_enforce_decode_limits ... ok
+test mutation_recovery::executor_original_keys_bind_current_grant_scope_store_and_expiry ... ok
+test mutation_recovery::executor_faults_roll_back_or_reconcile_each_transition_without_a_second_event ... ok
+test mutation_recovery::missing_source_selector_remains_missing_in_its_original_reply_after_later_admission ... ok
+test numeric_reference_invariant_is_not_relabelled_as_a_source_property ... ok
+test new_complete_analysis_requires_matching_policy_before_fresh_analysis ... ok
+test optional_checks_are_bound_to_idempotency_and_cannot_remove_mandatory_checks ... ok
+test only_installed_exact_public_review_can_admit_a_new_sensitive_path ... ok
+test policy_cas_invalidates_prepolicy_analysis_without_advancing_source ... ok
+test oversized_optional_selection_reserves_neither_an_attempt_nor_an_idempotency_key ... ok
+test rejected_admission_identity_and_error_survive_policy_fixes_and_lost_responses ... ok
+test retry_uses_new_identity_and_cannot_rewrite_failed_attempt_history ... ok
+test mutation_recovery::original_executor_results_and_rejections_survive_terminal_state_and_fresh_embedding ... ok
+test source_recovery_keeps_full_engine_rejection_diagnostics_beyond_worker_reason_limit ... ok
+test stale_or_forged_patch_binding_and_undeclared_paths_are_rejected_before_attempt ... ok
+test terminal_attempts_cannot_be_revived_and_single_claim_survives_competing_handles ... ok
+test unauthorized_principal_cannot_poison_an_owners_attempt_or_idempotency_identity ... ok
+test unknown_and_explicitly_required_optional_checks_reject_without_runnable_work ... ok
+test worker_verifier_session_cannot_replace_separate_scoped_executor_capability ... ok
+test source_request_persistence::exact_full_request_keeps_empty_operation_identity_and_optional_selection ... ok
+test mutation_recovery::source_journal_codec_and_normalized_recovery_reject_substituted_context_and_events ... ok
+
+test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s
+
+     Running tests/source_event_persistence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_event_persistence-b55b8139729336c9)
+
+running 2 tests
+test rejected_engine_diagnostics_do_not_weaken_worker_event_limits_or_legal_edges ... ok
+test source_event_layout_is_frozen_and_cannot_move_between_contexts_or_namespaces ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/source_evidence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_evidence-b5428ee8c0aaec7f)
+
+running 69 tests
+test an_exact_replay_only_acknowledges_history_after_owner_and_lease_invalidation ... ok
+test canonical_comparison_uses_the_same_bytes_that_were_digest_verified ... ok
+test competing_delivery_rechecks_state_and_retains_one_immutable_outcome ... ok
+test artifact_contract_substitution_and_unplanned_objects_reject_instead_of_becoming_success ... ok
+test complete_bound_records_derive_pass_without_advancing_source_revision_or_granting_publication ... ok
+test diagnostics_cannot_be_waived_by_registry_configuration ... ok
+test authority_expiry_revocation_policy_and_cancellation_during_storage_io_are_rechecked ... ok
+test aggregate_persisted_payload_budget_is_checked_before_storage_io ... ok
+test empty_check_sets_and_forged_executor_bindings_cannot_enter_the_admission_gate ... ok
+test duplicate_acknowledgement_requires_the_original_claim_and_storage_registration ... ok
+test every_required_check_object_must_exist_under_its_verified_address ... ok
+test failed_attempt_evidence_remains_immutable_and_cannot_satisfy_a_fresh_retry ... ok
+test immutable_duplicate_delivery_and_lost_retention_response_return_the_original_outcome ... ok
+test legacy_envelope_media_is_not_relabelled_as_current_attested_evidence ... ok
+test executor_and_artifact_store_scope_or_origin_cannot_be_substituted ... ok
+test nonzero_and_signal_are_retained_as_failed_execution_not_verified_source ... ok
+test missing_required_artifact_persistence_and_injected_io_failures_retain_no_green_state ... ok
+test every_canonical_provenance_object_is_required_and_must_be_retrievable ... ok
+test pre_admission_future_and_expired_record_times_are_rejected ... ok
+test publication::expiry_cancellation_and_changed_model_require_new_work ... ok
+test publication::preview_never_substitutes_for_current_artifact_availability ... ok
+test publication::fresh_opaque_reader_and_current_owner_authorization_are_required ... ok
+test publication::request::canonical_original_request_round_trip_binds_every_field_and_both_actor_contexts ... ok
+test publication::request::a_previously_prepared_body_does_not_cache_permission_lease_or_lifecycle_authority ... ok
+test missing_results_truncation_resource_overruns_timeout_and_unknown_termination_stay_incomplete ... ok
+test publication::request::commit::a_rejected_raw_request_keeps_its_original_result_and_does_not_poison_a_new_key ... ok
+test publication::request::commit::a_competing_commit_during_unlocked_reads_has_one_publication_and_original_reply ... ok
+test publication::request::commit::checked_reopen_rejects_missing_or_substituted_source_publication_effects ... ok
+test publication::request::commit::missing_or_corrupt_objects_cannot_publish_or_memoize_a_commit_decision ... ok
+test publication::request::commit::opaque_sessions_and_current_roles_are_required_for_each_new_source_commit ... ok
+test publication::request::journal::exact_source_receipt_retains_both_snapshots_and_model_generation ... ok
+test publication::request::commit::source_commit_publishes_one_revision_analysis_history_and_original_reply ... ok
+test publication::request::commit::final_gate_rechecks_revocations_expiry_and_cancellation_after_unlocked_object_io ... ok
+test publication::request::journal::missing_selector_rejection_reconstructs_without_fake_transaction_or_admission ... ok
+test publication::request::journal::shared_journal_restores_request_with_its_actual_outer_operation_key ... ok
+test publication::request::journal::source_outcome_has_an_independent_complete_canonical_layout ... ok
+test publication::request::commit::prepublication_faults_leave_no_effect_and_lost_success_is_recovered_once ... ok
+test publication::request::journal::unissued_metadata_neither_bypasses_live_roles_nor_reconstructs_a_commit ... ok
+test publication::request::metadata_cannot_substitute_for_either_current_opaque_session ... ok
+test publication::request::preparation_uses_distinct_least_privilege_sessions_and_preserves_exact_bindings ... ok
+test publication::request::journal::malformed_contexts_results_and_receipts_are_rejected_after_rehashing ... ok
+test publication::request::raw_rejected_scope_grants_fence_and_attempt_survive_under_independent_actor_context ... ok
+test publication::request::malformed_original_requests_and_analyzer_decode_limits_are_rejected ... ok
+test publication::scoped_reader_can_analyze_exact_successor_without_commit_or_model_permission ... ok
+test publication::request::stale_and_incomplete_analysis_cannot_prepare_a_source_commit ... ok
+test publication::unsealed_failed_and_unknown_admissions_cannot_supply_preview ... ok
+test recovered_runtime::resolver_rechecks_revocation_after_external_authentication ... ok
+test recovered_scopes_can_reuse_executor_cleanup_and_storage_ids_without_runtime_aliasing ... ok
+test revalidation::checked_recovery_rejects_forged_epochs_reservations_and_original_observations ... ok
+test recovered_runtime::fresh_embedding_resumes_claimed_work_only_after_independent_authentication_and_reader_resolution ... ok
+test required_global_provenance_and_execution_record_bytes_are_independently_verified ... ok
+test revalidation::expiry_revocation_cancellation_and_foreign_sessions_cannot_revive_source_work ... ok
+test revalidation::fresh_epoch_closes_unfinished_source_execution_and_fences_late_worker_results ... ok
+test revalidation::fresh_semantic_dependencies_replace_old_impact_and_unknown_identities_fail_closed ... ok
+test revalidation::original_transaction_mutations_recover_after_fresh_source_epoch_and_commit ... ok
+test revalidation::policy_change_creates_one_fresh_epoch_and_original_retry_does_not_renew_it ... ok
+test publication::request::oversized_analyzer_input_is_bounded_before_preparation_replay ... ok
+test revalidation::source_history_shrinker_preserves_an_injected_stale_read_counterexample ... ok
+test revalidation::publication_capture_cannot_be_invented_from_a_manifest_or_a_different_receipt ... ok
+test source_authority_recovery::configured_artifact_adapter_survives_recovery_and_is_bound_to_provenance ... ok
+test revalidation::stale_selectors_and_original_domain_rejections_never_create_partial_epochs ... ok
+test source_authority_recovery::passed_failed_and_incomplete_receipts_recover_with_missing_readers_and_revoked_grants ... ok
+test source_authority_recovery::receipt_selection_assessment_provenance_and_source_transaction_state_are_checked ... ok
+test revalidation::stale_parallel_source_work_reexecutes_at_current_head_then_commits_second_revision ... ok
+test terminal_failed_attempts_cannot_accept_late_success_even_after_a_retry_starts ... ok
+test v2_attestation_is_identity_bound_and_an_unattested_claim_cannot_authorize_evidence ... ok
+test the_sealed_envelope_scope_retention_media_label_and_bytes_are_not_producer_assertions ... ok
+test substituted_check_plan_candidate_backend_toolchain_environment_and_limits_are_rejected ... ok
+test revalidation::generated_source_histories_match_independent_serial_interpreter_with_fresh_epochs ... ok
+
+test result: ok. 69 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.53s
+
+     Running tests/source_evidence_persistence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_evidence_persistence-815ad0cabd8dce41)
+
+running 9 tests
+test envelope_check_order_must_be_canonical_and_distinct ... ok
+test check_decoder_rejects_noncanonical_invalid_and_misbound_metadata ... ok
+test execution_outcome_termination_cleanup_and_manifest_variants_survive ... ok
+test frozen_execution_layout_preserves_every_nonrecursive_field ... ok
+test metadata_restore_never_establishes_artifact_durability_or_admission ... ok
+test envelope_decoder_rejects_binding_substitution_and_noncanonical_sets ... ok
+test v2_envelope_restoration_keeps_self_references_provenance_and_attestation ... ok
+test check_decoder_checks_digest_truncation_and_all_explicit_budgets ... ok
+test envelope_decoder_enforces_digest_format_and_aggregate_nested_budgets ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/source_execution_persistence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_execution_persistence-4b21ed5ab49d7847)
+
+running 8 tests
+test independently_encoded_source_contracts_restore_every_field_and_preserve_published_digests ... ok
+test checked_dependencies_and_external_freshness_reject_substitution ... ok
+test nested_and_referenced_inputs_share_byte_field_and_collection_budgets ... ok
+test omitted_mandatory_branches_and_invariant_fanout_are_bounded_before_plan_resolution ... ok
+test rehashed_source_metadata_cannot_weaken_capture_credentials_or_check_requirements ... ok
+test mutation_policy::policy_original_replies_survive_new_heads_expiry_and_fresh_embedding_authentication ... ok
+test canonical_source_records_reject_truncation_corruption_trailing_data_and_unknown_tags ... ok
+test mutation_policy::original_policy_codec_keeps_full_definitions_and_rejects_truncation_and_substitution ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.75s
+
+     Running tests/source_execution_plans.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_execution_plans-6d33ea4f38636e75)
+
+running 17 tests
+test command_t0_host_lookup_escaping_paths_and_missing_execution_logs_fail ... ok
+test credential_environment_keys_require_scoped_references_even_without_a_known_value_pattern ... ok
+test backend_network_and_credential_grants_cannot_be_widened ... ok
+test definition_delivery_order_is_irrelevant_and_requirement_provenance_is_bound ... ok
+test candidate_input_digests_and_working_directory_are_independently_checked ... ok
+test every_resource_dimension_must_fit_and_zero_limits_are_invalid ... ok
+test full_check_identity_binds_all_execution_relevant_dimensions ... ok
+test literal_environment_material_is_screened_even_under_an_ordinary_key ... ok
+test live_incomplete_and_relabelled_capture_cannot_become_complete_by_policy ... ok
+test missing_substituted_duplicate_and_unsupported_requirements_fail_explicitly ... ok
+test patch_policy_cannot_widen_symlinks_or_payload_limits ... ok
+test optional_dependency_is_promoted_when_also_required_transitively ... ok
+test path_rules_bind_exact_preimages_operations_guards_and_new_paths ... ok
+test stale_scope_snapshot_and_analysis_cannot_build_a_plan ... ok
+test policy_rejects_dormant_missing_dependencies_cycles_and_duplicate_definitions ... ok
+test planner_unions_mandatory_sources_and_orders_dependency_closure ... ok
+test plan_and_cache_identity_bind_result_patch_analysis_policy_and_platform ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/source_outcome_persistence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_outcome_persistence-3183599a53ce6613)
+
+running 3 tests
+test independently_encoded_accepted_and_nested_rejection_layouts_are_frozen ... ok
+test malformed_rehashed_errors_context_and_budgets_cannot_be_hidden_by_valid_addresses ... ok
+test all_source_error_families_preserve_exact_tags_values_and_binary_strings ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/source_patches.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_patches-2292cdd4d2d4fd45)
+
+running 16 tests
+test arbitrary_reserved_base_content_cannot_be_silently_omitted_as_metadata ... ok
+test all_layer_provenance_uncertainty_environment_and_exclusions_are_retained ... ok
+test binary_operations_preserve_source_and_revision_and_replay_exactly ... ok
+test canonical_operation_order_roundtrips_and_exact_envelope_bindings_change_identity ... ok
+test exact_base_and_all_preimages_are_required_including_kind_and_mode ... ok
+test conflicting_operations_and_occupied_destinations_reject_without_any_source_mutation ... ok
+test final_graph_checks_case_fold_inferred_directories_and_file_ancestors ... ok
+test malformed_canonical_bytes_and_decoder_resource_amplification_fail_closed ... ok
+test noncanonical_operation_order_is_rejected_instead_of_silently_normalized_on_decode ... ok
+test noops_empty_patches_invalid_bindings_and_result_limits_are_explicit ... ok
+test portable_path_profile_rejects_traversal_control_unicode_and_windows_ambiguity ... ok
+test replay_validation_rejects_an_application_from_a_different_patch ... ok
+test relative_parent_components_require_actual_directories_before_normalization ... ok
+test symlink_operations_need_explicit_policy_and_targets_are_checked_against_final_graph ... ok
+test unknown_reserved_application_environment_rejects_and_prior_uncertainty_survives_reapplication ... ok
+test simultaneous_rename_swaps_and_longer_cycles_have_no_order_dependence ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/source_registration_persistence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_registration_persistence-7284efb8dd7c312a)
+
+running 3 tests
+test configured_registration_layout_and_provenance_have_independent_frozen_addresses ... ok
+test registration_decode_limits_precede_materialization ... ok
+test context_substitution_and_rehashed_malformed_registration_reject ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests celetixo_engine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,8 @@
+    Finished `test` profile [optimized] target(s) in 0.12s
+     Running tests/source_evidence.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/source_evidence-b5428ee8c0aaec7f)
+
+running 1 test
+test publication::request::commit::a_rejected_raw_request_keeps_its_original_result_and_does_not_poison_a_new_key ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 68 filtered out; finished in 0.01s
+

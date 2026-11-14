@@ -953,21 +953,16 @@ impl Engine {
                 {
                     return Err(EngineError::Unauthorized);
                 }
-                let request_digest =
-                    request.map(|request| request.digest(scope, session.principal()));
-                if let Some(record) = db.operations.get(&operation_key) {
-                    let attempt = request.map_or(tx.attempt().number, |request| request.attempt);
-                    let recorded_digest = record
-                        .request
-                        .as_ref()
-                        .map(|recorded| recorded.digest(scope, session.principal()));
-                    if record.transaction != *id
-                        || record.attempt != attempt
-                        || recorded_digest != request_digest
-                    {
-                        return Err(EngineError::IdempotencyConflict);
-                    }
-                    return record.outcome.clone();
+                if let Some(outcome) = commit_request::recorded_outcome(
+                    db,
+                    scope,
+                    id,
+                    tx.attempt().number,
+                    session.principal(),
+                    &operation_key.1,
+                    request,
+                )? {
+                    return outcome;
                 }
                 if let Some(request) = request {
                     commit_request::validate_request(&tx, request)?;
