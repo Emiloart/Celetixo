@@ -1,0 +1,27 @@
+{
+  "binary_sha256": "3dd971aca097f953cb6dd5dafbb7d5f83d5f965870faf4748d6efde791fc5ba2",
+  "source_commit": "8923d9164b99a8e7387bba5b5e133a08af83bf00",
+  "private_configuration_not_published": true,
+  "checks": [
+    {
+      "kind": "Publisher",
+      "exit_code": 0,
+      "ready_then_sigterm_stopped": true,
+      "authority_revision_and_generation_unchanged": true,
+      "duration_seconds": 0.664,
+      "raw_log_sha256": "7a94cfbcb43e8e4ca8de763a8789c290d7c42f1fdce4fcc55783fccf222d1323",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_log": "worker-publisher.raw.log"
+    },
+    {
+      "kind": "Consumer",
+      "exit_code": 0,
+      "ready_then_sigterm_stopped": true,
+      "authority_revision_and_generation_unchanged": true,
+      "duration_seconds": 1.564,
+      "raw_log_sha256": "5fca748d2626f48ae99550287a0cbadb6797052c6800e65ab2ea969ec1384a7e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_log": "worker-consumer.raw.log"
+    }
+  ]
+}

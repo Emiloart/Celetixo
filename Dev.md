@@ -250,8 +250,9 @@ new source attempts, recomputed impact, fenced reservation replacement and exact
 original recovery with schema v8. Old patches and evidence cannot satisfy a new
 attempt. [04.2 acceptance](docs/implementation/goal-04-commit-acceptance.md) adds independent
 source process histories and a separate serial interpreter. [04.3 events](docs/implementation/goal-04-events.md)
-adds atomic lifecycle frames and scoped JetStream delivery at schema v9 with selected
-real fault checks. Complete its recorded remaining checks, then continue 04.4 Temporal
+adds atomic lifecycle frames and scoped JetStream delivery at schema v9. Its
+[local-profile acceptance](docs/implementation/goal-04-events-acceptance.md) records
+real faults, combined SQL regression coverage and standalone worker operation. Continue 04.4 Temporal
 and the original Goal 04 milestones. Published schema migrations 0001–0009 are
 immutable; subsequent changes require a new migration.
 

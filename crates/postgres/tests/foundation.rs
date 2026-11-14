@@ -1646,8 +1646,7 @@ fn sql_native_preserves_lifecycle_and_rejects_budget_clock_and_scope_without_pub
         backend.inspect_registration(&selected),
         Err(AuthorityFailure::Integrity)
     );
-    owner.execute("INSERT INTO celetixo.authority_publications (organization_id,workspace_id,repository_id,state_generation,observed_clock_ms,authenticated_database_role,authenticated_database_role_oid,actor_kind,snapshot_digest) SELECT organization_id,workspace_id,repository_id,state_generation+1,'18446744073709551615',session_user::name,(SELECT oid FROM pg_roles WHERE rolname=session_user),'EmbeddingAdministrator',snapshot_digest FROM celetixo.authority_publications WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text ORDER BY state_generation DESC LIMIT 1", &[&a[0],&a[1],&a[2]]).unwrap();
-    owner.execute("UPDATE celetixo.repositories SET state_generation=state_generation+1 WHERE organization_id=$1::text AND workspace_id=$2::text AND repository_id=$3::text", &[&a[0],&a[1],&a[2]]).unwrap();
+    native_authority::events::clock::append_future_clock(&mut owner, &selected, &base);
     let future = backend.inspect_registration(&selected).unwrap();
     assert_eq!(
         engine.current(&worker, &selected),

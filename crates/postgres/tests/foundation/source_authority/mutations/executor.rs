@@ -196,7 +196,7 @@ fn executor_sql_constraints_reject_partial_context_results_and_duplicate_events(
             .is_ok()
     );
     let mut client = owner();
-    let columns: Vec<String> = client.query("SELECT attname::text FROM pg_attribute WHERE attrelid='celetixo.engine_mutations'::regclass AND attnum>0 AND NOT attisdropped ORDER BY attnum", &[]).unwrap().iter().map(|row|row.get(0)).collect();
+    let columns: Vec<String> = client.query("SELECT attname::text FROM pg_attribute WHERE attrelid='celetixo.engine_mutations'::regclass AND attnum>0 AND NOT attisdropped AND attgenerated='' ORDER BY attnum", &[]).unwrap().iter().map(|row|row.get(0)).collect();
     for (operation, replacements, expected) in [
         ("claim", vec![], "23505"),
         ("claim", vec![("raw_source_attempt_id", "NULL")], "23514"),

@@ -2,6 +2,8 @@ use super::*;
 use celetixo_postgres::delivery::{DeliveryError, EventDelivery, QuarantineReason, ServiceKind};
 use celetixo_protocol::celetixo::platform::v1::LifecycleEvent;
 use prost::Message;
+#[path = "events/clock.rs"]
+pub(crate) mod clock;
 #[path = "events/nats.rs"]
 mod nats;
 #[path = "events/poison.rs"]

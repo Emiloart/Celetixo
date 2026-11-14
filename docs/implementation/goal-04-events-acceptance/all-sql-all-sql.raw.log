@@ -1,0 +1,226 @@
+    Finished `test` profile [optimized] target(s) in 0.14s
+     Running tests/foundation.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/foundation-8df36ed3dd233239)
+
+running 107 tests
+test actual_repository_analysis_reopens_and_retains_engine_rejection_of_incomplete_impact ... ok
+test durable_payloads_cannot_forge_content_scope_format_or_manifest ... ok
+test immutable_catalogs_survive_actual_database_process_restart ... ok
+test migration_checksum_version_skew_and_concurrent_migrators_fail_closed ... ok
+test native_authority::commit_transport::actual_server_commit_reply_loss_reconciles_the_original_durable_receipt ... ok
+test native_authority::events::event_database_roles_cannot_assume_engine_or_other_consumer_authority ... ok
+test native_authority::events::lifecycle_outbox_fences_replays_reorders_quarantines_and_preserves_engine_truth ... ok
+test native_authority::events::nats::real_jetstream_puback_redelivery_poison_retention_reconciliation_and_scoped_roles ... ok
+test native_authority::events::poison::unsupported_outbox_frames_and_expired_final_claims_are_durably_quarantined ... ok
+test native_authority::events::upgrade::published_v8_commit_survives_atomic_event_upgrade_and_checked_legacy_backfill ... ok
+test native_authority::mutations::a_rejected_mutation_survives_before_repository_registration ... ok
+test native_authority::mutations::analysis_replies_survive_model_replacement_and_an_ambiguous_commit ... ok
+test native_authority::mutations::delayed_execution_does_not_publish_success_after_lease_expiry ... ok
+test native_authority::mutations::delayed_renewal_cannot_publish_after_original_lease_expiry ... ok
+test native_authority::mutations::duplicate_lease_mutations_use_one_atomic_reply_across_connections ... ok
+test native_authority::mutations::execution_and_cancellation_recover_original_results_after_abort ... ok
+test native_authority::mutations::independent_processes_recover_one_reply_for_one_lease_effect ... 
+running 1 test
+
+running 1 test
+test native_authority::mutations::independent_processes_recover_one_reply_for_one_lease_effect ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 2.27s
+
+test native_authority::mutations::independent_processes_recover_one_reply_for_one_lease_effect ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 2.79s
+
+ok
+test native_authority::mutations::mutation_faults_roll_back_or_reconcile_without_a_second_effect ... ok
+test native_authority::mutations::mutation_rows_enforce_immutable_scope_actor_and_effect_bindings ... ok
+test native_authority::mutations::native_effects::delayed_patch_submission_cannot_publish_bindings_after_lease_expiry ... ok
+test native_authority::mutations::native_effects::delayed_revalidation_cannot_append_an_attempt_after_lease_expiry ... ok
+test native_authority::mutations::native_effects::native_mutation_faults_recover_each_original_effect_after_lost_response ... ok
+test native_authority::mutations::native_effects::native_reply_constraints_bind_exact_attempt_evidence_and_admitting_verifier ... ok
+test native_authority::mutations::native_effects::original_native_replies_survive_later_evidence_selection_and_revalidation ... ok
+test native_authority::mutations::native_effects::rejected_revalidation_keeps_original_conflict_provenance_after_cancellation ... ok
+test native_authority::mutations::original_lease_replies_and_rejections_survive_cold_reopen ... ok
+test native_authority::mutations::proposal_originals_survive_registration_and_a_lost_admission_reply ... ok
+test native_authority::mutations::published_v4_upgrade_is_atomic_and_preserves_snapshot_data ... ok
+test native_authority::mutations::repository::repository_original_replies_survive_registration_model_replacement_and_lost_responses ... ok
+test native_authority::mutations::repository::repository_reply_rows_bind_model_payloads_snapshot_and_optional_target ... ok
+test native_authority::mutations::upgrade::v5_original_mutation_upgrade_preserves_rows_and_rolls_back_errors_and_process_death ... ok
+test native_authority::native_auxiliary_corruption_and_unsupported_state_cannot_be_silently_repaired ... ok
+test native_authority::native_expiry_read_observation_final_gate_and_revocation_fail_closed ... ok
+test native_authority::native_generated_pair_histories_match_independent_bitmask_oracle ... ok
+test native_authority::native_independent_processes_race_and_recover_without_duplicate_revision ... 
+running 1 test
+
+running 1 test
+test native_authority::native_independent_processes_race_and_recover_without_duplicate_revision ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 5.21s
+
+test native_authority::native_independent_processes_race_and_recover_without_duplicate_revision ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 6.03s
+
+
+running 1 test
+
+running 1 test
+test native_authority::native_independent_processes_race_and_recover_without_duplicate_revision ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 5.44s
+
+test native_authority::native_independent_processes_race_and_recover_without_duplicate_revision ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 6.21s
+
+
+running 1 test
+
+running 1 test
+test native_authority::native_independent_processes_race_and_recover_without_duplicate_revision ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 4.43s
+
+test native_authority::native_independent_processes_race_and_recover_without_duplicate_revision ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 5.07s
+
+ok
+test native_authority::native_lifecycle_reopens_and_commits_receipt_operation_terminal_and_outbox_atomically ... ok
+test native_authority::native_numeric_attempt_revision_and_event_order_survives_double_digits ... ok
+test native_authority::native_original_requests_survive_evidence_replacement_and_revalidation ... ok
+test native_authority::native_process_death_around_sql_commit_retains_one_unambiguous_outcome ... 
+running 1 test
+
+running 1 test
+ok
+test native_authority::native_repeated_admission_preserves_original_signer_timestamp_and_binary_abort ... ok
+test native_authority::native_reservation_conflict_and_distinct_proposal_acquisition_grants_remain_exact ... ok
+test native_authority::native_sql_faults_roll_back_or_reconcile_exactly_once ... ok
+test process_death_during_v1_upgrade_retains_v1_until_recovered_publication ... ok
+test process_death_rolls_back_ddl_and_ledger_before_successful_recovery ... ok
+test reconstruction_metadata_enforces_scope_current_head_and_zero_based_attempts ... ok
+test semantic_catalog_rejects_forged_bytes_formats_versions_contexts_and_generations ... ok
+test semantic_records_reopen_with_scope_snapshot_and_generation_binding_without_installing_authority ... ok
+test snapshot_reopen_scope_isolation_immutable_rows_and_exact_u64_revision ... ok
+test source_authority::guards::source_budgets_corrupt_state_and_legacy_registration_fail_without_publication ... ok
+test source_authority::guards::source_unpublished_metadata_and_profile_reinterpretation_are_rejected ... ok
+test source_authority::isolation::source_revocation_during_artifact_io_prevents_receipt_publication ... ok
+test source_authority::isolation::source_same_embedding_reused_grant_and_store_numbers_remain_scoped ... ok
+test source_authority::lifecycle::mutations::administrative::administrative_allocation_races_reconcile_one_original_id_per_resource ... ok
+test source_authority::lifecycle::mutations::administrative::administrative_original_results_survive_revocation_and_fresh_sql_instances_without_a_repository ... ok
+test source_authority::lifecycle::mutations::administrative::administrative_sql_constraints_reject_partial_or_unbound_resource_results ... 
+thread 'source_authority::lifecycle::mutations::administrative::administrative_sql_constraints_reject_partial_or_unbound_resource_results' (58985) panicked at crates/postgres/tests/foundation/source_authority/mutations/administrative.rs:554:9:
+assertion `left == right` failed: [("actor_principal_id", "'forged-principal'::text")]: db error
+  left: "428C9"
+ right: "23514"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test source_authority::lifecycle::mutations::administrative::administrative_sql_faults_preserve_one_allocation_and_original_revocation_per_resource ... ok
+test source_authority::lifecycle::mutations::administrative::grants_expiring_before_sql_publication_roll_back_allocation_and_key ... ok
+test source_authority::lifecycle::mutations::administrative::runtime_database_login_cannot_forge_an_administrative_journal_actor ... 
+thread 'source_authority::lifecycle::mutations::administrative::runtime_database_login_cannot_forge_an_administrative_journal_actor' (62671) panicked at crates/postgres/tests/foundation/source_authority/mutations/administrative.rs:320:5:
+assertion `left == right` failed
+  left: "428C9"
+ right: "42501"
+FAILED
+test source_authority::lifecycle::mutations::executor::executor_concurrent_original_claims_publish_one_event_and_one_original_result ... ok
+test source_authority::lifecycle::mutations::executor::executor_each_transition_rolls_back_and_recovers_lost_commit_replies ... ok
+test source_authority::lifecycle::mutations::executor::executor_final_database_clock_rolls_back_the_transition_and_original_key ... ok
+test source_authority::lifecycle::mutations::executor::executor_original_missing_selector_and_invalid_finish_remain_original_after_admission ... ok
+test source_authority::lifecycle::mutations::executor::executor_original_replies_and_rejections_survive_terminal_state_and_fresh_connections ... ok
+test source_authority::lifecycle::mutations::executor::executor_sql_constraints_reject_partial_context_results_and_duplicate_events ... 
+thread 'source_authority::lifecycle::mutations::executor::executor_sql_constraints_reject_partial_context_results_and_duplicate_events' (63104) panicked at crates/postgres/tests/foundation/source_authority/mutations/executor.rs:260:9:
+assertion `left == right` failed: claim: []
+  left: "428C9"
+ right: "23505"
+FAILED
+test source_authority::lifecycle::mutations::native_patch_and_revalidation_rejections_never_substitute_for_source_operations ... ok
+test source_authority::lifecycle::mutations::policy::delayed_policy_installation_cannot_publish_an_expired_new_head ... ok
+test source_authority::lifecycle::mutations::policy::source_policy_original_results_survive_replacement_and_a_lost_response ... ok
+test source_authority::lifecycle::mutations::source_analysis_returns_the_original_effective_accesses_after_abort_and_reopen ... ok
+test source_authority::lifecycle::mutations::source_cancellation_keeps_execution_reply_and_closes_admitted_work ... ok
+test source_authority::lifecycle::mutations::source_lease_original_results_survive_full_graph_reopen ... ok
+test source_authority::lifecycle::mutations::source_lease_reply_survives_an_ambiguous_database_commit ... ok
+test source_authority::lifecycle::mutations::source_proposal_replays_its_original_state_after_source_execution_and_cancellation ... ok
+test source_authority::lifecycle::mutations::source_repository_requests_recover_original_registration_and_analysis_heads ... ok
+test source_authority::lifecycle::publication::checks::final_database_time_rejects_source_publication_after_original_lease_expiry ... ok
+test source_authority::lifecycle::publication::checks::independent_engine_instances_publish_one_revision_and_one_original_result ... ok
+test source_authority::lifecycle::publication::processes::histories::generated_distinct_source_process_histories_match_independent_serial_interpreter ... source history seed=0, flags=0 starting
+source history seed=0, flags=0 passed
+source history seed=1, flags=1 starting
+source history seed=1, flags=1 passed
+source history seed=2, flags=2 starting
+source history seed=2, flags=2 passed
+source history seed=3, flags=4 starting
+source history seed=3, flags=4 passed
+source history seed=4, flags=8 starting
+source history seed=4, flags=8 passed
+source history seed=5, flags=16 starting
+source history seed=5, flags=16 passed
+source history seed=6, flags=32 starting
+source history seed=6, flags=32 passed
+source history seed=7, flags=64 starting
+source history seed=7, flags=64 passed
+source history seed=8, flags=128 starting
+source history seed=8, flags=128 passed
+source history seed=9, flags=256 starting
+source history seed=9, flags=256 passed
+source history seed=10, flags=6 starting
+source history seed=10, flags=6 passed
+source history seed=11, flags=511 starting
+source history seed=11, flags=511 passed
+source history seed=12, flags=377 starting
+source history seed=12, flags=377 passed
+source history seed=13, flags=22 starting
+source history seed=13, flags=22 passed
+source history seed=14, flags=179 starting
+source history seed=14, flags=179 passed
+source history seed=15, flags=336 starting
+source history seed=15, flags=336 passed
+ok
+test source_authority::lifecycle::publication::processes::independent_source_commit_processes_recover_one_revision_for_same_or_distinct_keys ... ok
+test source_authority::lifecycle::publication::processes::source_commit_process_exit_before_or_after_publication_recovers_exact_original_effect ... ok
+test source_authority::lifecycle::publication::source_lifecycle_frames_replay_every_phase_and_original_commit_without_changing_truth ... ok
+test source_authority::lifecycle::publication::source_publication_atomically_reopens_history_result_head_and_outbox ... ok
+test source_authority::lifecycle::publication::source_publication_rolls_back_precommit_failure_and_recovers_lost_database_response ... ok
+test source_authority::lifecycle::revalidation::final_database_time_rejects_revalidation_after_the_original_lease_expires ... ok
+test source_authority::lifecycle::revalidation::source_revalidation_contexts_are_immutable_forced_rls_and_required_for_checked_recovery ... ok
+test source_authority::lifecycle::revalidation::source_revalidation_process_crashes_roll_back_or_recover_one_original_epoch ... ok
+test source_authority::lifecycle::revalidation::source_revalidation_processes_share_exactly_one_original_result_and_reservation ... ok
+test source_authority::lifecycle::revalidation::source_revalidation_reopens_fresh_epoch_rejects_late_evidence_and_publishes_fresh_checks ... ok
+test source_authority::lifecycle::source_admission_publication_faults_withhold_results_and_recover_original_rejection ... ok
+test source_authority::lifecycle::source_evidence_receipts_and_logical_object_associations_reopen_all_assessments ... ok
+test source_authority::lifecycle::source_final_database_clock_rejects_an_execution_transition_after_lease_expiry ... ok
+test source_authority::lifecycle::source_lifecycle_admission_claim_and_failure_reopen_each_phase_without_native_patches ... ok
+test source_authority::lifecycle::source_original_rejections_collisions_and_historical_policy_survive_head_replacement ... ok
+test source_authority::migration::v3_source_upgrade_preserves_legacy_artifact_associations_and_rolls_back_faults ... ok
+test source_authority::migration::v6_source_publication_upgrade_is_atomic_and_preserves_the_published_ledger ... ok
+test source_authority::migration::v7_source_revalidation_upgrade_preserves_published_rows_and_rolls_back_failures ... ok
+test source_authority::recovery::source_independent_process_claim_race_has_one_durable_winner ... ok
+test source_authority::recovery::source_process_death_before_and_after_commit_reconciles_original_admission ... ok
+test source_authority::source_profile_pre_registration_grants_and_configured_store_reopen_without_runtime_resources ... ok
+test sql_native_preserves_lifecycle_and_rejects_budget_clock_and_scope_without_publication ... 
+thread 'sql_native_preserves_lifecycle_and_rejects_budget_clock_and_scope_without_publication' (94793) panicked at crates/postgres/tests/foundation.rs:1651:58:
+called `Result::unwrap()` on an `Err` value: Integrity
+FAILED
+test sql_registration_checks_the_new_schema_after_waiting_for_a_migrator ... ok
+test sql_registration_process_death_rolls_back_before_a_fresh_independent_writer ... ok
+test sql_registration_reopens_exact_state_preserves_uncertainty_and_requires_fresh_sessions ... ok
+test sql_registration_roles_scope_revocation_and_live_schema_fencing_fail_closed ... ok
+test sql_registration_rolls_back_failures_and_withholds_lost_commit_acknowledgement ... ok
+test sql_registration_serializes_independent_instances_and_bootstrap_creators ... ok
+test sql_registration_waiting_reader_observes_coherent_state_or_explicit_contention ... ok
+test v1_upgrade_is_atomic_preserves_data_and_rejects_incomplete_or_future_history ... ok
+test v2_upgrade_recovers_errors_and_process_death_with_scoped_immutable_publications ... ok
+
+failures:
+
+failures:
+    source_authority::lifecycle::mutations::administrative::administrative_sql_constraints_reject_partial_or_unbound_resource_results
+    source_authority::lifecycle::mutations::administrative::runtime_database_login_cannot_forge_an_administrative_journal_actor
+    source_authority::lifecycle::mutations::executor::executor_sql_constraints_reject_partial_context_results_and_duplicate_events
+    sql_native_preserves_lifecycle_and_rejects_budget_clock_and_scope_without_publication
+
+test result: FAILED. 103 passed; 4 failed; 0 ignored; 0 measured; 7 filtered out; finished in 4791.80s
+
+error: test failed, to rerun pass `-p celetixo-postgres --test foundation`

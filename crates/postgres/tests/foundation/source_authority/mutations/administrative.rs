@@ -301,9 +301,10 @@ fn runtime_database_login_cannot_forge_an_administrative_journal_actor() {
             .outcome,
         Err(EngineError::Unauthorized)
     );
-    // Copy every actual column in catalog order; only the key changes. This
+    // Copy every insertable column in catalog order; derived generated columns
+    // must be recomputed by PostgreSQL. Only the key changes. This
     // specifically probes the authenticated role boundary, not payload parsing.
-    let columns=owner().query("SELECT column_name FROM information_schema.columns WHERE table_schema='celetixo' AND table_name='engine_mutations' ORDER BY ordinal_position",&[]).unwrap().into_iter().map(|row|row.get::<_,String>(0)).collect::<Vec<_>>();
+    let columns=owner().query("SELECT column_name FROM information_schema.columns WHERE table_schema='celetixo' AND table_name='engine_mutations' AND is_generated='NEVER' ORDER BY ordinal_position",&[]).unwrap().into_iter().map(|row|row.get::<_,String>(0)).collect::<Vec<_>>();
     let select = columns
         .iter()
         .map(|column| {
@@ -475,7 +476,7 @@ fn administrative_sql_constraints_reject_partial_or_unbound_resource_results() {
     }
     let before = authority().inspect_source(&selected).unwrap();
     let mut client = owner();
-    let columns = client.query("SELECT column_name FROM information_schema.columns WHERE table_schema='celetixo' AND table_name='engine_mutations' ORDER BY ordinal_position", &[])
+    let columns = client.query("SELECT column_name FROM information_schema.columns WHERE table_schema='celetixo' AND table_name='engine_mutations' AND is_generated='NEVER' ORDER BY ordinal_position", &[])
         .unwrap().into_iter().map(|row| row.get::<_, String>(0)).collect::<Vec<_>>();
     for (operation, replacements, code) in [
         (

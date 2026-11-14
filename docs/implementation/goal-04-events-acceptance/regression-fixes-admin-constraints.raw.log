@@ -1,0 +1,9 @@
+   Compiling celetixo-postgres v0.1.0 (/home/emiloart/.local/share/celetixo-goal04/worktree/crates/postgres)
+    Finished `test` profile [optimized] target(s) in 9.88s
+     Running tests/foundation.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/foundation-8df36ed3dd233239)
+
+running 1 test
+test source_authority::lifecycle::mutations::administrative::administrative_sql_constraints_reject_partial_or_unbound_resource_results ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 3.17s
+

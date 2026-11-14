@@ -2,14 +2,17 @@
 
 **Status:** [04.1 durable state](goal-04-authority-acceptance.md) and
 [04.2 atomic commit](goal-04-commit-acceptance.md) are accepted for the reviewed
-PostgreSQL adapters. [04.3 event delivery](goal-04-events.md) is implemented with
-selected real PostgreSQL/NATS fault validation; its remaining regression and worker
-checks are explicit. The complete Goal 04 objective remains active and incomplete.
+PostgreSQL adapters. [04.3 event delivery](goal-04-events-acceptance.md) is accepted
+for the reviewed local PostgreSQL/NATS profile. The complete Goal 04 objective
+remains active and incomplete.
 
 The [event validation record](goal-04-events-validation/checks.json) records 556
 workspace passes, six selected real PostgreSQL parents, actual three-node broker
-fault recovery and strict build/protocol checks. It leaves the complete SQL suite
-and standalone worker process checks open.
+fault recovery and strict build/protocol checks. The supplemental
+[acceptance record](goal-04-events-acceptance/checks.json) adds all 107 SQL parents
+across an initial 103-pass/four-failure run and four corrected exact-parent passes,
+plus standalone publisher/consumer readiness and graceful shutdown. The original
+failed run is retained; no single green full-suite run is claimed.
 
 The preceding source-history proof records 552 workspace passes, 48 generated Engine
 source histories and 16 real PostgreSQL histories using independent commit
@@ -29,7 +32,7 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 |---|---|
 | 04.1 — PostgreSQL state and recovery | **Accepted for the reviewed PostgreSQL adapter.** [Acceptance audit](goal-04-authority-acceptance.md) maps the original criteria to normalized native/source state, exact outcomes, leases/fences, schema v8, all supported prior upgrades and actual checked restart/reopen. Full Goal 04 remains active. |
 | 04.2 — Multi-instance atomic commit | **Accepted for the reviewed PostgreSQL adapters.** [Acceptance audit](goal-04-commit-acceptance.md) maps conditional revision advancement, exact outcomes, independent-process native/source histories and crash ambiguity to actual evidence. Production service/transport and the original full-goal operations programme remain open. |
-| 04.3 — Transactional events | [Implemented, selected real integration validated](goal-04-events.md): typed lifecycle frames, fenced publisher, scoped SQL inbox/projections, three-node mutual-TLS JetStream, crash/replay/quorum/retention reconciliation. Full SQL regression and standalone worker checks remain open. |
+| 04.3 — Transactional events | **[Accepted for the reviewed local profile](goal-04-events-acceptance.md).** Typed lifecycle frames, fenced publisher, scoped SQL inbox/projections, three-node mutual-TLS JetStream, crash/replay/quorum/retention reconciliation, combined 107-parent SQL coverage and standalone worker readiness/shutdown. Full-platform operations remain in 04.7. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. The local writer/format is retained; the reader extension above does not establish S3 storage. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
@@ -52,8 +55,9 @@ parent. Per-check build profiles and the later CI-only profile delta are explici
 Existing production Rust, canonical protocol and migrations 0001–0008 are unchanged.
 
 The subsequent [04.3 event implementation](goal-04-events.md) adds the real
-JetStream path and selected fault/security evidence. Complete its remaining
-regression and worker operation checks, then proceed with 04.4 Temporal. The original 04.4–04.7 workflow,
+JetStream path and selected fault/security evidence. Its
+[acceptance audit](goal-04-events-acceptance.md) closes the regression and worker
+operation checks for the reviewed local profile. Continue with 04.4 Temporal. The original 04.4–04.7 workflow,
 object storage, analytics/shared services and operational proof also remain active.
 
 ## Independent source commit processes
@@ -653,8 +657,8 @@ readiness, whole-goal completion or service-level performance claim is made.
 
 ## Next implementation boundary
 
-Complete the remaining [04.3 checks](goal-04-events.md), then implement 04.4
-Temporal workflows against the same authoritative Engine path. Publishing an event
+Implement 04.4 Temporal workflows against the same authoritative Engine path,
+following [04.3 local-profile acceptance](goal-04-events-acceptance.md). Publishing an event
 cannot create or reverse a commit. Continue the original 04.4–04.7 workflow,
 object-store, analytics/shared-service and complete operational programme.
 

@@ -1,0 +1,8 @@
+    Finished `test` profile [optimized] target(s) in 0.17s
+     Running tests/foundation.rs (/home/emiloart/.local/share/celetixo-goal04/cargo-fast-target/debug/deps/foundation-8df36ed3dd233239)
+
+running 1 test
+test sql_native_preserves_lifecycle_and_rejects_budget_clock_and_scope_without_publication ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 2.62s
+

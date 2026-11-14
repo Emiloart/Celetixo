@@ -1,10 +1,11 @@
 # Transactional lifecycle events and JetStream delivery
 
-**Status:** implemented at schema v9 with selected real PostgreSQL/NATS fault
-checks. This is a bounded implementation record, not full Goal 04 acceptance.
-The complete SQL regression suite and standalone worker operation remain separate
-follow-up checks. [Validation receipts](goal-04-events-validation/checks.json)
-name the exact executed commands and frozen source inputs.
+**Status:** accepted for the reviewed local schema-v9 PostgreSQL/NATS profile.
+The [acceptance audit](goal-04-events-acceptance.md) adds combined coverage of all
+107 opt-in SQL parents and standalone publisher/consumer operation to the earlier
+[fault checks](goal-04-events-validation/checks.json). The full Goal 04 remains
+active. Receipts distinguish the initial failed full run from four corrected
+exact-parent passes; no single green full-suite run is claimed.
 
 ## Authority and delivery
 
@@ -64,8 +65,9 @@ versioned operator configuration, bounded batches/reconnects/retries, fixed-key
 numeric status output, periodic consumer reconciliation and signal-driven drain.
 Its configuration reader rejects public files, symlinks, hardlinks, unknown fields
 and oversized input. The [runbook](../operations/local-event-delivery-runbook.md)
-describes credentials, grants, stream settings and replay. Standalone process
-startup/shutdown validation is not inferred from library integration tests.
+describes credentials, grants, stream settings and replay. Separate standalone
+publisher and consumer processes reached readiness, handled SIGTERM and exited
+successfully with unchanged authoritative revision and generation.
 
 The local fixture uses pinned NATS 2.15.3 and async-nats 0.52.0, client mutual TLS,
 a separate route CA, distinct publisher/consumer/operator identities and an
@@ -95,7 +97,11 @@ certificate and client certificates at the cluster route boundary; a valid route
 certificate is the positive control. Raw check output and source hashes accompany
 the receipts. These are Linux/WSL local-service tests, not hosted CI results.
 
-The full SQL suite, production workload identity/transport, full-service
+The [supplemental acceptance checks](goal-04-events-acceptance/checks.json) cover
+the complete SQL parent set across the original 103 passes and four corrected
+fixture reruns. Production Rust and migrations are unchanged by those fixes.
+
+Production workload identity/transport, full-service
 observability/alerts, partitions beyond tested broker quorum loss, database
 failover, host power loss, backup/restore, load acceptance and malicious host
 administrators are not established here. Actual T1 checks were not rerun for this
