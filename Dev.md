@@ -215,11 +215,13 @@ bounded PostgreSQL grants and native repository/model registration. The
 [04.1h native SQL profile](docs/implementation/goal-04-native-sql-authority.md) adds
 normalized lifecycle/lease/evidence/request recovery and atomic native commit.
 Preserve its checked readback, original requests, auxiliary validations and final
-clock/authorization gate. Complete source recovery remains required before
-claiming milestone 04.1 or production transaction authority.
+clock/authorization gate. The subsequent
+[04.1 acceptance audit](docs/implementation/goal-04-authority-acceptance.md) now
+covers durable native/source state and checked restart/reopen in the reviewed
+PostgreSQL adapter. Production service authority remains a later full-goal gate.
 The selected backend cannot fall back to memory and requires prepared commit
 requests. Schema v3 is additive and must remain immutable after publication.
-Preserve full source-state recovery as a remaining gate; the native profile rejects
+Preserve the separate complete source adapter; the native profile rejects
 unsupported source state rather than omitting it. Use the
 [session handoff](docs/implementation/goal-04-session-handoff.md) for remaining
 full-goal work and preserved operating context.

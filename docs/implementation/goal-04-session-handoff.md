@@ -11,7 +11,9 @@ and [04.1i checked source codecs](goal-04-source-codecs.md), followed by
 [original transaction/repository/admin outcomes](goal-04-mutation-recovery.md) and
 [original executor transitions](goal-04-executor-recovery.md),
 [source publication](goal-04-source-publication.md) and
-[fresh source revalidation](goal-04-source-revalidation.md). Goal 04 is not complete; preserve the entire accepted
+[fresh source revalidation](goal-04-source-revalidation.md).
+[Milestone 04.1 is accepted](goal-04-authority-acceptance.md) for the reviewed
+PostgreSQL adapter. Goal 04 is not complete; preserve the entire accepted
 [seven-milestone objective](goal-04.md). Its contract SHA-256 remains
 `339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743`.
 
@@ -61,7 +63,9 @@ publication protocol are the starting point for the remaining SQL integration.
 The bounded native reconstruction rejects captured source state and legacy
 unbound commit records. Existing Goal 03 memory/T1 behavior remains separately
 validated. Do not silently discard unsupported rows or treat partial reconstruction
-as complete source recovery. All remaining 04.1–04.7 requirements still apply.
+as complete source recovery. 04.1 is now accepted for the reviewed adapter;
+the remaining 04.2–04.7
+requirements still apply.
 
 ## Next implementation work
 
@@ -83,7 +87,7 @@ Continue the entire accepted goal from these remaining gates:
 3. Extend multi-instance source commit, authorization/index/policy/evidence/fence
    rechecks and fault recovery; retain atomic history/head/outcome/outbox and exact
    original requests. Expand independent generated histories and shrinking against
-   SQL and complete source-path proof before claiming 04.1/04.2 accepted.
+   SQL and complete source-path proof before claiming 04.2 accepted.
 4. Add authenticated versioned service boundaries from canonical Protobuf contracts,
    preserving complete TaskIntent and Rust Engine authority. The reviewed Unix
    embedding profile does not establish production network identity/transport.

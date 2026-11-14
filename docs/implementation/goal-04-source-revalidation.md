@@ -4,7 +4,10 @@
 [Checks](goal-04-source-revalidation-validation/checks.json) and the
 [validation scope](goal-04-source-revalidation-validation/README.md) bind exact
 sources to 548 ordinary workspace tests, 14 selected SQL parent cases and 10
-actual Linux T1 cases. Complete Goal 04 and milestones 04.1/04.2 are not claimed.
+actual Linux T1 cases. This record does not claim complete Goal 04 or milestone
+04.2. The subsequent
+[04.1 acceptance audit](goal-04-authority-acceptance.md) evaluates the original
+durable-state criteria separately.
 
 A stale source transaction can now request a new, explicitly numbered attempt.
 The Engine uses current installed complete repository analysis and current
@@ -51,7 +54,7 @@ Validation includes finite complete analyzer fixtures, not proof of language
 extraction completeness. The implemented deterministic policy always requires
 fresh execution; evidence-equivalence reuse is not implemented. Full generated
 source transaction histories against an independent oracle, all remaining
-04.1/04.2 gates and later distributed services/operations remain Goal 04 work.
+04.2 gates and later distributed services/operations remain Goal 04 work.
 
 The generic Analyze operation remains restricted to Proposed. The compound
 revalidation operation alone constructs a fresh epoch before analyzing it; merely

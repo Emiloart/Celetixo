@@ -1,7 +1,7 @@
 # Goal 04 PostgreSQL authority schema
 
-**Status:** implementation foundation for milestone 04.1; not a completed durable Engine or a distributed-commit claim
-**Canonical SQL:** immutable [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql), additive [0002_lifecycle_reconstruction.sql](../../crates/postgres/migrations/0002_lifecycle_reconstruction.sql), [0003_native_lifecycle.sql](../../crates/postgres/migrations/0003_native_lifecycle.sql) and [0004_source_lifecycle.sql](../../crates/postgres/migrations/0004_source_lifecycle.sql), [0005_mutation_recovery.sql](../../crates/postgres/migrations/0005_mutation_recovery.sql), [0006_source_executor_mutations.sql](../../crates/postgres/migrations/0006_source_executor_mutations.sql) and [0007_source_publication.sql](../../crates/postgres/migrations/0007_source_publication.sql)
+**Status:** scoped PostgreSQL schema through v8; [04.1 accepted](goal-04-authority-acceptance.md) for the reviewed adapter; full distributed-service Goal 04 remains open
+**Canonical SQL:** immutable [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql), additive [0002_lifecycle_reconstruction.sql](../../crates/postgres/migrations/0002_lifecycle_reconstruction.sql), [0003_native_lifecycle.sql](../../crates/postgres/migrations/0003_native_lifecycle.sql) and [0004_source_lifecycle.sql](../../crates/postgres/migrations/0004_source_lifecycle.sql), [0005_mutation_recovery.sql](../../crates/postgres/migrations/0005_mutation_recovery.sql), [0006_source_executor_mutations.sql](../../crates/postgres/migrations/0006_source_executor_mutations.sql) [0007_source_publication.sql](../../crates/postgres/migrations/0007_source_publication.sql) and [0008_source_revalidation.sql](../../crates/postgres/migrations/0008_source_revalidation.sql)
 **Authority:** [Goal 04](goal-04.md), ADR-0003 and ADR-0004
 
 Subsequent integration: [04.1g](goal-04-registration-authority.md) now routes scoped
@@ -10,8 +10,10 @@ native grants and repository/model registration through this schema.
 lifecycle/lease/evidence/request recovery and atomic native commit/outbox facts.
 [Source SQL lifecycle](goal-04-source-sql-authority.md) adds normalized source
 publication through evidence receipts. [Source publication](goal-04-source-publication.md) adds source revision commit,
-original outcomes and committed history through additive schema v7. Fresh source
-revalidation and full-goal services remain pending.
+original outcomes and committed history through additive schema v7.
+[Fresh revalidation](goal-04-source-revalidation.md) adds new fenced source attempts
+and original recovery with schema v8. [04.1 acceptance](goal-04-authority-acceptance.md)
+covers the reviewed durable-state adapter; full-goal services remain pending.
 
 This schema separates mutable operational authority, immutable engineering values and
 append-only outcomes. It provides database constraints and row isolation. Rust still

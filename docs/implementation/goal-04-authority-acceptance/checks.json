@@ -1,0 +1,224 @@
+{
+  "kind": "Milestone 04.1 acceptance audit of reviewed PostgreSQL adapter; full Goal 04 remains active",
+  "date": "2026-11-14T09:30:40.575485+00:00",
+  "implementation_commit": "0918af94bcfa3351d902139069d31a221b76e15e",
+  "frozen_source_manifest": "../goal-04-source-revalidation-validation/source-manifest.json",
+  "source_manifest_sha256": "8c700c57455adcce42c6fb657b0a73c72d67693540ea868301a51bd83c840d59",
+  "frozen_implementation_inputs_unchanged": true,
+  "primary_validation": "../goal-04-source-revalidation-validation/checks.json",
+  "primary_validation_sha256": "2db850c596cd66944e2a5d60f382ca261f20bb745ca0ebc17ca3eb317997b25b",
+  "primary_counts": {
+    "workspace_passed": 548,
+    "workspace_ignored": 114,
+    "actual_linux_t1_passed": 10,
+    "selected_sql_parent_cases": 14
+  },
+  "supplemental_sql_parent_cases": [
+    {
+      "case": "v2_upgrade_recovers_errors_and_process_death_with_scoped_immutable_publications",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "v2_upgrade_recovers_errors_and_process_death_with_scoped_immutable_publications",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 3.879,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "0d1146c5706361101ff137f3b832fbb28a9de31749e5d11b37343ddc498800aa"
+    },
+    {
+      "case": "source_authority::migration::v3_source_upgrade_preserves_legacy_artifact_associations_and_rolls_back_faults",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "source_authority::migration::v3_source_upgrade_preserves_legacy_artifact_associations_and_rolls_back_faults",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 4.369,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "c3584f7235f2b0eff050a8ff0456ff6f4b00a2cc06293b3900a9d589a4a5c128"
+    },
+    {
+      "case": "native_authority::mutations::published_v4_upgrade_is_atomic_and_preserves_snapshot_data",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "native_authority::mutations::published_v4_upgrade_is_atomic_and_preserves_snapshot_data",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 2.83,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "706f22ebd7d42ccc3d699d777467726be7d9b1494d72f44b1950161e3e406656"
+    },
+    {
+      "case": "source_authority::migration::v6_source_publication_upgrade_is_atomic_and_preserves_the_published_ledger",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "source_authority::migration::v6_source_publication_upgrade_is_atomic_and_preserves_the_published_ledger",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 2.739,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "505687be8f0aebb7cc5e71fe9eb921633a65b6af4e01e395e2fe28ff0b4117c4"
+    },
+    {
+      "case": "immutable_catalogs_survive_actual_database_process_restart",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "immutable_catalogs_survive_actual_database_process_restart",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 62.449,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "7c9f370372fbe8ac4d665151e848cacb5bbb173cbdd4895b7caf988447b221e9"
+    },
+    {
+      "case": "native_authority::native_generated_pair_histories_match_independent_bitmask_oracle",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "native_authority::native_generated_pair_histories_match_independent_bitmask_oracle",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 267.448,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "b79bf2a64bd1fe1fabcdb21aceb8d216d1c9a0481b9d087760a8c644b65c5ab8"
+    },
+    {
+      "case": "process_death_rolls_back_ddl_and_ledger_before_successful_recovery",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "process_death_rolls_back_ddl_and_ledger_before_successful_recovery",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 1.754,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "b05c5206a8088ffb126173856cb1983f3b33e042dad53931c69a4728667173e9"
+    }
+  ],
+  "supplemental_parent_count": 7,
+  "native_oracle_seeds": 16,
+  "engine_generated_history_seeds": 192,
+  "engine_history_shrinker_test_in_primary_workspace": true,
+  "schema_upgrade_prior_versions_checked_against_v8": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "empty_schema_creation": "The selected validation database was created without application tables; the harness owner() applied all eight migrations before the source-profile scenarios. Historical schema prefix builders independently create and upgrade every published prior version.",
+  "published_log_sha256": "3196e63bf1536a3a659428a0a5c27bce7db81f98d48875035f090d6ff86b8ac3",
+  "log_normalization": "Compact build directory replaced; trailing whitespace removed. Raw hashes name retained private originals.",
+  "limits": [
+    "Local PostgreSQL 17.9 reviewed Unix-socket fixture and trusted embedding adapter",
+    "No whole SQL-suite or hosted CI pass claimed",
+    "Synthetic source execution evidence; actual Linux T1 checked separately",
+    "Complete source generated-history oracle and independent-process source commit proof remain 04.2 work",
+    "Production service identity/transport, NATS, Temporal, S3, ClickHouse/shared services and full 04.7 operational programme remain open",
+    "Optional exact-tree repository inspection was interrupted after 257.603 seconds; its subsequent patch benchmark was not run; neither counted as passing"
+  ]
+}
