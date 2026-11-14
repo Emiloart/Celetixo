@@ -94,6 +94,22 @@ fn restore_request_inner(
         return Err(RestoreError::BindingMismatch);
     }
     let kind = text(&mut r, 64)?;
+    if kind == "RevalidateSource" {
+        let key = operation_key
+            .ok_or(RestoreError::UnsupportedDomainValue)?
+            .clone();
+        let request = MutationRequest::SourceRevalidate(Box::new(
+            source_revalidation::decode_request(&mut r, key)?,
+        ));
+        r.end()?;
+        lifecycle::canonical(
+            request.digest(expected_scope, expected_actor),
+            expected,
+            &request.canonical_bytes(expected_scope, expected_actor),
+            bytes,
+        )?;
+        return Ok(request);
+    }
     if kind == "CommitSource" {
         let key = operation_key
             .ok_or(RestoreError::UnsupportedDomainValue)?
@@ -251,6 +267,17 @@ impl MutationOutcomeRecord {
         record: MutationRecord,
     ) -> Result<Self, RestoreError> {
         record.check_shape(&key.actor)?;
+        if let MutationRequest::SourceRevalidate(request) = &record.request {
+            if request.key != key.key {
+                return Err(RestoreError::BindingMismatch);
+            }
+            if let Ok(MutationValue::SourceRevalidated(receipt)) = &record.outcome {
+                let MutationActor::Session { principal, .. } = &key.actor else {
+                    return Err(RestoreError::BindingMismatch);
+                };
+                receipt.validate_request(&scope, principal, request)?;
+            }
+        }
         if let MutationRequest::SourceCommit(request) = &record.request {
             if request.key != key.key {
                 return Err(RestoreError::BindingMismatch);
@@ -318,10 +345,18 @@ impl MutationOutcomeRecord {
         if let Some(context) = &self.record.source_execution {
             source_mutation::encode_context(&mut c, context);
         }
+        if let Some(context) = &self.record.source_revalidation {
+            source_revalidation::encode_context(&mut c, context);
+        }
         if let Some(context) = &self.record.source_commit {
             source_commit::encode_context(&mut c, context);
         }
         match &self.record.outcome {
+            Ok(MutationValue::SourceRevalidated(receipt)) => {
+                c.str("Accepted");
+                c.str("SourceRevalidated");
+                receipt.encode_fields(&mut c);
+            }
             Ok(MutationValue::SourceCommitted(receipt)) => {
                 c.str("Accepted");
                 c.str("SourceCommitted");
@@ -485,6 +520,11 @@ pub fn restore_mutation_outcome(
     } else {
         None
     };
+    let source_revalidation = if matches!(request, MutationRequest::SourceRevalidate(_)) {
+        Some(Box::new(source_revalidation::decode_context(&mut r)?))
+    } else {
+        None
+    };
     let source_commit = if matches!(request, MutationRequest::SourceCommit(_)) {
         Some(Box::new(source_commit::decode_context(&mut r)?))
     } else {
@@ -492,6 +532,9 @@ pub fn restore_mutation_outcome(
     };
     let outcome = match text(&mut r, 64)? {
         "Accepted" => Ok(match text(&mut r, 64)? {
+            "SourceRevalidated" => MutationValue::SourceRevalidated(Box::new(
+                source_revalidation::decode_receipt(&mut r)?,
+            )),
             "SourceCommitted" => {
                 MutationValue::SourceCommitted(Box::new(source_commit::decode_receipt(&mut r)?))
             }
@@ -551,6 +594,7 @@ pub fn restore_mutation_outcome(
             administration,
             source_execution,
             source_commit,
+            source_revalidation,
             outcome,
         },
     )?;

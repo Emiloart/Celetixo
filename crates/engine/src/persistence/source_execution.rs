@@ -409,6 +409,7 @@ pub(super) fn decode_policy_fields(
             0 => SourceCaptureConsistency::ImmutableGitTree,
             1 => SourceCaptureConsistency::ReferenceFixture,
             2 => SourceCaptureConsistency::LiveObserved,
+            3 => SourceCaptureConsistency::EnginePublication,
             _ => return Err(RestoreError::Encoding),
         },
         gaps: strings(r)?,

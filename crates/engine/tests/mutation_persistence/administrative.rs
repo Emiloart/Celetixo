@@ -88,6 +88,7 @@ fn records() -> Vec<MutationRecord> {
                 lease_events_before: 0,
                 source_execution: None,
                 source_commit: None,
+                source_revalidation: None,
                 administration: Some(AdministrativeContext {
                     counter_before: if revoke { 4 } else { 3 },
                     target_active_before: if revoke { Some(true) } else { None },
@@ -279,6 +280,7 @@ fn rejected_original_grant_options_keep_invalid_tiers_resources_and_unresolved_s
             lease_events_before: 0,
             source_execution: None,
             source_commit: None,
+            source_revalidation: None,
             administration: Some(AdministrativeContext {
                 counter_before: 0,
                 target_active_before: None,

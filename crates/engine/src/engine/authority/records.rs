@@ -441,7 +441,7 @@ pub(super) fn restore_base(
         } else {
             validate_attempts(&tx)?;
         }
-        validate_lease(&db, &tx, records.reservation_fence)?;
+        validate_lease(&db, &tx, records.reservation_fence, source.is_some())?;
         for event in &tx.lease_history {
             if matches!(event.kind, LeaseEventKind::Acquired { .. }) && !fences.insert(event.fence)
             {
@@ -794,12 +794,17 @@ fn validate_attempts(tx: &Transaction) -> Result<(), RestoreError> {
     }
     Ok(())
 }
-fn validate_lease(db: &Database, tx: &Transaction, fence: u64) -> Result<(), RestoreError> {
-    let mut acquired = BTreeMap::new();
+fn validate_lease(
+    db: &Database,
+    tx: &Transaction,
+    fence: u64,
+    source: bool,
+) -> Result<(), RestoreError> {
+    let mut acquired: BTreeMap<u64, (&LeaseEvent, u64)> = BTreeMap::new();
     let mut previous_at = 0;
     let mut released = false;
     for event in &tx.lease_history {
-        if released {
+        if released && !(source && matches!(event.kind, LeaseEventKind::Acquired { .. })) {
             return Err(RestoreError::BindingMismatch);
         }
         if event.fence == 0
@@ -819,6 +824,20 @@ fn validate_lease(db: &Database, tx: &Transaction, fence: u64) -> Result<(), Res
             return Err(RestoreError::BindingMismatch);
         }
         if let LeaseEventKind::Acquired { expires_at } = event.kind {
+            if source {
+                if let Some((&previous, (first, _))) = acquired.last_key_value() {
+                    if !released
+                        || previous >= event.fence
+                        || first.acquisition_attempt.checked_add(1)
+                            != Some(event.acquisition_attempt)
+                    {
+                        return Err(RestoreError::BindingMismatch);
+                    }
+                } else if event.acquisition_attempt != 0 {
+                    return Err(RestoreError::BindingMismatch);
+                }
+                released = false;
+            }
             if tx.attempts
                 [usize::try_from(event.acquisition_attempt).map_err(|_| RestoreError::Limit)?]
             .effective
@@ -868,7 +887,10 @@ fn validate_lease(db: &Database, tx: &Transaction, fence: u64) -> Result<(), Res
             }
         }
     }
-    if acquired.len() > 1 {
+    if source && tx.lease.is_none() && !acquired.is_empty() && !released {
+        return Err(RestoreError::BindingMismatch);
+    }
+    if !source && acquired.len() > 1 {
         return Err(RestoreError::BindingMismatch);
     }
     if tx.state == TransactionState::Committed {

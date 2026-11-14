@@ -386,6 +386,9 @@ pub enum SourceCaptureConsistency {
     /// Deliberately finite, trusted reference fixtures; never parser completeness.
     ReferenceFixture,
     LiveObserved,
+    /// An Engine-published revision whose capture policy identifies its original
+    /// source commit receipt. The Engine separately checks that full history.
+    EnginePublication,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -638,6 +641,24 @@ impl SourceExecutionPolicy {
                     .provenance
                     .starts_with("celetixo/reference-source/")
                     || !exclusions.is_empty()
+                    || environment
+                        .keys()
+                        .any(|key| key.starts_with("celetixo.capture."))
+                {
+                    return Err(SourcePlanError::IncompleteCapture);
+                }
+            }
+            SourceCaptureConsistency::EnginePublication => {
+                // These are structural selectors, not proof that publication
+                // occurred. Installation/restoration must check the receipt and
+                // its complete source revision chain independently.
+                if snapshot.revision().0 == 0
+                    || !snapshot
+                        .manifest()
+                        .provenance
+                        .starts_with("celetixo/source-application/v1;")
+                    || self.input.capture.uncertainty
+                        != SourceCaptureBinding::empty_uncertainty_digest()
                     || environment
                         .keys()
                         .any(|key| key.starts_with("celetixo.capture."))
@@ -1213,6 +1234,7 @@ fn encode_policy(c: &mut Canonical, p: &SourcePolicyInput) {
         SourceCaptureConsistency::ImmutableGitTree => 0,
         SourceCaptureConsistency::ReferenceFixture => 1,
         SourceCaptureConsistency::LiveObserved => 2,
+        SourceCaptureConsistency::EnginePublication => 3,
     });
     c.u64(p.capture.gaps.len() as u64);
     for gap in &p.capture.gaps {

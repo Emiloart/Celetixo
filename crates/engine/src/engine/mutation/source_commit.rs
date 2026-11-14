@@ -3,7 +3,7 @@ use super::*;
 use crate::persistence::RestoreError;
 use crate::source_evidence::{SourceEvidenceAssessment, SourceEvidenceError};
 
-mod history;
+pub(super) mod history;
 
 pub(super) fn domain_error(error: &EngineError) -> bool {
     matches!(

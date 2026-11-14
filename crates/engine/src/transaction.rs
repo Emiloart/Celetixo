@@ -27,6 +27,8 @@ impl TransactionState {
                 | (Executing, Validating)
                 | (Validating, Committed)
                 | (Validating, RevalidationRequired)
+                | (Executing, RevalidationRequired)
+                | (RevalidationRequired, Analyzed)
                 | (RevalidationRequired, Validating)
         ) || (next == Aborted && !matches!(self, Committed | Aborted))
     }

@@ -20,6 +20,7 @@ pub(in crate::authority) fn load(
     rejections(tx, &mut loader, &mut records)?;
     evidence(tx, &mut loader, &mut records)?;
     unprepared_commits(tx, &mut loader, &mut records)?;
+    super::revalidation::load(tx, &mut loader, &records)?;
     records.check_recovery_limits(limits).map_err(restore)?;
     artifacts(tx, &mut loader, &records)?;
     let generations = loader.rows(

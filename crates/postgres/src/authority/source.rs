@@ -13,6 +13,7 @@ mod definitions;
 mod load;
 mod publication;
 mod publish;
+mod revalidation;
 
 pub(super) use load::load;
 pub(super) use publish::publish;
@@ -134,6 +135,22 @@ fn final_gate(
         return Err(AuthorityFailure::ClockRegression);
     }
     native::final_lease_gate(now, &before.base, &after.base)?;
+    for (key, record) in &after.base.mutations {
+        if before.base.mutations.contains_key(key) {
+            continue;
+        }
+        if let (
+            celetixo_engine::engine::MutationRequest::SourceRevalidate(request),
+            Ok(celetixo_engine::engine::MutationValue::SourceRevalidated(_)),
+        ) = (&record.request, &record.outcome)
+        {
+            let original =
+                AuthorityState::from_source_records(before.clone(), limits).map_err(restore)?;
+            original
+                .check_source_revalidation_metadata_at(now, &key.actor, request)
+                .map_err(|_| AuthorityFailure::Contention)?;
+        }
+    }
     if after.history.len() > before.history.len() {
         let original =
             AuthorityState::from_source_records(before.clone(), limits).map_err(restore)?;

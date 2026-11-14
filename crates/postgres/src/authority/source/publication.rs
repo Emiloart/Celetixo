@@ -36,20 +36,20 @@ const COLUMNS: &[&str] = &[
 
 /// Only SQL representation lives here. Every value is compared with the
 /// independently decoded, Engine-checked original journal record on load.
-enum Value {
+pub(super) enum Value {
     Text(Option<String>),
     Number(Option<String>),
     Bytes(Option<Vec<u8>>),
     Bool(Option<bool>),
 }
 impl Value {
-    fn number(value: Option<u64>) -> Self {
+    pub(super) fn number(value: Option<u64>) -> Self {
         Self::Number(value.map(|v| v.to_string()))
     }
-    fn digest(value: Option<Digest>) -> Self {
+    pub(super) fn digest(value: Option<Digest>) -> Self {
         Self::Bytes(value.map(|v| v.as_bytes().to_vec()))
     }
-    fn cast(&self) -> &'static str {
+    pub(super) fn cast(&self) -> &'static str {
         match self {
             Self::Text(_) => "text",
             Self::Number(_) => "text::numeric",
@@ -57,14 +57,14 @@ impl Value {
             Self::Bool(_) => "boolean",
         }
     }
-    fn argument(&self) -> &(dyn ToSql + Sync) {
+    pub(super) fn argument(&self) -> &(dyn ToSql + Sync) {
         match self {
             Self::Text(v) | Self::Number(v) => v,
             Self::Bytes(v) => v,
             Self::Bool(v) => v,
         }
     }
-    fn matches(&self, row: &Row, column: usize) -> bool {
+    pub(super) fn matches(&self, row: &Row, column: usize) -> bool {
         match self {
             Self::Text(v) | Self::Number(v) => *v == row.get::<_, Option<String>>(column),
             Self::Bytes(v) => *v == row.get::<_, Option<Vec<u8>>>(column),
@@ -200,7 +200,7 @@ pub(super) fn publish(
     }
     history::publish(tx, before, after)
 }
-fn execute(
+pub(super) fn execute(
     tx: &mut Transaction<'_>,
     scope: &Scope,
     sql: &str,
@@ -211,7 +211,7 @@ fn execute(
     parameters.extend_from_slice(args);
     tx.execute(sql, &parameters).map_err(database)
 }
-fn put(
+pub(super) fn put(
     tx: &mut Transaction<'_>,
     scope: &Scope,
     id: Digest,
@@ -220,7 +220,7 @@ fn put(
 ) -> SqlResult<()> {
     semantic::put_payload(tx, scope, id, format, bytes).map_err(storage)
 }
-fn one(count: u64) -> SqlResult<()> {
+pub(super) fn one(count: u64) -> SqlResult<()> {
     if count == 1 {
         Ok(())
     } else {

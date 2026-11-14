@@ -29,6 +29,7 @@ mod source_evidence_gate;
 mod source_policy;
 mod source_publication;
 mod source_recovery;
+mod source_revalidation;
 mod state_access;
 pub use commit_request::{CommitRequest, ReservationView};
 pub use mutation::{
@@ -50,6 +51,10 @@ pub use source_evidence_gate::{
 pub use source_publication::{
     SourceCommitArtifactRead, SourceCommitContext, SourceCommitPreparation, SourceCommitReceipt,
     SourceCommitRequest, SourceCommitSourceContext,
+};
+pub use source_revalidation::{
+    SourceLeaseObservation, SourceRevalidationContext, SourceRevalidationReceipt,
+    SourceRevalidationRequest,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

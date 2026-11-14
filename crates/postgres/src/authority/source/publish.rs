@@ -24,6 +24,7 @@ pub(in crate::authority) fn publish(
     execution::publish(tx, before, after)?;
     super::super::mutations::publish(tx, &before.base, &after.base)?;
     super::publication::publish(tx, before, after)?;
+    super::revalidation::publish(tx, before, after)?;
     publish_envelope(tx, context, login, generation, next, &after.base, true)?;
     one(execute(
         tx,

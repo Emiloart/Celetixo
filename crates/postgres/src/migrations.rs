@@ -35,6 +35,10 @@ const MIGRATIONS: &[Migration] = &[
         name: "0007_source_publication",
         sql: include_str!("../migrations/0007_source_publication.sql"),
     },
+    Migration {
+        name: "0008_source_revalidation",
+        sql: include_str!("../migrations/0008_source_revalidation.sql"),
+    },
 ];
 pub(crate) const LOCK: i64 = 0x43454c455449584f;
 

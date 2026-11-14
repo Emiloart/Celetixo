@@ -212,6 +212,15 @@ impl Engine {
             .get(&key)
             .ok_or(EngineError::NotFound)?
             .clone();
+        // The compound source revalidation path may pass through Analyzed only
+        // after constructing a fresh epoch. Generic Analyze cannot reopen an
+        // existing frame or retain its old patch, evidence or reservation.
+        if tx.state != TransactionState::Proposed {
+            return Err(EngineError::IllegalTransition {
+                from: tx.state,
+                to: TransactionState::Analyzed,
+            });
+        }
         tx.transition(TransactionState::Analyzed)?;
         let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
         if tx.attempt().model != repo.model {

@@ -7,6 +7,7 @@ mod execution;
 mod repository;
 mod source_commit;
 mod source_executor;
+mod source_revalidation;
 pub use administrative::{AdministrativeContext, AdministrativeMutation, AdministrativeResource};
 use execution::{
     check_shape as check_execution_shape, error_size as execution_error_size, evidence_size,
@@ -60,6 +61,7 @@ pub struct MutationKey {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MutationRequest {
     SourceCommit(Box<SourceCommitRequest>),
+    SourceRevalidate(Box<SourceRevalidationRequest>),
     SourceExecutor(Box<SourceExecutorMutation>),
     Administrative(Box<AdministrativeMutation>),
     Repository(Box<RepositoryMutation>),
@@ -103,6 +105,7 @@ impl MutationRequest {
     pub fn transaction(&self) -> Option<&TransactionId> {
         match self {
             Self::SourceCommit(request) => Some(&request.binding.transaction),
+            Self::SourceRevalidate(request) => Some(&request.transaction),
             Self::SourceExecutor(request) => Some(&request.binding.transaction),
             Self::Repository(_) | Self::Administrative(_) => None,
             Self::Analyze { transaction }
@@ -119,6 +122,7 @@ impl MutationRequest {
     fn permission(&self) -> Option<Permission> {
         Some(match self {
             Self::SourceCommit(_) => Permission::Commit,
+            Self::SourceRevalidate(_) => Permission::Analyze,
             Self::Administrative(_) | Self::SourceExecutor(_) => return None,
             Self::Repository(request) => request.permission(),
             Self::Analyze { .. } => Permission::Analyze,
@@ -237,6 +241,10 @@ impl MutationRequest {
         c.str(scope.repository.as_str());
         actor.encode(&mut c);
         match self {
+            Self::SourceRevalidate(request) => {
+                c.str("RevalidateSource");
+                request.encode_body(&mut c);
+            }
             Self::SourceCommit(request) => {
                 c.str("CommitSource");
                 request.encode_body(&mut c);
@@ -314,6 +322,7 @@ impl MutationRequest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MutationValue {
     SourceCommitted(Box<SourceCommitReceipt>),
+    SourceRevalidated(Box<SourceRevalidationReceipt>),
     SourceAttempt(Box<SourceMutationResult>),
     Allocation {
         resource: AdministrativeResource,
@@ -361,6 +370,7 @@ pub struct MutationRecord {
     pub administration: Option<AdministrativeContext>,
     pub source_execution: Option<SourceMutationContext>,
     pub source_commit: Option<Box<SourceCommitContext>>,
+    pub source_revalidation: Option<Box<SourceRevalidationContext>>,
     pub outcome: Result<MutationValue, EngineError>,
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -384,6 +394,12 @@ impl MutationRecord {
         actor: &MutationActor,
     ) -> Result<(), crate::persistence::RestoreError> {
         use crate::persistence::RestoreError;
+        if let MutationRequest::SourceRevalidate(request) = &self.request {
+            return source_revalidation::check_record(request, self, actor);
+        }
+        if self.source_revalidation.is_some() {
+            return Err(RestoreError::BindingMismatch);
+        }
         if let MutationRequest::SourceCommit(request) = &self.request {
             return source_commit::check_record(request, self, actor);
         }
@@ -540,6 +556,14 @@ impl Engine {
         request: &MutationRequest,
     ) -> Result<MutationValue, EngineError> {
         match request {
+            MutationRequest::SourceRevalidate(request) => {
+                let actor = MutationActor::Session {
+                    principal: session.principal.clone(),
+                    grant: session.token,
+                };
+                super::source_revalidation::apply(db, scope, &actor, request)
+                    .map(|receipt| MutationValue::SourceRevalidated(Box::new(receipt)))
+            }
             MutationRequest::SourceCommit(_) => Err(EngineError::Unauthorized),
             MutationRequest::Administrative(_) | MutationRequest::SourceExecutor(_) => {
                 Err(EngineError::Unauthorized)
@@ -660,6 +684,18 @@ pub(super) fn apply_once(
         }
         return Ok(Ok(original.response(scope, &key.actor, true)));
     }
+    if let MutationRequest::SourceRevalidate(request) = &request {
+        if request.key != key.key {
+            return Ok(Err(EngineError::CommitRequestMismatch));
+        }
+        if db
+            .repositories
+            .get(scope)
+            .is_some_and(|repo| repo.source_analysis.is_none())
+        {
+            return Ok(Err(EngineError::SourceMutationUnsupported));
+        }
+    }
     if db
         .mutations
         .keys()
@@ -687,6 +723,13 @@ pub(super) fn apply_once(
     } else {
         None
     };
+    let source_revalidation = if let MutationRequest::SourceRevalidate(request) = &request {
+        Some(Box::new(super::source_revalidation::observe(
+            db, scope, request,
+        )))
+    } else {
+        None
+    };
     let outcome = match execute(db, &request) {
         Ok(value) => Ok(value),
         Err(error) if mutation_error(&request, &error) => Err(error),
@@ -706,6 +749,7 @@ pub(super) fn apply_once(
         administration,
         source_execution,
         source_commit,
+        source_revalidation,
         outcome,
     };
     validate(db, scope, &key, &record).map_err(|_| AuthorityFailure::Integrity)?;
@@ -730,6 +774,7 @@ fn lease_error(request: &MutationRequest, error: &EngineError) -> bool {
 fn mutation_error(request: &MutationRequest, error: &EngineError) -> bool {
     match request {
         MutationRequest::SourceCommit(_) => source_commit::domain_error(error),
+        MutationRequest::SourceRevalidate(_) => source_revalidation::domain_error(error),
         MutationRequest::SourceExecutor(request) => request.domain_error(error),
         MutationRequest::Administrative(request) => request.domain_error(error),
         MutationRequest::Repository(request) => request.domain_error(error),
@@ -911,18 +956,19 @@ fn check_analysis_shape(r: &MutationRecord) -> Result<(), crate::persistence::Re
     };
     match &r.outcome {
         Ok(MutationValue::Analysis { attempt, .. })
-            if before.allows(TransactionState::Analyzed)
-                && r.resolved_attempt == Some(*attempt) =>
+            if before == TransactionState::Proposed && r.resolved_attempt == Some(*attempt) =>
         {
             Ok(())
         }
         Err(EngineError::IllegalTransition { from, to })
-            if *from == before && *to == TransactionState::Analyzed && !before.allows(*to) =>
+            if *from == before
+                && *to == TransactionState::Analyzed
+                && before != TransactionState::Proposed =>
         {
             Ok(())
         }
         Err(error)
-            if before.allows(TransactionState::Analyzed)
+            if before == TransactionState::Proposed
                 && mutation_error(&r.request, error)
                 && !matches!(
                     error,
@@ -1053,6 +1099,27 @@ pub(crate) fn recovery_size(
         bytes = bytes.checked_add(reason.len()).ok_or(RestoreError::Limit)?;
     }
     let mut entries = 1usize;
+    if let Some(context) = &record.source_revalidation {
+        for id in context.leases.keys() {
+            bytes = bytes
+                .checked_add(64 + id.as_str().len())
+                .ok_or(RestoreError::Limit)?;
+            entries = entries.checked_add(1).ok_or(RestoreError::Limit)?;
+        }
+        for id in context.source_event_counts.keys() {
+            bytes = bytes
+                .checked_add(32 + id.as_str().len())
+                .ok_or(RestoreError::Limit)?;
+            entries = entries.checked_add(1).ok_or(RestoreError::Limit)?;
+        }
+    }
+    if let Ok(MutationValue::SourceRevalidated(receipt)) = &record.outcome {
+        let size = receipt.recovery_size()?;
+        bytes = bytes.checked_add(size.bytes).ok_or(RestoreError::Limit)?;
+        entries = entries
+            .checked_add(size.entries)
+            .ok_or(RestoreError::Limit)?;
+    }
     if let Some(context) = &record.source_commit {
         bytes = bytes
             .checked_add(8192)
@@ -1166,6 +1233,11 @@ pub(super) fn restore(
     }
     for (key, record) in records {
         validate(db, scope, &key, &record)?;
+        if let Ok(MutationValue::SourceRevalidated(receipt)) = &record.outcome
+            && !revalidations.insert((Some(receipt.transaction.clone()), receipt.attempt))
+        {
+            return Err(crate::persistence::RestoreError::NonCanonical);
+        }
         if let MutationRequest::SourceExecutor(request) = &record.request
             && let Some(context) = &record.source_execution
             && context.events_after > context.events_before
@@ -1237,6 +1309,9 @@ pub(super) fn validate(
     let invalid = RestoreError::BindingMismatch;
     if let MutationRequest::SourceExecutor(request) = &r.request {
         return request.validate(db, scope, key, r);
+    }
+    if let MutationRequest::SourceRevalidate(request) = &r.request {
+        return source_revalidation::validate(db, scope, key, request, r);
     }
     if let MutationRequest::SourceCommit(request) = &r.request {
         return source_commit::validate(db, scope, key, request, r);
@@ -1418,6 +1493,7 @@ pub(super) fn validate(
         Err(_) => Err(invalid),
         Ok(
             MutationValue::SourceCommitted(_)
+            | MutationValue::SourceRevalidated(_)
             | MutationValue::SourceAttempt(_)
             | MutationValue::State { .. }
             | MutationValue::Repository { .. }

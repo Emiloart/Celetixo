@@ -20,6 +20,8 @@ use std::time::Duration;
 
 #[path = "source_evidence/publication.rs"]
 mod publication;
+#[path = "source_evidence/revalidation.rs"]
+mod revalidation;
 
 fn d(value: &str) -> Digest {
     Digest::of("source-evidence-reference/v1", value.as_bytes())
@@ -237,6 +239,9 @@ struct Harness {
 }
 impl Harness {
     fn new() -> Self {
+        Self::configured(false)
+    }
+    fn configured(two_files: bool) -> Self {
         let (store, admin) = InMemoryStore::new();
         let engine = Engine::new(store);
         let owner = admin
@@ -253,6 +258,26 @@ impl Harness {
                 [Permission::Read].into(),
             )
             .unwrap();
+        let mut inputs = vec![WorkspaceInput {
+            path: "src/main.rs".into(),
+            layer: InputLayer::Base,
+            kind: InputKind::File,
+            mode: FileMode::Regular,
+            bytes: Some(b"old".to_vec()),
+        }];
+        if two_files {
+            inputs.push(WorkspaceInput {
+                path: "src/z.rs".into(),
+                layer: InputLayer::Base,
+                kind: InputKind::File,
+                mode: FileMode::Regular,
+                bytes: Some(b"old-z".to_vec()),
+            });
+        }
+        let mut elements: BTreeSet<_> = [element()].into();
+        if two_files {
+            elements.insert(ElementId::new("file:z").unwrap());
+        }
         let base = Snapshot::new(
             scope(),
             Revision(0),
@@ -261,13 +286,7 @@ impl Harness {
                 canonicalization_version: 1,
                 inclusion_policy: InclusionPolicy::complete(),
                 provenance: "celetixo/reference-source/v1".into(),
-                inputs: vec![WorkspaceInput {
-                    path: "src/main.rs".into(),
-                    layer: InputLayer::Base,
-                    kind: InputKind::File,
-                    mode: FileMode::Regular,
-                    bytes: Some(b"old".to_vec()),
-                }],
+                inputs,
                 environment: BTreeMap::new(),
             },
             State::new(),
@@ -279,9 +298,12 @@ impl Harness {
                 index_generation: d("index"),
                 analyzer_version: "complete-finite-reference/v1".into(),
                 configuration: d("config"),
-                elements: [element()].into(),
+                elements: elements.clone(),
                 dependencies: BTreeMap::new(),
-                checks: [(element(), [cid()].into())].into(),
+                checks: elements
+                    .iter()
+                    .map(|id| (id.clone(), [cid()].into()))
+                    .collect(),
                 gaps: BTreeSet::new(),
             },
         )
@@ -289,7 +311,7 @@ impl Harness {
         engine
             .register_repository(&owner, base.clone(), analysis.clone())
             .unwrap();
-        let definition = SourceCheckDefinition::new(SourceCheckInput {
+        let mut check_input = SourceCheckInput {
             check: CheckSpec::new(
                 cid(),
                 vec!["/tools/reference-check".into()],
@@ -343,8 +365,30 @@ impl Harness {
             .into(),
             depends_on: BTreeSet::new(),
             failure_policy: FailurePolicy::FailAttempt,
-        })
-        .unwrap();
+        };
+        if two_files {
+            check_input.inputs.clear();
+        }
+        let definition = SourceCheckDefinition::new(check_input).unwrap();
+        let mut paths: BTreeMap<_, _> = [(
+            "src/main.rs".into(),
+            SourcePathRule {
+                allowed_operations: [OperationKind::Replace].into(),
+                required_writes: [element()].into(),
+                expected_base: Some(Preimage::of(&base.manifest().inputs[0]).unwrap()),
+            },
+        )]
+        .into();
+        if two_files {
+            paths.insert(
+                "src/z.rs".into(),
+                SourcePathRule {
+                    allowed_operations: [OperationKind::Replace].into(),
+                    required_writes: [ElementId::new("file:z").unwrap()].into(),
+                    expected_base: Some(Preimage::of(&base.manifest().inputs[1]).unwrap()),
+                },
+            );
+        }
         let policy = SourceExecutionPolicy::new(SourcePolicyInput {
             version: 1,
             generation: 1,
@@ -362,15 +406,7 @@ impl Harness {
             },
             patch_policy: PatchPolicy::default(),
             credentials: CredentialPolicy::default(),
-            paths: [(
-                "src/main.rs".into(),
-                SourcePathRule {
-                    allowed_operations: [OperationKind::Replace].into(),
-                    required_writes: [element()].into(),
-                    expected_base: Some(Preimage::of(&base.manifest().inputs[0]).unwrap()),
-                },
-            )]
-            .into(),
+            paths,
             checks: vec![definition],
             invariants: vec![],
             always_required: BTreeSet::new(),

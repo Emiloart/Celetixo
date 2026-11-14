@@ -71,6 +71,7 @@ fn metadata() -> (Harness, MutationKey, MutationRecord) {
             .len() as u64,
         administration: None,
         source_execution: None,
+        source_revalidation: None,
         source_commit: Some(Box::new(context)),
         outcome: Ok(MutationValue::SourceCommitted(Box::new(receipt))),
     };

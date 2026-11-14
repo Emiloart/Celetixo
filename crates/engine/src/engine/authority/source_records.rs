@@ -173,6 +173,22 @@ impl AuthorityState {
         .map(|_| ())
     }
 
+    /// Pure final-time recheck. Actor metadata is not caller authentication.
+    pub fn check_source_revalidation_metadata_at(
+        &self,
+        now: u64,
+        actor: &MutationActor,
+        request: &SourceRevalidationRequest,
+    ) -> Result<(), EngineError> {
+        if now < self.db.now {
+            return Err(AuthorityFailure::ClockRegression.into());
+        }
+        let mut observed = self.db.clone();
+        observed.now = now;
+        super::super::source_revalidation::select(&observed, &self.scope, actor, request)
+            .map(|_| ())
+    }
+
     pub fn from_source_records(
         records: SourceRecords,
         limits: NativeRecordLimits,
@@ -442,6 +458,15 @@ fn validate_catalogs(r: &SourceRecords) -> Result<(), RestoreError> {
             return invalid();
         }
         p.validate_snapshot(base)?;
+        if p.input().capture.consistency
+            == crate::source_execution::SourceCaptureConsistency::EnginePublication
+            && !r.history.iter().any(|record| {
+                record.receipt.publication_snapshot == base.id()
+                    && record.receipt.digest() == p.input().capture.capture_policy
+            })
+        {
+            return invalid();
+        }
         let files = crate::snapshot::effective_workspace(base)
             .map_err(|_| RestoreError::BindingMismatch)?;
         for (path, rule) in &p.input().paths {
@@ -489,41 +514,57 @@ pub(super) fn validate_transaction(
     tx: &Transaction,
     r: &SourceRecords,
 ) -> Result<(), RestoreError> {
-    if tx.attempts.len() != 1 {
-        return Err(RestoreError::UnsupportedDomainValue);
-    }
-    let a = tx.attempt();
-    let context = r
-        .attempt_contexts
-        .get(&(tx.id.clone(), a.number))
-        .ok_or(RestoreError::BindingMismatch)?;
-    let source = r
-        .analyses
-        .get(&context.analysis)
-        .ok_or(RestoreError::BindingMismatch)?;
-    source.validate(&a.base, source.index_generation())?;
-    if source.model(a.model.generation) != a.model
-        || a.patch.is_some()
-        || a.candidate.is_some()
-        || !a.evidence.is_empty()
-    {
+    if tx.attempts.is_empty() {
         return invalid();
     }
-    if a.analysis.is_some() {
-        let policy = context
-            .policy
-            .map(|d| r.policies.get(&d).ok_or(RestoreError::BindingMismatch))
-            .transpose()?;
-        let mut expected = tx.clone();
-        analyze_attempt(&mut expected, Some(source), policy)
-            .map_err(|_| RestoreError::BindingMismatch)?;
-        if expected.attempt().effective != a.effective || expected.attempt().analysis != a.analysis
+    for (index, a) in tx.attempts.iter().enumerate() {
+        if a.number != index as u64 {
+            return invalid();
+        }
+        let context = r
+            .attempt_contexts
+            .get(&(tx.id.clone(), a.number))
+            .ok_or(RestoreError::BindingMismatch)?;
+        let source = r
+            .analyses
+            .get(&context.analysis)
+            .ok_or(RestoreError::BindingMismatch)?;
+        source.validate(&a.base, source.index_generation())?;
+        if source.model(a.model.generation) != a.model
+            || a.patch.is_some()
+            || a.candidate.is_some()
+            || !a.evidence.is_empty()
         {
             return invalid();
         }
-    } else if context.policy.is_some() {
+        if a.analysis.is_some() {
+            let policy = context
+                .policy
+                .map(|d| r.policies.get(&d).ok_or(RestoreError::BindingMismatch))
+                .transpose()?;
+            let mut expected = tx.clone();
+            expected.attempts.truncate(index + 1);
+            analyze_attempt(&mut expected, Some(source), policy)
+                .map_err(|_| RestoreError::BindingMismatch)?;
+            if expected.attempt().effective != a.effective
+                || expected.attempt().analysis != a.analysis
+            {
+                return invalid();
+            }
+        } else if context.policy.is_some() || index > 0 {
+            return invalid();
+        }
+        if index>0 && r.base.mutations.values().filter(|record|matches!(&record.outcome,Ok(MutationValue::SourceRevalidated(receipt)) if receipt.transaction==tx.id && receipt.attempt==a.number)).count()!=1 {return invalid()}
+    }
+    if tx.attempts.len() > 1
+        && matches!(
+            tx.state,
+            TransactionState::Proposed | TransactionState::Analyzed | TransactionState::Reserved
+        )
+    {
         return invalid();
     }
+    let a = tx.attempt();
     let analyzed = a.analysis.is_some();
     let leased = tx.lease.is_some();
     let valid = match tx.state {
@@ -918,6 +959,9 @@ fn restore_attempt(
         .transactions
         .get(&(scope.clone(), b.transaction.clone()))
         .ok_or(RestoreError::BindingMismatch)?;
+    if !a.state.is_terminal() && b.transaction_attempt != tx.attempt().number {
+        return invalid();
+    }
     let expiry = lease_at(
         tx,
         a.admission_fence,

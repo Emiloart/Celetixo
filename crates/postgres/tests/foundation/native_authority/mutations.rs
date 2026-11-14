@@ -129,7 +129,7 @@ fn published_v4_upgrade_is_atomic_and_preserves_snapshot_data() {
                 .is_none()
         );
     }
-    assert_eq!(migrate(&mut client).unwrap().schema_version, 7);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 8);
     validate_schema(&mut client).unwrap();
     assert!(!migrate(&mut client).unwrap().newly_applied);
     let selected = expected.scope();

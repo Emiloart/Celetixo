@@ -27,6 +27,10 @@ mod source_admission;
 mod source_artifacts;
 mod source_authority;
 mod source_commit;
+mod source_revalidation;
+pub use source_revalidation::{
+    restore_source_revalidation_receipt, restore_source_revalidation_request,
+};
 mod source_errors;
 mod source_event;
 mod source_evidence;

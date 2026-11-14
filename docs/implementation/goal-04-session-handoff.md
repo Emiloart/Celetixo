@@ -9,7 +9,9 @@ and [04.1i checked source codecs](goal-04-source-codecs.md), followed by
 [complete source metadata/fresh runtime recovery](goal-04-source-recovery.md) and
 [source SQL lifecycle through receipts](goal-04-source-sql-authority.md) and
 [original transaction/repository/admin outcomes](goal-04-mutation-recovery.md) and
-[original executor transitions](goal-04-executor-recovery.md). Goal 04 is not complete; preserve the entire accepted
+[original executor transitions](goal-04-executor-recovery.md),
+[source publication](goal-04-source-publication.md) and
+[fresh source revalidation](goal-04-source-revalidation.md). Goal 04 is not complete; preserve the entire accepted
 [seven-milestone objective](goal-04.md). Its contract SHA-256 remains
 `339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743`.
 
@@ -32,9 +34,9 @@ this handoff; obtain its identity with Git. The previous published milestone was
 - Remote transport previously used the installed Windows Git executable at
   `/mnt/c/Program Files/Git/cmd/git.exe`, with `-C C:/dev/celetixo`.
   Fetch and preserve remote work; never force-push over contributions.
-- Windows backing storage is nearly full. Reuse the shared target; avoid duplicate
-  build trees/images. No project/programming data deletion is authorized by this
-  implementation task. Stop dedicated fixtures after verification, retaining data.
+- Monitor actual Windows backing space and retain private fixture data. Use one
+  Cargo build at a time and the persistent compact target described below; avoid
+  duplicate build trees/images. Stop dedicated fixtures after verification.
 
 ## What exists and what does not
 
@@ -51,8 +53,8 @@ native lifecycle/commit recovery. The source SQL profile now implements captured
 source lifecycle through evidence receipts; the [mutation journal](goal-04-mutation-recovery.md)
 adds original transaction/repository/admin outcomes with schema v5. The
 [executor extension](goal-04-executor-recovery.md) adds all four keyed executor
-transitions with schema v6. Source revision commit/revalidation and full Goal 04
-acceptance remain pending. Its shared schema and
+transitions with schema v6. Source revision commit and fresh source revalidation now have bounded SQL
+validation with schemas v7/v8. Full Goal 04 acceptance remains pending. Its shared schema and
 repository locking, independent restricted runtime/admin logins and checked
 publication protocol are the starting point for the remaining SQL integration.
 
@@ -66,8 +68,8 @@ as complete source recovery. All remaining 04.1–04.7 requirements still apply.
 The original 04.1f-to-native integration tasks are now covered by 04.1g/04.1h.
 Continue the entire accepted goal from these remaining gates:
 
-1. Continue from the verified [source SQL lifecycle](goal-04-source-sql-authority.md)
-   through source prepared commit/revalidation. Preserve every
+1. Continue from verified [source publication](goal-04-source-publication.md) and
+   [fresh source revalidation](goal-04-source-revalidation.md). Preserve every
    original request/result, historical definition, source attempt/event, receipt,
    grant and artifact association. The source integration checks, rather than
    native-only regressions or memory reconstruction, establish its bounded SQL
@@ -77,7 +79,7 @@ Continue the entire accepted goal from these remaining gates:
    administrative and all four executor transitions now have typed original-outcome
    paths. Preserve fresh executor validation and independent launch/workspace
    recovery; an old claim result cannot authorize another launch. Use a new
-   migration after published schema v6; never edit an applied or published checksum.
+   migration after published schema v8; never edit an applied or published checksum.
 3. Extend multi-instance source commit, authorization/index/policy/evidence/fence
    rechecks and fault recovery; retain atomic history/head/outcome/outbox and exact
    original requests. Expand independent generated histories and shrinking against
@@ -99,31 +101,32 @@ production identity services remain pending and need their own implementation/ev
 
 ## Local verification resources
 
-Use one Cargo invocation at a time with the previously validated local environment:
+Use one Cargo invocation at a time with the validated compact test profile:
 
 ```sh
-CARGO_INCREMENTAL=0 CARGO_TARGET_DIR=/mnt/c/dev/celetixo/target \
+CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0 \
+CARGO_TARGET_DIR="$HOME/.local/share/celetixo-goal04/cargo-fast-target" \
+CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 \
 CRATE_CC_NO_DEFAULTS=1 CFLAGS='-target x86_64-linux-gnu -fPIC' \
-cargo test --workspace --locked --offline
+cargo test --workspace --all-targets --locked --offline
 ```
 
-Read the [Linux T1 runbook](../operations/local-linux-t1-runbook.md) before operating
-its execution profile. Private tools are under
-`/home/emiloart/.local/share/celetixo-goal03`; the source-bound validation records
-name their exact hashes. The private Goal 04 validation directory retains command
-runners, source manifests and preservation metadata outside the public repository.
+This disables debug symbols, retaining debug assertions and overflow checks.
+Strict Clippy was also run with the default symbol profile. The
+[fresh revalidation validation](goal-04-source-revalidation-validation/README.md)
+binds the exact final sources, commands and selected PostgreSQL parents.
 
-The dedicated PostgreSQL fixture is under
-`/home/emiloart/.local/share/celetixo-goal04/pg17-ci`.
-`connection-source-sql.json` selects the new source/native schema-v4 validation
-database. Earlier draft-v4 databases and their checksum ledgers remain retained;
-do not reuse them with different migration bytes. `connection-lifecycle.json`
-selects the previous schema-v3 native validation database;
-`connection.json` selects an older unpublished-v2 development database whose
-checksum mismatch is intentional and preserved. Never rewrite that ledger.
-Configuration/credential files are private: do not print their contents or place
-credential values in arguments, logs, environment or Git. Fixture start/verify/stop
-is through `scripts/goal04/postgres_fixture.py --help`; no automatic image pulls.
+Read the [Linux T1 runbook](../operations/local-linux-t1-runbook.md) before operating
+its execution profile. Private OCI tools are under
+`/home/emiloart/.local/share/celetixo-goal03`. PostgreSQL validation uses the retained
+`pg17-mutation-next` fixture under the private Goal 04 root and the database
+`celetixo_revalidation_0fbc6ed697bb`, selected by its private connection file. Earlier
+source-publication and draft databases/checksum ledgers remain retained. Never
+rewrite those ledgers or apply changed migration bytes to an existing database.
+
+Configuration and credential files are private: never print their contents or
+place values in arguments, logs, environment or Git. Fixture start/verify/stop is
+through `scripts/goal04/postgres_fixture.py --help`; no automatic image pulls.
 The unrelated host PostgreSQL instance must be left alone.
 
 The last complete published parent CI run (04.1e) was

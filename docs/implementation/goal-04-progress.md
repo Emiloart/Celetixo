@@ -1,6 +1,6 @@
 # Goal 04 progress and foundation validation
 
-**Status:** resumed at the user's request on 2026-11-12 from 04.1f (`f1f2b83`). Native SQL authority and source reconstruction are verified. [Source SQL lifecycle through evidence receipts](goal-04-source-sql-authority.md) is verified in the bounded local profile. Its [checks](goal-04-source-sql-validation/checks.json) record 452 workspace tests, 10 actual Linux T1 tests and 45 PostgreSQL groups. Subsequent [mutation recovery](goal-04-mutation-recovery.md) adds original transaction/repository/admin outcomes, followed by [executor recovery](goal-04-executor-recovery.md) with 504 workspace tests, 10 actual Linux T1 tests and all 87 SQL parent cases checked serially in separate processes. [Source publication](goal-04-source-publication.md) now adds source revision commit, checked history and original recovery with 539 workspace tests, 10 actual T1 tests and 15 selected SQL parent cases. Goal 04 and milestone 04.1 remain incomplete.
+**Status:** resumed at the user's request on 2026-11-12 from 04.1f (`f1f2b83`). Native SQL authority and source reconstruction are verified. [Source SQL lifecycle through evidence receipts](goal-04-source-sql-authority.md) is verified in the bounded local profile. Its [checks](goal-04-source-sql-validation/checks.json) record 452 workspace tests, 10 actual Linux T1 tests and 45 PostgreSQL groups. Subsequent [mutation recovery](goal-04-mutation-recovery.md) adds original transaction/repository/admin outcomes, followed by [executor recovery](goal-04-executor-recovery.md) with 504 workspace tests, 10 actual Linux T1 tests and all 87 SQL parent cases checked serially in separate processes. [Source publication](goal-04-source-publication.md) now adds source revision commit, checked history and original recovery with 539 workspace tests, 10 actual T1 tests and 15 selected SQL parent cases. [Fresh source revalidation](goal-04-source-revalidation.md) adds new attempts, current impact, fences and original recovery with 548 workspace tests, 10 actual T1 tests and 14 selected SQL parents. Goal 04 and milestone 04.1 remain incomplete.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -12,13 +12,30 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 
 | Milestone | Current evidence / remaining work |
 |---|---|
-| 04.1 — PostgreSQL state and recovery | **Partial.** [Native SQL authority](goal-04-native-sql-authority.md), [source reconstruction](goal-04-source-recovery.md) and [source SQL lifecycle through receipts](goal-04-source-sql-authority.md). [Original transaction/repository/admin outcomes](goal-04-mutation-recovery.md) and [original executor transitions](goal-04-executor-recovery.md) extend recovery. [Source publication](goal-04-source-publication.md) adds atomic source commits; fresh source revalidation and broader oracle equivalence remain pending. |
+| 04.1 — PostgreSQL state and recovery | **Partial.** [Native SQL authority](goal-04-native-sql-authority.md), [source reconstruction](goal-04-source-recovery.md) and [source SQL lifecycle through receipts](goal-04-source-sql-authority.md). [Original transaction/repository/admin outcomes](goal-04-mutation-recovery.md) and [original executor transitions](goal-04-executor-recovery.md) extend recovery. [Source publication](goal-04-source-publication.md) adds atomic source commits; [fresh revalidation](goal-04-source-revalidation.md) adds complete new epochs and original recovery. Broader source oracle equivalence remains pending. |
 | 04.2 — Multi-instance atomic commit | Partial native implementation in 04.1h: SQL CAS, exact prepared results, process races and local commit-response/crash recovery. Complete source path, broad distributed failure proof and service transport remain pending. |
 | 04.3 — Transactional events | Native commits now insert a stable outbox fact atomically. No cross-service publisher, inbox consumer or real NATS integration yet. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. Existing local Goal 03 storage is unchanged. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
 | 04.7 — End-to-end operational proof | Pending: complete real-service path, multi-instance/fault/security/load tests, backup/restore drills and measured operational baselines. |
+
+## Fresh source revalidation
+
+[Fresh revalidation](goal-04-source-revalidation.md) replaces an owned live source
+reservation with a new fence and numbered attempt using current complete analysis
+and policy. New work requires an explicit patch and fresh checks. Old workers and
+evidence cannot authorize the new attempt. Original typed replies recover without
+renewing authority. Schema v8 preserves every published v1–v7 migration.
+
+[Checks](goal-04-source-revalidation-validation/checks.json) bind one frozen source
+set to 548 ordinary workspace tests, 14 selected SQL parents and 10 actual Linux
+T1 cases. SQL scenarios include independent processes racing one original result,
+process death before/after commit, final-time expiry, immutable forced-RLS context
+and v7 upgrade rollback. A graceful PostgreSQL restart preserved 256 logical rows
+across 60 scoped tables for a committed transaction with two source epochs.
+This is a bounded local proof. Full source generated-history equivalence and the
+remaining seven-milestone service/operational contract stay active.
 
 ## Source revision publication
 
@@ -574,13 +591,14 @@ readiness, whole-goal completion or service-level performance claim is made.
 
 ## Next implementation boundary
 
-The [source SQL lifecycle](goal-04-source-sql-authority.md) integrates normalized
-source state through receipts. Continue with source prepared commit/revalidation,
-exact durable request identities for every externally retriable mutation, and
-broader generated-history equivalence. Preserve historical definitions, original
-requests and independently checked evidence, and keep artifact I/O outside SQL
-transactions with current authority rechecked afterward.
+Source publication and fresh source revalidation are implemented in the bounded
+PostgreSQL profile. Complete the remaining 04.1/04.2 acceptance audit against the
+original contract, with generated source histories and an independently
+structured oracle where still missing. Preserve exact outcomes, authorization,
+semantic dependencies, fresh evidence, fencing and atomic history/head/outbox.
 
-The subsequent gate is equivalence with the independently structured reference
-oracle plus process restart, grant/policy revocation, lease expiry/fencing and
-complete source-attempt recovery tests. Only then can 04.1 be marked complete.
+Then implement the remaining typed service, event, workflow, object-store and
+analytics/shared-service integration and execute the complete 04.7 failure,
+security, backup/restore and load programme. The seven milestones in
+[Goal 04](goal-04.md) remain the full objective; the validation records above do
+not mark any unverified requirement complete.

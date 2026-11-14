@@ -134,6 +134,7 @@ fn original_source_analysis_requests_preserve_their_own_unregistered_bindings() 
                 lease_events_before: 0,
                 source_execution: None,
                 source_commit: None,
+                source_revalidation: None,
                 administration: None,
                 outcome,
             },
@@ -296,6 +297,7 @@ fn original_repository_codecs_preserve_invalid_models_and_require_no_transaction
             lease_events_before: 0,
             source_execution: None,
             source_commit: None,
+            source_revalidation: None,
             administration: None,
             outcome,
         };

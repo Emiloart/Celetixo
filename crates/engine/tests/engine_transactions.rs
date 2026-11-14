@@ -257,6 +257,36 @@ fn compatible_same_snapshot_transactions_require_fresh_attempt_evidence_and_pres
         h.commit("b", "old-b"),
         Err(EngineError::RevalidationRequired { .. })
     ));
+    let unchanged = h
+        .engine
+        .attempts(&h.worker, &h.scope, &transaction("b"))
+        .unwrap();
+    let rejected = EngineError::IllegalTransition {
+        from: TransactionState::RevalidationRequired,
+        to: TransactionState::Analyzed,
+    };
+    assert_eq!(
+        h.engine.analyze(&h.worker, &h.scope, &transaction("b")),
+        Err(rejected.clone())
+    );
+    let original = h
+        .engine
+        .mutate(
+            &h.worker,
+            &h.scope,
+            key("generic-analyze-is-not-revalidation"),
+            celetixo_engine::engine::MutationRequest::Analyze {
+                transaction: transaction("b"),
+            },
+        )
+        .unwrap();
+    assert_eq!(original.outcome, Err(rejected));
+    assert_eq!(
+        h.engine
+            .attempts(&h.worker, &h.scope, &transaction("b"))
+            .unwrap(),
+        unchanged
+    );
     let bindings = h
         .engine
         .revalidate(&h.worker, &h.scope, &transaction("b"))

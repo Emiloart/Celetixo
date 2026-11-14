@@ -115,6 +115,7 @@ fn original_policy_codec_keeps_full_definitions_and_rejects_truncation_and_subst
                 lease_events_before: 0,
                 source_execution: None,
                 source_commit: None,
+                source_revalidation: None,
                 administration: None,
                 outcome,
             },

@@ -3,7 +3,8 @@
 **Status:** validated bounded Engine/PostgreSQL source publication and original
 outcome recovery. [Checks](goal-04-source-publication-validation/checks.json) record
 539 workspace tests, 10 actual Linux T1 tests and 15 selected PostgreSQL parent
-cases. Fresh source revalidation and complete milestones 04.1/04.2 remain pending.
+cases. [Fresh source revalidation](goal-04-source-revalidation.md) was implemented and
+validated subsequently. Complete milestones 04.1/04.2 remain pending.
 Published source application, admission, evidence and native request formats are
 unchanged.
 
@@ -120,12 +121,14 @@ development runs remain retained separately from the passing final checks.
 
 ## Remaining implementation
 
-- Multiple transaction attempts with fresh source revalidation, patch adaptation
-  and new verification evidence; old patches/evidence cannot satisfy a new attempt.
+- [Fresh source revalidation](goal-04-source-revalidation.md) now implements multiple
+  attempts and requires new patches/checks. Automatic patch adaptation and
+  evidence-equivalence reuse remain unimplemented.
 - Independent-process races and generated-history oracle equivalence for the
   complete source commit/revalidation path.
-- Complete final workspace, real SQL and execution acceptance evidence for that
-  source capability, followed by its own verified human-attributed commit/push.
+- Complete remaining 04.1/04.2 acceptance and distributed service/operational gates.
+  This publication milestone has its own verified commit; its historical checks
+  remain unchanged by the subsequent revalidation record.
 
 Checks for this implementation are recorded separately
 from the published [executor recovery evidence](goal-04-executor-recovery.md).

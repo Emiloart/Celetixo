@@ -12,6 +12,8 @@ use celetixo_execution::artifacts::{ArtifactStoreLimits, LocalSourceArtifactStor
 mod mutations;
 #[path = "publication.rs"]
 mod publication;
+#[path = "revalidation.rs"]
+mod revalidation;
 
 fn element() -> ElementId {
     ElementId::new("symbol:main").unwrap()

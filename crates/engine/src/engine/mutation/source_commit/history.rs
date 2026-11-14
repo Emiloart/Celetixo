@@ -120,7 +120,9 @@ pub(super) fn at_observation(
     Ok(historical)
 }
 
-fn observed_lease(tx: &Transaction) -> Result<Option<Lease>, RestoreError> {
+pub(in crate::engine::mutation) fn observed_lease(
+    tx: &Transaction,
+) -> Result<Option<Lease>, RestoreError> {
     let Some(start) = tx
         .lease_history
         .iter()

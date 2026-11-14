@@ -32,6 +32,7 @@ impl Engine {
         if !analysis.is_complete() {
             return Err(EngineError::IncompleteAnalysis);
         }
+        validate_publication_capture(db, scope, &policy, &repo.current)?;
         policy
             .validate_snapshot(&repo.current)
             .map_err(SourceAttemptError::from)?;
@@ -81,4 +82,24 @@ impl Engine {
         db.source_policies.insert(scope.clone(), policy);
         Ok(digest)
     }
+}
+
+/// Raw manifest provenance cannot authorize a derived capture. Only an exact
+/// source receipt already published through the authoritative journal can.
+pub(super) fn validate_publication_capture(
+    db: &Database,
+    scope: &Scope,
+    policy: &SourceExecutionPolicy,
+    snapshot: &Snapshot,
+) -> Result<(), EngineError> {
+    if policy.input().capture.consistency
+        != crate::source_execution::SourceCaptureConsistency::EnginePublication
+    {
+        return Ok(());
+    }
+    let repo = db.repositories.get(scope).ok_or(EngineError::NotFound)?;
+    if !repo.history.iter().any(|change|change.revision==snapshot.revision())
+        || !db.mutations.iter().any(|((s,_),record)|s==scope && matches!(&record.outcome,Ok(MutationValue::SourceCommitted(receipt)) if receipt.publication_snapshot==snapshot.id() && receipt.digest()==policy.input().capture.capture_policy))
+    {return Err(SourceAttemptError::Plan(SourcePlanError::IncompleteCapture).into())}
+    Ok(())
 }

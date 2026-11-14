@@ -56,6 +56,9 @@ fn load_base(
             "source_evidence_objects",
             "source_commit_mutations",
             "source_committed_changes",
+            "source_revalidation_mutations",
+            "source_revalidation_leases",
+            "source_revalidation_sources",
         ][..]
     } else {
         &[

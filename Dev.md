@@ -240,9 +240,14 @@ outcomes. Reconcile a lost response with the same scoped actor, key and full
 original request; a diagnostic state view or a new request body is insufficient.
 Historical replies do not renew authority. The [executor extension](docs/implementation/goal-04-executor-recovery.md)
 adds keyed claim/patch/verification/finish results with additive schema v6. A
-replayed claim never authorizes materialization or another launch. Source prepared
-commit/revalidation and remaining Goal 04 acceptance gates stay pending. Published
-schema migrations 0001–0006 are immutable; subsequent changes require a new migration.
+replayed claim never authorizes materialization or another launch.
+[Source publication](docs/implementation/goal-04-source-publication.md) adds atomic
+prepared source commit with schema v7.
+[Fresh source revalidation](docs/implementation/goal-04-source-revalidation.md) adds
+new source attempts, recomputed impact, fenced reservation replacement and exact
+original recovery with schema v8. Old patches and evidence cannot satisfy a new
+attempt. Remaining Goal 04 acceptance gates stay pending. Published schema
+migrations 0001–0008 are immutable; subsequent changes require a new migration.
 
 ### Phase 7 — Real worker integration and evaluation
 

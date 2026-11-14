@@ -1,0 +1,814 @@
+{
+  "kind": "Local fresh source revalidation validation; not full Goal 04 acceptance or Engine-admitted evidence",
+  "date": "2026-11-14T09:17:57.231718+00:00",
+  "parent_commit": "64dd7ef6887f907d9c2ef8b7d15f40747b7f7c5f",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "cargo": "cargo 1.94.1 (29ea6fb6a 2026-03-24)",
+  "goal_contract_sha256": "339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743",
+  "migration_sha256": {
+    "0001_authority.sql": "aacc58cc8cf70224b8343074b68aafbebb57350cf5d963e4ddc0de296c091647",
+    "0002_lifecycle_reconstruction.sql": "99789c46e55a38cd2f54e7433f58c7c5d12351a6a724e0dd9482b38d646a5d8e",
+    "0003_native_lifecycle.sql": "607423e4399f40bcc95161983e64e1ca7922880e49277216eebde62033d99640",
+    "0004_source_lifecycle.sql": "27f8a7f8824ca3b87e978810dcf1af9dd6bdda3a0a5029491644e72789a1ed27",
+    "0005_mutation_recovery.sql": "cb36137693cf89d37b9ba13bad09cd28e667a69005348eae414fceb7e22cb60e",
+    "0006_source_executor_mutations.sql": "18128aba1e1bed29e48f949ca3a8aa3b567f7af4a775217bc2b5880d2e5db561",
+    "0007_source_publication.sql": "829161164fdb5d9c967a1926a0782412df872282a4e1c9f8220268cf5c04c5c8",
+    "0008_source_revalidation.sql": "0fbc6ed697bb88857739e46079f932d0ed055ef8f6ff6f6bb7b6f8f8cb457c82"
+  },
+  "published_migrations_0001_through_0007_unchanged": true,
+  "workspace": {
+    "passed": 548,
+    "ignored": 114
+  },
+  "linux_t1": {
+    "passed": 10,
+    "ignored": 0
+  },
+  "postgres": {
+    "passed_parent_cases": 14,
+    "full_suite_rerun": false,
+    "cases": [
+      {
+        "case": "source_authority::lifecycle::revalidation::source_revalidation_reopens_fresh_epoch_rejects_late_evidence_and_publishes_fresh_checks",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "source_authority::lifecycle::revalidation::source_revalidation_reopens_fresh_epoch_rejects_late_evidence_and_publishes_fresh_checks",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 52.535,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "3deb6476f0107ee4136242b3661c692e4954a0331f52feced3ef3a96d78c2c64"
+      },
+      {
+        "case": "source_authority::lifecycle::revalidation::source_revalidation_process_crashes_roll_back_or_recover_one_original_epoch",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "source_authority::lifecycle::revalidation::source_revalidation_process_crashes_roll_back_or_recover_one_original_epoch",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 44.862,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "efa7305a84b17aeda5158078f0795c82fd46ad6284705cdc4e68762c1b92ce0c"
+      },
+      {
+        "case": "source_authority::lifecycle::revalidation::source_revalidation_processes_share_exactly_one_original_result_and_reservation",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "source_authority::lifecycle::revalidation::source_revalidation_processes_share_exactly_one_original_result_and_reservation",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 19.254,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "16818eb2629043d2ba1ec63e2c479e9ba86cdf745849b24b3bfafb4615122cee"
+      },
+      {
+        "case": "source_authority::lifecycle::revalidation::final_database_time_rejects_revalidation_after_the_original_lease_expires",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "source_authority::lifecycle::revalidation::final_database_time_rejects_revalidation_after_the_original_lease_expires",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 24.158,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "f8c5b18e1b3ed6a80e31952bf95cb4c3e0218ace6ad0c7b2189a8e1adbbd67ac"
+      },
+      {
+        "case": "source_authority::lifecycle::revalidation::source_revalidation_contexts_are_immutable_forced_rls_and_required_for_checked_recovery",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "source_authority::lifecycle::revalidation::source_revalidation_contexts_are_immutable_forced_rls_and_required_for_checked_recovery",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 12.367,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "e95e501134c1505bcb30c5afd2ad65f2916726ece59e7bcc9673bc121642a989"
+      },
+      {
+        "case": "source_authority::migration::v7_source_revalidation_upgrade_preserves_published_rows_and_rolls_back_failures",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "source_authority::migration::v7_source_revalidation_upgrade_preserves_published_rows_and_rolls_back_failures",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 2.085,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "d5aee0ec3e112c807797db221cae87ed9b539af97be7273bf210905951f0878a"
+      },
+      {
+        "case": "source_authority::lifecycle::publication::source_publication_atomically_reopens_history_result_head_and_outbox",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "source_authority::lifecycle::publication::source_publication_atomically_reopens_history_result_head_and_outbox",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 21.967,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "5f1ccb8f3b67bcb1f26acea76178ca0cb13c6c11d89651b0bb5fa94e33d1510e"
+      },
+      {
+        "case": "source_authority::lifecycle::publication::checks::independent_engine_instances_publish_one_revision_and_one_original_result",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "source_authority::lifecycle::publication::checks::independent_engine_instances_publish_one_revision_and_one_original_result",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 24.48,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "db777f7c67459c4dda95f9f75dd8a776078a48f032d553191517dfb48330923d"
+      },
+      {
+        "case": "native_authority::mutations::upgrade::v5_original_mutation_upgrade_preserves_rows_and_rolls_back_errors_and_process_death",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "native_authority::mutations::upgrade::v5_original_mutation_upgrade_preserves_rows_and_rolls_back_errors_and_process_death",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 2.164,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "38029d95e9d33d189ea0e8ff86b97a7f37f447b261f6d44718660b6f84285a7b"
+      },
+      {
+        "case": "native_authority::native_independent_processes_race_and_recover_without_duplicate_revision",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "native_authority::native_independent_processes_race_and_recover_without_duplicate_revision",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 59.933,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "525d97097f7717b1c38b9795edd07c3a4686455e28cd9dfd54aebd5dd0bc2544"
+      },
+      {
+        "case": "v1_upgrade_is_atomic_preserves_data_and_rejects_incomplete_or_future_history",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "v1_upgrade_is_atomic_preserves_data_and_rejects_incomplete_or_future_history",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 2.191,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "6754de334bf06821fe74ea9c245b1c03b99fd14b496cb896c4d004b3c1e646ad"
+      },
+      {
+        "case": "migration_checksum_version_skew_and_concurrent_migrators_fail_closed",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "migration_checksum_version_skew_and_concurrent_migrators_fail_closed",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.575,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "862758c700bb920ae7812477ca6477e19dfb66293f34561c597d62b29a513177"
+      },
+      {
+        "case": "sql_registration_checks_the_new_schema_after_waiting_for_a_migrator",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "sql_registration_checks_the_new_schema_after_waiting_for_a_migrator",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 2.787,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "594103b0f09a5c7349a49aee345f5e820df60a96b9ca009f6120e879a9538582"
+      },
+      {
+        "case": "source_authority::guards::source_unpublished_metadata_and_profile_reinterpretation_are_rejected",
+        "exit_code": 0,
+        "receipt": {
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "celetixo-postgres",
+            "--test",
+            "foundation",
+            "source_authority::guards::source_unpublished_metadata_and_profile_reinterpretation_are_rejected",
+            "--locked",
+            "--offline",
+            "--",
+            "--ignored",
+            "--exact",
+            "--test-threads=1",
+            "--nocapture"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.738,
+          "retained_malformed_artifacts": 0,
+          "periodic_filesystem_sync": true
+        },
+        "log_sha256": "0fcc52c26d202e71ae2484d7ae30995e309d5ae88e40cdb59f1df8f0f4d9c26d"
+      }
+    ],
+    "fixture": "PostgreSQL 17.9, reviewed pinned-image SCRAM Unix-socket fixture, network none, no published ports, restricted runtime roles, fsync/full_page_writes/synchronous_commit/data_checksums on",
+    "checks_use_synthetic_source_execution_evidence": true
+  },
+  "postgres_restart": {
+    "scope_and_receipt": [
+      "pg-source-revalidation-reopen-26811",
+      "workspace",
+      "repository",
+      "454d00edd4169b7fc8d55a6a9a96d7db5bb815900b8d0228d33661d28515b490"
+    ],
+    "scoped_tables": 60,
+    "row_counts": {
+      "inbox": 0,
+      "grants": 2,
+      "outbox": 1,
+      "attempts": 2,
+      "evidence": 1,
+      "policies": 3,
+      "snapshots": 2,
+      "operations": 2,
+      "policy_heads": 1,
+      "repositories": 1,
+      "reservations": 2,
+      "transactions": 1,
+      "attempt_checks": 0,
+      "db_role_scopes": 2,
+      "domain_payloads": 74,
+      "engine_counters": 1,
+      "outbox_delivery": 1,
+      "source_analyses": 2,
+      "source_attempts": 2,
+      "artifact_objects": 0,
+      "engine_mutations": 2,
+      "repository_heads": 1,
+      "access_provenance": 12,
+      "artifact_contents": 14,
+      "committed_changes": 0,
+      "evidence_receipts": 1,
+      "grant_permissions": 10,
+      "source_rejections": 0,
+      "artifact_locations": 14,
+      "engine_model_heads": 1,
+      "reservation_claims": 0,
+      "reservation_events": 4,
+      "reservation_fences": 1,
+      "artifact_references": 15,
+      "transaction_outcomes": 1,
+      "source_attempt_events": 10,
+      "source_executor_tiers": 1,
+      "source_policy_catalog": 3,
+      "authority_publications": 24,
+      "source_attempt_contexts": 2,
+      "source_attempt_outcomes": 2,
+      "source_attempt_policies": 2,
+      "source_commit_mutations": 1,
+      "source_evidence_objects": 15,
+      "source_rejection_events": 0,
+      "source_check_definitions": 1,
+      "source_committed_changes": 1,
+      "source_admission_contexts": 2,
+      "source_operation_contexts": 2,
+      "source_rejection_contexts": 0,
+      "source_unprepared_commits": 0,
+      "reference_evidence_signers": 0,
+      "source_cleanup_definitions": 0,
+      "source_policy_dependencies": 9,
+      "source_revalidation_leases": 1,
+      "source_executor_definitions": 1,
+      "source_revalidation_sources": 1,
+      "artifact_store_registrations": 1,
+      "reference_evidence_admissions": 0,
+      "source_revalidation_mutations": 1
+    },
+    "rows_sha256": "8ebf8283ab4940953007647b6be0b2b2fc64810c45c55920a9efd85c97408909",
+    "logical_rows": 256,
+    "database": "celetixo_revalidation_0fbc6ed697bb",
+    "actual_database_process_restart": true,
+    "all_scoped_rows_preserved": true,
+    "graceful_restart_not_host_loss": true
+  },
+  "source_unchanged": true,
+  "frozen_source_files": 282,
+  "test_build_environment": {
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC"
+  },
+  "debug_assertions_and_overflow_checks_enabled": true,
+  "checks": [
+    {
+      "name": "clippy",
+      "receipt": {
+        "command": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--offline",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 29.692,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "beae8e9d9077b3a82b523ffce3e77dcb1d60b8a070f568d3979e64a105833c1c",
+      "profile": "default dev/test debug symbols; same frozen sources"
+    },
+    {
+      "name": "workspace",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--offline"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 196.397,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "e266e8481cb340691f263f69574db4356af79af44dce13a15c0978867c5e2463"
+    },
+    {
+      "name": "sql",
+      "command": [
+        "/usr/bin/python3",
+        "/home/emiloart/.local/share/celetixo-goal04/validation/source-sql/source-revalidation-final-v2/run-sql.py"
+      ],
+      "receipt": {
+        "command": [
+          "/usr/bin/python3",
+          "/home/emiloart/.local/share/celetixo-goal04/validation/source-sql/source-revalidation-final-v2/run-sql.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 273.23,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "a732cd0094e735fac3ca287023ae496acda9d2106d4bb3bcf3248c07124a084c"
+    },
+    {
+      "name": "t1",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "-p",
+        "celetixo-execution",
+        "--test",
+        "oci",
+        "--test",
+        "source_flow",
+        "--",
+        "--ignored",
+        "--test-threads=1"
+      ],
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "celetixo-execution",
+          "--test",
+          "oci",
+          "--test",
+          "source_flow",
+          "--",
+          "--ignored",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 105.497,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "838d7300c84f14db4f8901ff559a1245d0134995bd1718f7a0a81b4019fdf0c6"
+    },
+    {
+      "name": "examples",
+      "command": [
+        "cargo",
+        "build",
+        "--workspace",
+        "--examples",
+        "--locked",
+        "--offline"
+      ],
+      "receipt": {
+        "command": [
+          "cargo",
+          "build",
+          "--workspace",
+          "--examples",
+          "--locked",
+          "--offline"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 5.723,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "a30f27dfeda1ff33c69aa594068216e388e3c8c88469b21d34558c56b81e1ad7"
+    },
+    {
+      "name": "reference-example",
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "--offline",
+        "-p",
+        "celetixo-engine",
+        "--example",
+        "concurrent_transactions"
+      ],
+      "receipt": {
+        "command": [
+          "cargo",
+          "run",
+          "--locked",
+          "--offline",
+          "-p",
+          "celetixo-engine",
+          "--example",
+          "concurrent_transactions"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.708,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "ed57594819efb3083e9bb22f07b70492bf4dab9c85b026bb3cb0bd6d29f79616"
+    },
+    {
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "receipt": {
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 1.786,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "workflows",
+      "command": [
+        "python3",
+        ".github/scripts/check-workflows.py",
+        "--offline"
+      ],
+      "receipt": {
+        "command": [
+          "python3",
+          ".github/scripts/check-workflows.py",
+          "--offline"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.194,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "0e516b46b7afa0af0b7ab175684692544002bc76756ecfd8b9222a25f89a6214"
+    },
+    {
+      "name": "protocol",
+      "command": [
+        "python3",
+        "scripts/protocol/check.py"
+      ],
+      "receipt": {
+        "command": [
+          "python3",
+          "scripts/protocol/check.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.102,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "426789bbf53c7b28489a14e3c853965a37e8c5c3fef91e2a8b9b7e2f83d9c00b"
+    },
+    {
+      "name": "protocol-mutations",
+      "command": [
+        "python3",
+        "-O",
+        "scripts/protocol/test_compatibility.py"
+      ],
+      "receipt": {
+        "command": [
+          "python3",
+          "-O",
+          "scripts/protocol/test_compatibility.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.674,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "473fbc0ef3b0966f5f5e134e01ed79ab298feb969d9a259ec8090cf003b637b3"
+    },
+    {
+      "name": "attribution-fixtures",
+      "command": [
+        "bash",
+        ".github/scripts/test-commit-attribution.sh"
+      ],
+      "receipt": {
+        "command": [
+          "bash",
+          ".github/scripts/test-commit-attribution.sh"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 1.093,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "6b68cd2c326a78e894c5e997a6268508fa5c0b42deeef070489208f9300940ca"
+    },
+    {
+      "name": "benchmark-summary",
+      "command": [
+        "python3",
+        ".github/scripts/test-goal03-benchmark-summary.py"
+      ],
+      "receipt": {
+        "command": [
+          "python3",
+          ".github/scripts/test-goal03-benchmark-summary.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 15.305,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "37082f10ef8e56c331f59365fb6a759ca7425f8f3068ab9074c33bbb03a170e2"
+    },
+    {
+      "name": "diff",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "receipt": {
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.293,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "published_log_sha256": "8d0c4165dce51fd115d7b2ac1447e1ccd04b30a791f253b9271e656d7999def7",
+  "log_normalization": "Private workspace/cache prefixes replaced and trailing whitespace removed; individual receipt hashes identify retained original raw logs.",
+  "unrun": [
+    "Full PostgreSQL opt-in suite",
+    "Actual rust-analyzer probe (unchanged integration)",
+    "Hosted CI for this revision",
+    "Full source generated-history independent oracle programme",
+    "NATS, Temporal, S3, ClickHouse, production transport, host-loss/failover, backup/restore and load acceptance"
+  ],
+  "development_failures": "Retained private development logs record corrected wiring/fixture errors, missing SQL accepted-outcome projection, retryable authentication contention, lint failures, and interrupted resource-limited builds. These were not counted as passes. Only the frozen final source set above supplies passing milestone evidence."
+}
