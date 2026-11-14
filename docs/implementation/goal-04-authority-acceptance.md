@@ -47,7 +47,11 @@ The separate optional committed-tree repository inspector was interrupted after
 as passing. Exact reviewed-input rejection/admission regressions and a complete
 public-file audit passed with the unchanged default credential policy.
 
-## Remaining Goal 04 work
+The subsequent [04.2 acceptance audit](goal-04-commit-acceptance.md) adds source
+process histories and a separate serial interpreter. The original 04.1 checks
+and their scope remain unchanged.
+
+## Remaining Goal 04 work at this audit
 
 04.2 still requires complete source independent-process commit races and broader
 generated-history equivalence through source commit/revalidation. Existing native

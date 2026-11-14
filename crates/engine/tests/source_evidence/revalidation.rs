@@ -4,6 +4,10 @@ use super::*;
 use celetixo_engine::engine::authority::{AuthorityState, SourceRecords};
 use celetixo_engine::persistence::*;
 
+#[path = "../support/source_history_model.rs"]
+mod history_model;
+use history_model::History;
+
 fn key(value: &str) -> IdempotencyKey {
     IdempotencyKey::new(value).unwrap()
 }
@@ -75,6 +79,25 @@ fn start(h: &Harness, name: &str, path: &str, element: ElementId) -> Attempt {
     run(h, &transaction, path, &format!("{name}-source-0"))
 }
 fn run(h: &Harness, transaction: &TransactionId, path: &str, id: &str) -> Attempt {
+    run_bytes(
+        h,
+        transaction,
+        path,
+        id,
+        if path == "src/main.rs" {
+            b"new".to_vec()
+        } else {
+            b"new-z".to_vec()
+        },
+    )
+}
+fn run_bytes(
+    h: &Harness,
+    transaction: &TransactionId,
+    path: &str,
+    id: &str,
+    bytes: Vec<u8>,
+) -> Attempt {
     let context = h
         .engine
         .source_patch_context(&h.owner, &scope(), transaction)
@@ -99,15 +122,7 @@ fn run(h: &Harness, transaction: &TransactionId, path: &str, id: &str) -> Attemp
                     .unwrap(),
             )
             .unwrap(),
-            entry: PatchEntry::file(
-                if path == "src/main.rs" {
-                    b"new".to_vec()
-                } else {
-                    b"new-z".to_vec()
-                },
-                FileMode::Regular,
-            )
-            .unwrap(),
+            entry: PatchEntry::file(bytes, FileMode::Regular).unwrap(),
         }],
     )
     .unwrap();
@@ -935,4 +950,255 @@ fn original_transaction_mutations_recover_after_fresh_source_epoch_and_commit() 
         SourceAttemptState::RevalidationRequired
     );
     checked(&h);
+}
+
+fn history_element(index: usize) -> ElementId {
+    if index == 0 {
+        element()
+    } else {
+        ElementId::new("file:z").unwrap()
+    }
+}
+fn history_path(index: usize) -> &'static str {
+    if index == 0 {
+        "src/main.rs"
+    } else {
+        "src/z.rs"
+    }
+}
+fn history_accesses(history: History, index: usize) -> AccessSet {
+    let other = history_element(1 - index);
+    AccessSet {
+        writes: [history_element(index)].into(),
+        reads: if history.explicit_read(index) {
+            [other.clone()].into()
+        } else {
+            BTreeSet::new()
+        },
+        invariant_scopes: if history.scope(index) {
+            [other.clone()].into()
+        } else {
+            BTreeSet::new()
+        },
+        predicates: if history.predicate(index) {
+            [celetixo_engine::access::Predicate::Prefix(
+                other.as_str().into(),
+            )]
+            .into()
+        } else {
+            BTreeSet::new()
+        },
+    }
+}
+fn check_history_footprint(history: History, index: usize, accesses: &AccessSet) {
+    assert_eq!(accesses.writes, [history_element(index)].into());
+    assert_eq!(
+        accesses.reads,
+        history
+            .reads(index)
+            .into_iter()
+            .enumerate()
+            .filter(|(_, read)| *read)
+            .map(|(i, _)| history_element(i))
+            .collect()
+    );
+    assert_eq!(
+        accesses.invariant_scopes,
+        history_accesses(history, index).invariant_scopes
+    );
+}
+fn run_source_history(history: History) {
+    let mut h = Harness::configured(true);
+    let old = records(&h);
+    let original = &old.analyses[&old.analysis_head.unwrap()];
+    let analysis = RepositoryAnalysis::new(
+        &h.base,
+        RepositoryAnalysisInput {
+            index_generation: d(&format!("source-history-{}", history.flags)),
+            analyzer_version: "finite-source-history/v1".into(),
+            configuration: d("source-history-config"),
+            elements: original.elements().clone(),
+            dependencies: (0..2)
+                .filter(|consumer| history.edge(*consumer, 1 - consumer))
+                .map(|consumer| {
+                    (
+                        history_element(consumer),
+                        [history_element(1 - consumer)].into(),
+                    )
+                })
+                .collect(),
+            checks: original.checks().clone(),
+            gaps: BTreeSet::new(),
+        },
+    )
+    .unwrap();
+    h.engine
+        .install_repository_analysis(&h.owner, &scope(), original.digest(), analysis)
+        .unwrap();
+    fresh_policy(&mut h);
+    let mut attempts = Vec::new();
+    for index in 0..2 {
+        let id = TransactionId::new(format!("history-{index}")).unwrap();
+        h.engine
+            .propose(
+                &h.owner,
+                &scope(),
+                id.clone(),
+                h.base.id(),
+                TransactionIntent {
+                    objective: "generated finite source history".into(),
+                    accesses: history_accesses(history, index),
+                    invariants: vec![],
+                    required_checks: vec![h.policy.checks()[&cid()].input().check.clone()],
+                    depends_on: BTreeSet::new(),
+                },
+            )
+            .unwrap();
+        h.engine.analyze(&h.owner, &scope(), &id).unwrap();
+        h.engine.reserve(&h.owner, &scope(), &id, 900).unwrap();
+        h.engine.execute(&h.owner, &scope(), &id).unwrap();
+        let a = run_bytes(
+            &h,
+            &id,
+            history_path(index),
+            &format!("history-{index}-old"),
+            history.output(index, [1, 2]).to_string().into_bytes(),
+        );
+        let bundle = seal(&h, &a);
+        let commit = prepare_commit(&h, &a, &format!("history-{index}-commit-old"));
+        check_history_footprint(
+            history,
+            index,
+            &records(&h).base.transactions[&id].attempts[0]
+                .effective
+                .clone()
+                .unwrap(),
+        );
+        attempts.push((a, bundle, commit));
+    }
+    let [first, second] = history.order();
+    let receipt = h
+        .engine
+        .commit_source_prepared(&h.owner, &h.owner, &scope(), attempts[first].2.clone())
+        .unwrap();
+    let stale =
+        h.engine
+            .commit_source_prepared(&h.owner, &h.owner, &scope(), attempts[second].2.clone());
+    assert!(matches!(
+        stale,
+        Err(EngineError::RevalidationRequired { .. })
+    ));
+    checked(&h);
+    h.base = h.engine.current(&h.owner, &scope()).unwrap();
+    fresh_policy(&mut h);
+    let request = h
+        .engine
+        .prepare_source_revalidation_request(
+            &h.owner,
+            &scope(),
+            &attempts[second].0.transaction,
+            800,
+            key("history-fresh"),
+        )
+        .unwrap();
+    let epoch = h
+        .engine
+        .revalidate_source_prepared(&h.owner, &scope(), request.clone())
+        .unwrap();
+    check_history_footprint(history, second, &epoch.accesses);
+    assert_eq!(epoch.attempt, 1);
+    assert!(epoch.fence > request.fence);
+    let mut values = [1, 2];
+    values[first] = history.output(first, values);
+    let fresh = run_bytes(
+        &h,
+        &attempts[second].0.transaction,
+        history_path(second),
+        "history-fresh-source",
+        history.output(second, values).to_string().into_bytes(),
+    );
+    assert!(h.deliver(&fresh, &attempts[second].1).is_err());
+    seal(&h, &fresh);
+    let commit = prepare_commit(&h, &fresh, "history-fresh-commit");
+    let second_receipt = h
+        .engine
+        .commit_source_prepared(&h.owner, &h.owner, &scope(), commit.clone())
+        .unwrap();
+    checked(&h);
+    let current = h.engine.current(&h.owner, &scope()).unwrap();
+    let files = effective_workspace(&current).unwrap();
+    for (i, value) in history.serial().into_iter().enumerate() {
+        assert_eq!(
+            files[history_path(i)].bytes.as_ref().unwrap(),
+            value.to_string().as_bytes()
+        );
+    }
+    assert_eq!(current.revision(), Revision(2));
+    assert_eq!(
+        h.engine
+            .commit_source_prepared(&h.owner, &h.owner, &scope(), attempts[first].2.clone())
+            .unwrap(),
+        receipt
+    );
+    assert_eq!(
+        h.engine
+            .commit_source_prepared(&h.owner, &h.owner, &scope(), attempts[second].2.clone()),
+        stale
+    );
+    assert_eq!(
+        h.engine
+            .commit_source_prepared(&h.owner, &h.owner, &scope(), commit)
+            .unwrap(),
+        second_receipt
+    );
+    assert_eq!(
+        h.engine
+            .revalidate_source_prepared(&h.owner, &scope(), request)
+            .unwrap(),
+        epoch
+    );
+    checked(&h);
+}
+
+#[test]
+fn generated_source_histories_match_independent_serial_interpreter_with_fresh_epochs() {
+    let mut compatible = 0;
+    let mut conflicting = 0;
+    for seed in 0..48 {
+        let history = History::generated(seed);
+        if history.original_conflict() {
+            conflicting += 1
+        } else {
+            compatible += 1
+        }
+        if std::panic::catch_unwind(|| run_source_history(history)).is_err() {
+            let minimized = history_model::minimize(history, |h| {
+                std::panic::catch_unwind(|| run_source_history(h)).is_err()
+            });
+            panic!(
+                "source history mismatch: seed={seed}, original={history:?}, minimized={minimized:?}"
+            );
+        }
+    }
+    assert!(compatible > 0 && conflicting > 0);
+}
+
+#[test]
+fn source_history_shrinker_preserves_an_injected_stale_read_counterexample() {
+    let history = History { flags: 511 };
+    let stale_read_mismatch = |h: History| {
+        let [first, second] = h.order();
+        let mut values = [1, 2];
+        values[first] = h.output(first, values);
+        h.output(second, [1, 2]) != h.output(second, values)
+    };
+    let minimized = history_model::minimize(history, stale_read_mismatch);
+    assert!(stale_read_mismatch(minimized));
+    assert!(
+        minimized
+            .reductions()
+            .into_iter()
+            .all(|h| !stale_read_mismatch(h))
+    );
+    assert!(minimized.flags.count_ones() < history.flags.count_ones());
 }

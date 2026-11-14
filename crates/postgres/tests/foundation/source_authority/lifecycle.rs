@@ -229,6 +229,9 @@ impl Harness {
         (evidence, envelope)
     }
     pub(super) fn new(label: &str) -> Self {
+        Self::configured(label, false)
+    }
+    fn configured(label: &str, two_files: bool) -> Self {
         let selected = scope(label);
         authorize_source(&mut owner(), &selected);
         let authority = Arc::new(super::authority());
@@ -240,6 +243,24 @@ impl Harness {
                 Permission::ALL.into(),
             )
             .unwrap();
+        let mut inputs = vec![WorkspaceInput {
+            path: "src/main.rs".into(),
+            layer: InputLayer::Base,
+            kind: InputKind::File,
+            mode: FileMode::Regular,
+            bytes: Some(b"old".to_vec()),
+        }];
+        let mut elements: BTreeSet<_> = [element()].into();
+        if two_files {
+            inputs.push(WorkspaceInput {
+                path: "src/z.rs".into(),
+                layer: InputLayer::Base,
+                kind: InputKind::File,
+                mode: FileMode::Regular,
+                bytes: Some(b"old-z".to_vec()),
+            });
+            elements.insert(ElementId::new("symbol:z").unwrap());
+        }
         let base = Snapshot::new(
             selected.clone(),
             Revision(0),
@@ -248,13 +269,7 @@ impl Harness {
                 canonicalization_version: 1,
                 inclusion_policy: InclusionPolicy::complete(),
                 provenance: "celetixo/reference-source/v1".into(),
-                inputs: vec![WorkspaceInput {
-                    path: "src/main.rs".into(),
-                    layer: InputLayer::Base,
-                    kind: InputKind::File,
-                    mode: FileMode::Regular,
-                    bytes: Some(b"old".to_vec()),
-                }],
+                inputs,
                 environment: BTreeMap::new(),
             },
             BTreeMap::new(),
@@ -266,9 +281,12 @@ impl Harness {
                 index_generation: d("index"),
                 analyzer_version: "complete-synthetic/v1".into(),
                 configuration: d("analysis"),
-                elements: [element()].into(),
+                elements: elements.clone(),
                 dependencies: BTreeMap::new(),
-                checks: [(element(), [check_id()].into())].into(),
+                checks: elements
+                    .iter()
+                    .map(|id| (id.clone(), [check_id()].into()))
+                    .collect(),
                 gaps: BTreeSet::new(),
             },
         )
@@ -276,7 +294,7 @@ impl Harness {
         engine
             .register_repository(&owner, base.clone(), analysis.clone())
             .unwrap();
-        let definition = SourceCheckDefinition::new(SourceCheckInput {
+        let mut definition = SourceCheckInput {
             check: CheckSpec::new(
                 check_id(),
                 vec!["/tools/synthetic".into()],
@@ -330,8 +348,11 @@ impl Harness {
             .into(),
             depends_on: BTreeSet::new(),
             failure_policy: FailurePolicy::FailAttempt,
-        })
-        .unwrap();
+        };
+        if two_files {
+            definition.inputs.clear();
+        }
+        let definition = SourceCheckDefinition::new(definition).unwrap();
         let expiry = now() + 600_000;
         let policy = SourceExecutionPolicy::new(SourcePolicyInput {
             version: 1,
@@ -358,7 +379,18 @@ impl Harness {
                     expected_base: Some(Preimage::of(&base.manifest().inputs[0]).unwrap()),
                 },
             )]
-            .into(),
+            .into_iter()
+            .chain(two_files.then(|| {
+                (
+                    "src/z.rs".into(),
+                    SourcePathRule {
+                        allowed_operations: [OperationKind::Replace].into(),
+                        required_writes: [ElementId::new("symbol:z").unwrap()].into(),
+                        expected_base: Some(Preimage::of(&base.manifest().inputs[1]).unwrap()),
+                    },
+                )
+            }))
+            .collect(),
             checks: vec![definition],
             invariants: vec![],
             always_required: BTreeSet::new(),

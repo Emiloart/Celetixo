@@ -52,9 +52,10 @@ metadata before commit. Migrations 0001–0007 remain byte-for-byte unchanged.
 
 Validation includes finite complete analyzer fixtures, not proof of language
 extraction completeness. The implemented deterministic policy always requires
-fresh execution; evidence-equivalence reuse is not implemented. Full generated
-source transaction histories against an independent oracle, all remaining
-04.2 gates and later distributed services/operations remain Goal 04 work.
+fresh execution; evidence-equivalence reuse is not implemented. Finite generated
+source transaction histories are subsequently recorded in the
+[04.2 acceptance audit](goal-04-commit-acceptance.md). Later distributed
+services/operations remain Goal 04 work.
 
 The generic Analyze operation remains restricted to Proposed. The compound
 revalidation operation alone constructs a fresh epoch before analyzing it; merely

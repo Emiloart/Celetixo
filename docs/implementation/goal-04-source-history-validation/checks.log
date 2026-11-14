@@ -1,0 +1,189 @@
+workspace
+running 59 tests
+test result: ok. 59 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+running 5 tests
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+running 9 tests
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+running 23 tests
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+running 5 tests
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 9 tests
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+running 4 tests
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.70s
+running 14 tests
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+running 20 tests
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+running 4 tests
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+running 7 tests
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+running 13 tests
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+running 8 tests
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+running 13 tests
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 4 tests
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+running 37 tests
+test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+running 2 tests
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 69 tests
+test revalidation::source_history_shrinker_preserves_an_injected_stale_read_counterexample ... ok
+test revalidation::generated_source_histories_match_independent_serial_interpreter_with_fresh_epochs ... ok
+test result: ok. 69 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.98s
+running 9 tests
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+running 8 tests
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.18s
+running 17 tests
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+running 3 tests
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+running 16 tests
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+running 3 tests
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 20 tests
+test result: ok. 19 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 2.38s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 14 tests
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+running 13 tests
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+running 17 tests
+test result: ok. 8 passed; 0 failed; 9 ignored; 0 measured; 0 filtered out; finished in 0.03s
+running 1 test
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 107 tests
+test result: ok. 1 passed; 0 failed; 106 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 9 tests
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+running 3 tests
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+running 1 test
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+running 38 tests
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.95s
+running 1 test
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 12 tests
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+running 7 tests
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+running 9 tests
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+running 26 tests
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+running 28 tests
+test result: ok. 27 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.13s
+running 3 tests
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+clippy
+    Checking celetixo-postgres v0.1.0 (<worktree>/crates/postgres)
+    Checking celetixo-engine v0.1.0 (<worktree>/crates/engine)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.17s
+
+
+generated
+   Compiling celetixo-postgres v0.1.0 (<worktree>/crates/postgres)
+    Finished `test` profile [optimized] target(s) in 1m 06s
+     Running tests/foundation.rs (<compact-target>/debug/deps/foundation-31cec42ddbc539bd)
+
+running 1 test
+test source_authority::lifecycle::publication::processes::histories::generated_distinct_source_process_histories_match_independent_serial_interpreter ... source history seed=0, flags=0 starting
+source history seed=0, flags=0 passed
+source history seed=1, flags=1 starting
+source history seed=1, flags=1 passed
+source history seed=2, flags=2 starting
+source history seed=2, flags=2 passed
+source history seed=3, flags=4 starting
+source history seed=3, flags=4 passed
+source history seed=4, flags=8 starting
+source history seed=4, flags=8 passed
+source history seed=5, flags=16 starting
+source history seed=5, flags=16 passed
+source history seed=6, flags=32 starting
+source history seed=6, flags=32 passed
+source history seed=7, flags=64 starting
+source history seed=7, flags=64 passed
+source history seed=8, flags=128 starting
+source history seed=8, flags=128 passed
+source history seed=9, flags=256 starting
+source history seed=9, flags=256 passed
+source history seed=10, flags=6 starting
+source history seed=10, flags=6 passed
+source history seed=11, flags=511 starting
+source history seed=11, flags=511 passed
+source history seed=12, flags=377 starting
+source history seed=12, flags=377 passed
+source history seed=13, flags=22 starting
+source history seed=13, flags=22 passed
+source history seed=14, flags=179 starting
+source history seed=14, flags=179 passed
+source history seed=15, flags=336 starting
+source history seed=15, flags=336 passed
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 106 filtered out; finished in 1154.29s
+
+
+
+race
+    Finished `test` profile [optimized] target(s) in 0.14s
+     Running tests/foundation.rs (<compact-target>/debug/deps/foundation-31cec42ddbc539bd)
+
+running 1 test
+test source_authority::lifecycle::publication::processes::independent_source_commit_processes_recover_one_revision_for_same_or_distinct_keys ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 106 filtered out; finished in 38.02s
+
+
+
+crash
+    Finished `test` profile [optimized] target(s) in 0.13s
+     Running tests/foundation.rs (<compact-target>/debug/deps/foundation-31cec42ddbc539bd)
+
+running 1 test
+test source_authority::lifecycle::publication::processes::source_commit_process_exit_before_or_after_publication_recovers_exact_original_effect ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 106 filtered out; finished in 31.84s
+
+
+
+revalidation
+    Finished `test` profile [optimized] target(s) in 0.09s
+     Running tests/foundation.rs (<compact-target>/debug/deps/foundation-31cec42ddbc539bd)
+
+running 1 test
+test source_authority::lifecycle::revalidation::source_revalidation_reopens_fresh_epoch_rejects_late_evidence_and_publishes_fresh_checks ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 106 filtered out; finished in 27.88s
+
+
+
+fmt
+
+
+diff

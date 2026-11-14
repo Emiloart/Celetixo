@@ -14,7 +14,8 @@ and [04.1i checked source codecs](goal-04-source-codecs.md), followed by
 [fresh source revalidation](goal-04-source-revalidation.md) and
 [independent source commit process proof](goal-04-source-processes.md).
 [Milestone 04.1 is accepted](goal-04-authority-acceptance.md) for the reviewed
-PostgreSQL adapter. Goal 04 is not complete; preserve the entire accepted
+PostgreSQL adapter. [04.2 is accepted](goal-04-commit-acceptance.md) for reviewed
+native/source SQL atomic commit. Goal 04 is not complete; preserve the entire accepted
 [seven-milestone objective](goal-04.md). Its contract SHA-256 remains
 `339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743`.
 
@@ -65,8 +66,7 @@ The bounded native reconstruction rejects captured source state and legacy
 unbound commit records. Existing Goal 03 memory/T1 behavior remains separately
 validated. Do not silently discard unsupported rows or treat partial reconstruction
 as complete source recovery. 04.1 is now accepted for the reviewed adapter;
-the remaining 04.2–04.7
-requirements still apply.
+the remaining 04.3–04.7 requirements still apply.
 
 ## Next implementation work
 
@@ -85,11 +85,11 @@ Continue the entire accepted goal from these remaining gates:
    paths. Preserve fresh executor validation and independent launch/workspace
    recovery; an old claim result cannot authorize another launch. Use a new
    migration after published schema v8; never edit an applied or published checksum.
-3. Extend the verified same-transaction source commit process races/crashes to
-   distinct-source-transaction histories; retain current authorization, semantic,
-   evidence/fence checks and atomic history/head/outcome/outbox with exact original
-   requests. Expand independent generated histories and shrinking against
-   SQL and complete source-path proof before claiming 04.2 accepted.
+3. Preserve the [04.2 atomic commit acceptance](goal-04-commit-acceptance.md):
+   independent-process source histories, separate serial expectations, fresh
+   attempts/checks and original outcome recovery. The public validation record
+   names the exact source and per-check profiles. This does not establish
+   production service/transport or full-goal operations.
 4. Add authenticated versioned service boundaries from canonical Protobuf contracts,
    preserving complete TaskIntent and Rust Engine authority. The reviewed Unix
    embedding profile does not establish production network identity/transport.

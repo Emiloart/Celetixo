@@ -1,16 +1,15 @@
 # Goal 04 progress and foundation validation
 
-**Status:** [Milestone 04.1 is accepted](goal-04-authority-acceptance.md) for the
-reviewed PostgreSQL adapter. Milestone 04.2 is partially implemented; its remaining
-source process/oracle proofs and the later service/operational milestones remain
-open. The complete Goal 04 objective is active.
+**Status:** [04.1 durable state](goal-04-authority-acceptance.md) and
+[04.2 atomic commit](goal-04-commit-acceptance.md) are accepted for the reviewed
+PostgreSQL adapters. Milestones 04.3–04.7 and the complete Goal 04 objective remain
+active and incomplete.
 
-The latest implementation is [independent source commit processes](goal-04-source-processes.md):
-550 ordinary workspace passes, 10 actual Linux T1 cases and two selected SQL
-parents cover same-transaction key races and before/after process-exit recovery.
-The [04.1 acceptance audit](goal-04-authority-acceptance.md) remains separately
-bound to its implementation and 21 selected SQL parents. Earlier bounded records
-remain linked below.
+The latest source-history proof records 552 workspace passes, 48 generated Engine
+source histories and 16 real PostgreSQL histories using independent commit
+processes, plus three related SQL recovery/race parents. Its exact scope and
+unrun checks are in [the final record](goal-04-source-history-validation/checks.json).
+Earlier bounded records remain linked below.
 
 The complete [Goal 04 contract](goal-04.md) remains the objective. It was retrieved
 from `origin/main` at `117479221eb0830fdcab6918ef76a7ed293cabe7` on 2026-11-11;
@@ -23,12 +22,33 @@ Engine authority. ADR-0001–0004 and the existing Goal 01–03 gates remain in 
 | Milestone | Current evidence / remaining work |
 |---|---|
 | 04.1 — PostgreSQL state and recovery | **Accepted for the reviewed PostgreSQL adapter.** [Acceptance audit](goal-04-authority-acceptance.md) maps the original criteria to normalized native/source state, exact outcomes, leases/fences, schema v8, all supported prior upgrades and actual checked restart/reopen. Full Goal 04 remains active. |
-| 04.2 — Multi-instance atomic commit | **Partial.** Native SQL CAS/original outcomes and [source commit process races/crashes](goal-04-source-processes.md) are verified for their named cases. Distinct-source-transaction process histories, broader source oracle equivalence, distributed failure proof and service transport remain pending. |
+| 04.2 — Multi-instance atomic commit | **Accepted for the reviewed PostgreSQL adapters.** [Acceptance audit](goal-04-commit-acceptance.md) maps conditional revision advancement, exact outcomes, independent-process native/source histories and crash ambiguity to actual evidence. Production service/transport and the original full-goal operations programme remain open. |
 | 04.3 — Transactional events | Native commits now insert a stable outbox fact atomically. No cross-service publisher, inbox consumer or real NATS integration yet. |
 | 04.4 — Temporal workflows | Pending: Go workflows/activities, replay, timeout reconciliation, cancellation and worker recovery. |
 | 04.5 — Immutable object storage | Pending: S3 adapter, verified durable admission, scoped authorization, orphan reconciliation and governance/restore. The local writer/format is retained; the reader extension above does not establish S3 storage. |
 | 04.6 — Derived analytics and shared adapters | Pending: real ClickHouse ingestion/rebuild, scoped shared-service lifecycle and integration with the durable path. Existing bounded LSP/T1 capabilities remain as recorded for Goals 02/03. |
 | 04.7 — End-to-end operational proof | Pending: complete real-service path, multi-instance/fault/security/load tests, backup/restore drills and measured operational baselines. |
+
+## Milestone 04.2 acceptance
+
+[The atomic commit audit](goal-04-commit-acceptance.md) evaluates the original
+04.2 criterion. A test-only numeric serial interpreter checks source footprints
+and final file contents independently of Engine analysis/conflict code. Forty-eight
+Engine histories and 16 real SQL histories cover compatible/conflicting original
+work, dependencies/cycles, explicit reads, scopes, predicates and fresh attempts.
+A separate injected stale-read regression checks the shrinker.
+
+[Final checks](goal-04-source-history-validation/checks.json) record all 552
+workspace passes and strict Clippy on the exact frozen sources, followed by the
+complete 16-seed SQL parent, original-key races, pre/post-commit process exit and
+fresh revalidation/cold reopen. The first interrupted SQL run is not a passing
+parent. Per-check build profiles and the later CI-only profile delta are explicit.
+Existing production Rust, canonical protocol and migrations 0001–0008 are unchanged.
+
+The next milestone is the complete 04.3 transactional lifecycle event path with
+real NATS JetStream, scoped authentication, durable publication/inbox recovery,
+replay/redelivery and bounded failure behavior. The original 04.4–04.7 workflow,
+object storage, analytics/shared services and operational proof also remain active.
 
 ## Independent source commit processes
 
@@ -627,15 +647,12 @@ readiness, whole-goal completion or service-level performance claim is made.
 
 ## Next implementation boundary
 
-Source publication and fresh source revalidation are implemented in the bounded
-PostgreSQL profile. [04.1 is accepted](goal-04-authority-acceptance.md) for that
-profile. Complete the remaining 04.2 source independent-process commit races and generated source
-histories against an independently structured oracle. Preserve exact outcomes,
-authorization,
-semantic dependencies, fresh evidence, fencing and atomic history/head/outbox.
+Implement 04.3: canonical lifecycle event contracts, recoverable outbox publication,
+real NATS JetStream, scoped service identity/authorization and idempotent consumers
+with replay, poison handling, backpressure and reconciliation. Publishing an event
+cannot create or reverse a commit. Then continue the original 04.4–04.7 workflow,
+object-store, analytics/shared-service and complete operational programme.
 
-Then implement the remaining typed service, event, workflow, object-store and
-analytics/shared-service integration and execute the complete 04.7 failure,
-security, backup/restore and load programme. The seven milestones in
-[Goal 04](goal-04.md) remain the full objective; the validation records above do
-not mark any unverified requirement complete.
+The [full Goal 04 contract](goal-04.md) remains the objective. Reviewed SQL adapter
+acceptance does not establish production network identity, host-loss/failover,
+backup/restore, load acceptance or the complete integrated platform.

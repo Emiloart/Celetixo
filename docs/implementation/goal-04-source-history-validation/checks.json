@@ -1,0 +1,249 @@
+{
+  "kind": "Generated source-history and bounded atomic commit acceptance validation; not full Goal 04 acceptance",
+  "date": "2026-11-14T11:03:11.130555+00:00",
+  "parent_commit": "ab0c60df8118ce1d57303a050be5b35ad47bec94",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)",
+  "cargo": "cargo 1.94.1 (29ea6fb6a 2026-03-24)",
+  "goal_contract_sha256": "339c328bf93bb512b8f90a8006d3dc07b8ed031399a93c3a3c151f45940b8743",
+  "workspace": {
+    "passed": 552,
+    "ignored": 118
+  },
+  "engine_source_history_seeds": 48,
+  "postgres_source_history_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "selected_postgres_parent_cases": 4,
+  "existing_native_generated_histories": "192 Engine seeds plus independently structured native SQL bitmask histories remain separately validated; the 04.1 audit reran the 16 SQL seeds.",
+  "oracle": "Test-only numeric two-vertex interpreter using transitive reachability matrix and serial value updates; no production analyzer, conflict or publication function supplies its expectations.",
+  "shrinking": "Memory and SQL failures replay reduced feature sets; separate injected stale-read regression validates preservation and one-step minimality.",
+  "production_rust_canonical_protocol_and_migrations_unchanged_from_parent": true,
+  "source_files": 284,
+  "source_unchanged_during_checks": true,
+  "test_environment": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+    "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+    "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true",
+    "CRATE_CC_NO_DEFAULTS": "1",
+    "CFLAGS": "-target x86_64-linux-gnu -fPIC"
+  },
+  "workspace_and_clippy_profile": "Previously completed on this exact frozen source set with CARGO_BUILD_JOBS=1, test/dev debug symbols disabled, default optimization/debug assertions/overflow checks",
+  "separate_check_profiles": "Workspace and Clippy reused only their completed receipts on exactly unchanged source; SQL uses the explicitly recorded optimized profile. Neither interrupted run is counted as passing.",
+  "checks": [
+    {
+      "name": "workspace",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--offline"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 36.757,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "035cb7d5d8fc5a08708c8fe04d34b30fea5c05efd865e7db4d6f7c64628c4a81",
+      "source_binding": "same exact 284 implementation inputs; completed before external interruption; unoptimized test/debug0 profile"
+    },
+    {
+      "name": "clippy",
+      "receipt": {
+        "command": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--offline",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 3.276,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "900a5f9c74d00d350e497e62ae5534626627e575fa1e29de947131b2189ced09",
+      "source_binding": "same exact 284 implementation inputs; completed before external interruption; unoptimized test/debug0 profile"
+    },
+    {
+      "name": "generated",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "source_authority::lifecycle::publication::processes::histories::generated_distinct_source_process_histories_match_independent_serial_interpreter",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 1220.468,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "4637799447ff56554913fa039dcf0ab05da932f7d014219aa773684c68c87cd6"
+    },
+    {
+      "name": "race",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "source_authority::lifecycle::publication::processes::independent_source_commit_processes_recover_one_revision_for_same_or_distinct_keys",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 38.223,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "9d04ead42835b08cd43254afa7d56755bdb14a67920848761bebf3015017d97f"
+    },
+    {
+      "name": "crash",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "source_authority::lifecycle::publication::processes::source_commit_process_exit_before_or_after_publication_recovers_exact_original_effect",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 32.018,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "5351ddf2bcefb91b29a3daaab4dd5298aff901e781fd1d93a334d728202875f6"
+    },
+    {
+      "name": "revalidation",
+      "receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "celetixo-postgres",
+          "--test",
+          "foundation",
+          "source_authority::lifecycle::revalidation::source_revalidation_reopens_fresh_epoch_rejects_late_evidence_and_publishes_fresh_checks",
+          "--locked",
+          "--offline",
+          "--",
+          "--ignored",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 28.029,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "5f5410345cca7e44cc7f150b0e6f7cb26cb91d9ceda5f36e8219d414b0212caf"
+    },
+    {
+      "name": "fmt",
+      "receipt": {
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 1.582,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "diff",
+      "receipt": {
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.113,
+        "retained_malformed_artifacts": 0,
+        "periodic_filesystem_sync": true
+      },
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "published_log_sha256": "1eefadbfb49dd1411f1a5003d4d2976673175239593f81c7d97ed46d5b875872",
+  "log_normalization": "Workspace raw log reduced to test-group summaries and new history/shrinker results; other check output retained. Private path prefixes replaced and trailing whitespace normalized. Raw original hashes are in receipts.",
+  "development_failures": "Initial oracle incorrectly treated declared invariant scopes as direct value reads; corrected to the documented contract and rerun. Initial style lint findings corrected without suppressions. The first complete-corpus SQL run was externally interrupted after 14 seeds and had no passing parent receipt. A subsequent redundant optimized workspace compilation was deliberately stopped after its libraries completed. Previously passed workspace and Clippy receipts remain bound to exactly the same 284 inputs; this run re-executes all 16 SQL seeds and related parents with opt-level2, assertions and overflow checks enabled. Failed raw logs remain privately retained and do not count as passing.",
+  "unrun": [
+    "Full PostgreSQL opt-in suite",
+    "Actual Linux T1 rerun (unchanged production; preceding source-process milestone ran 10 actual cases)",
+    "Unchanged actual rust-analyzer integration, protocol generation and whole-tree indexing/patch benchmark smoke",
+    "Hosted CI for this revision",
+    "NATS/Temporal/S3/ClickHouse/shared service integration and full security/partition/failover/backup/restore/load programme"
+  ],
+  "limits": [
+    "Reviewed local PostgreSQL17.9 authenticated Unix-socket adapter and real retained local objects",
+    "Finite declared source dependencies and synthetic source check evidence; not source-extraction completeness or actual sandbox execution in SQL histories",
+    "No strict serializability, universal correctness or production network-service claim",
+    "Goal04 remains active in full"
+  ],
+  "post_run_workflow_profile_delta": "workflow-profile-delta.json",
+  "post_run_workflow_profile_delta_sha256": "bf8e4806db5726a16024a1fc7a4c51aa14c48c70975e2097597862cd3e86bf26"
+}

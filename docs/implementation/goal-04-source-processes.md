@@ -37,4 +37,7 @@ This is a local shared-filesystem reader, not an S3 implementation or a distribu
 storage/retention service. The same-transaction races do not establish complete
 independent-process histories involving distinct source transactions. Generated
 source history/oracle expansion and the remaining original 04.2–04.7 acceptance
-programme remain active. No hosted CI or production deployment result is inferred.
+programme remain active in that historical record. The subsequent
+[04.2 acceptance](goal-04-commit-acceptance.md) adds distinct-source process
+histories and a separate interpreter; the original validation here remains
+unchanged. No hosted CI or production deployment result is inferred.

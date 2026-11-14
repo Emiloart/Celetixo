@@ -1,0 +1,25 @@
+{
+  "path": ".github/workflows/ci.yml",
+  "executed_source_sha256": "cd9e77f6e3ce2e38184c89a65bf85413b18e3ded0efb29644f366462a269b889",
+  "publication_source_sha256": "23ed861eb70202b15b96098b81fb2243b0646e4202fee7482c0286514bdc9991",
+  "only_change": "Select the tested optimized PostgreSQL integration-test build profile in CI; retain explicit debug assertions and overflow checks. No test selector, fixture control, timeout or assertion changes.",
+  "environment": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+    "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+    "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+  },
+  "workflow_validation": {
+    "command": [
+      "python3",
+      ".github/scripts/check-workflows.py",
+      "--offline"
+    ],
+    "exit_code": 0,
+    "result": "Pinned actionlint 1.7.12 workflow semantics and invalid-context regression passed."
+  },
+  "hosted_ci_run_claimed": false,
+  "all_other_frozen_inputs_unchanged": true
+}

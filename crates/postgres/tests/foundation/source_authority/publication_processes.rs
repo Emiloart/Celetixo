@@ -11,6 +11,9 @@ use std::time::{Duration, Instant};
 const CHILD: &str =
     "source_authority::lifecycle::publication::processes::source_commit_process_child";
 
+#[path = "publication_histories.rs"]
+mod histories;
+
 fn retry_contention<T>(
     mut action: impl FnMut() -> Result<T, EngineError>,
 ) -> Result<T, EngineError> {
@@ -46,6 +49,16 @@ fn save_request(h: &Harness, directory: &std::path::Path, request: &SourceCommit
 }
 
 fn child(h: &Harness, directory: &std::path::Path, tag: &str, key: &str, mode: &str) -> Child {
+    child_request(h, directory, tag, key, mode, "request")
+}
+fn child_request(
+    h: &Harness,
+    directory: &std::path::Path,
+    tag: &str,
+    key: &str,
+    mode: &str,
+    request: &str,
+) -> Child {
     Command::new(std::env::current_exe().unwrap())
         .args([
             "--ignored",
@@ -60,6 +73,7 @@ fn child(h: &Harness, directory: &std::path::Path, tag: &str, key: &str, mode: &
         .env("CELETIXO_COMMIT_TAG", tag)
         .env("CELETIXO_COMMIT_KEY", key)
         .env("CELETIXO_COMMIT_MODE", mode)
+        .env("CELETIXO_COMMIT_REQUEST", request)
         .stdout(Stdio::from(
             File::create(directory.join(format!("{tag}.stdout"))).unwrap(),
         ))
@@ -101,7 +115,12 @@ fn source_commit_process_child() {
         repository: RepositoryId::new("repository").unwrap(),
     };
     let principal = PrincipalId::new("human").unwrap();
-    let bytes = std::fs::read(directory.join("request")).unwrap();
+    let file = std::env::var("CELETIXO_COMMIT_REQUEST").unwrap();
+    assert!(matches!(
+        file.as_str(),
+        "request" | "a.request" | "b.request"
+    ));
+    let bytes = std::fs::read(directory.join(file)).unwrap();
     let request = restore_source_commit_request(
         &scope,
         &principal,
@@ -193,6 +212,7 @@ fn source_commit_process_child() {
         Err(EngineError::SourceAttempt(SourceAttemptError::InvalidState)) => {
             "rejected:InvalidState".into()
         }
+        Err(EngineError::RevalidationRequired { .. }) => "rejected:RevalidationRequired".into(),
         other => panic!("unexpected source process outcome: {other:?}"),
     };
     std::fs::write(directory.join(format!("{tag}.result")), text).unwrap();

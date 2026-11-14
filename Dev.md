@@ -248,7 +248,9 @@ prepared source commit with schema v7.
 [Fresh source revalidation](docs/implementation/goal-04-source-revalidation.md) adds
 new source attempts, recomputed impact, fenced reservation replacement and exact
 original recovery with schema v8. Old patches and evidence cannot satisfy a new
-attempt. Remaining Goal 04 acceptance gates stay pending. Published schema
+attempt. [04.2 acceptance](docs/implementation/goal-04-commit-acceptance.md) adds independent
+source process histories and a separate serial interpreter. Continue with 04.3
+transactional events/NATS and the remaining original Goal 04 milestones. Published schema
 migrations 0001–0008 are immutable; subsequent changes require a new migration.
 
 ### Phase 7 — Real worker integration and evaluation
