@@ -12,6 +12,9 @@ pub(in crate::authority) fn load(
     records.base = native::load_source_base(tx, &mut loader)?;
     definitions::catalogs(tx, &mut loader, &mut records)?;
     definitions::grants(tx, &mut loader, &mut records)?;
+    // Admission reconstruction validates the registered revision chain. Load
+    // source publication history before replaying any historical admission.
+    super::publication::load(tx, &mut loader, &mut records)?;
     operations(tx, &mut loader, &mut records)?;
     attempts(tx, &mut loader, &mut records)?;
     rejections(tx, &mut loader, &mut records)?;

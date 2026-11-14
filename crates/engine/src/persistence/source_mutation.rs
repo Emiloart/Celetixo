@@ -41,7 +41,7 @@ pub(super) fn request(
         action,
     })
 }
-fn binding(r: &mut Reader<'_>) -> Result<PatchBinding, RestoreError> {
+pub(super) fn binding(r: &mut Reader<'_>) -> Result<PatchBinding, RestoreError> {
     Ok(PatchBinding {
         scope: r.scope()?,
         principal: PrincipalId::new(r.text()?).map_err(|_| RestoreError::Identity)?,

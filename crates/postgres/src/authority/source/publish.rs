@@ -23,6 +23,7 @@ pub(in crate::authority) fn publish(
     definitions::heads(tx, next, before, after)?;
     execution::publish(tx, before, after)?;
     super::super::mutations::publish(tx, &before.base, &after.base)?;
+    super::publication::publish(tx, before, after)?;
     publish_envelope(tx, context, login, generation, next, &after.base, true)?;
     one(execute(
         tx,
@@ -76,6 +77,7 @@ fn immutable<K: Ord, V: PartialEq>(
 }
 fn preserve(before: &SourceRecords, after: &SourceRecords) -> SqlResult<()> {
     if before.base.scope != after.base.scope
+        || !after.history.starts_with(&before.history)
         || before.executor_counter > after.executor_counter
         || before.cleanup_counter > after.cleanup_counter
         || before.artifact_counter > after.artifact_counter

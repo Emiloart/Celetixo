@@ -1192,6 +1192,31 @@ fn source_context(
     id: &TransactionId,
     owner_capability: u64,
 ) -> Result<SourcePatchContext, EngineError> {
+    source_context_in_state(db, scope, id, owner_capability, TransactionState::Executing)
+}
+
+pub(super) fn source_publication_context(
+    db: &Database,
+    scope: &Scope,
+    id: &TransactionId,
+    owner_capability: u64,
+) -> Result<SourcePatchContext, EngineError> {
+    source_context_in_state(
+        db,
+        scope,
+        id,
+        owner_capability,
+        TransactionState::Validating,
+    )
+}
+
+fn source_context_in_state(
+    db: &Database,
+    scope: &Scope,
+    id: &TransactionId,
+    owner_capability: u64,
+    expected_state: TransactionState,
+) -> Result<SourcePatchContext, EngineError> {
     let tx = db
         .transactions
         .get(&(scope.clone(), id.clone()))
@@ -1207,7 +1232,7 @@ fn source_context(
     {
         return Err(EngineError::Unauthorized);
     }
-    if tx.state != TransactionState::Executing {
+    if tx.state != expected_state {
         return Err(SourceAttemptError::InvalidState.into());
     }
     let lease = tx.lease.as_ref().ok_or(EngineError::InvalidLease)?;

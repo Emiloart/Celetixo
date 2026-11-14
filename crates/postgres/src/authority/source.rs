@@ -11,6 +11,7 @@ use celetixo_engine::source_execution::{BackendIdentity, ExecutionTier, Resource
 
 mod definitions;
 mod load;
+mod publication;
 mod publish;
 
 pub(super) use load::load;
@@ -75,7 +76,9 @@ pub(super) fn access(
     }
     let generation = lock_repository(&mut tx, context.scope(), update)?;
     profile_gate(&mut tx, context.scope(), PROFILE, update)?;
+
     let before = load(&mut tx, context.scope(), authority.limits)?;
+
     before
         .check_recovery_limits(authority.limits)
         .map_err(restore)?;
@@ -91,6 +94,7 @@ pub(super) fn access(
     authority.checkpoint(AuthorityStage::StateLoaded)?;
     let observed = state.source_records(authority.limits).map_err(restore)?;
     evaluate(&mut state)?;
+
     let after = state.source_records(authority.limits).map_err(restore)?;
     after
         .check_recovery_limits(authority.limits)
@@ -98,12 +102,14 @@ pub(super) fn access(
     AuthorityState::from_source_records(after.clone(), authority.limits).map_err(restore)?;
     if update {
         publish(&mut tx, context, login, generation, &before, &after)?;
+
         if load(&mut tx, context.scope(), authority.limits)? != after {
             return Err(AuthorityFailure::Integrity);
         }
+
         authority.checkpoint(AuthorityStage::BeforeCommit)?;
         login.check(&mut tx, Some(context.scope()))?;
-        final_gate(&mut tx, &before, &after)?;
+        final_gate(&mut tx, &before, &after, authority.limits)?;
         tx.commit()
             .map_err(|_| AuthorityFailure::CommitIndeterminate)?;
         authority
@@ -121,12 +127,37 @@ fn final_gate(
     tx: &mut Transaction<'_>,
     before: &SourceRecords,
     after: &SourceRecords,
+    limits: NativeRecordLimits,
 ) -> SqlResult<()> {
     let now = database_clock(tx)?;
     if now < after.base.clock_ms {
         return Err(AuthorityFailure::ClockRegression);
     }
     native::final_lease_gate(now, &before.base, &after.base)?;
+    if after.history.len() > before.history.len() {
+        let original =
+            AuthorityState::from_source_records(before.clone(), limits).map_err(restore)?;
+        for change in after.history.iter().skip(before.history.len()) {
+            let (key, record) = after.base.mutations.iter().find(|(_,record)|
+                matches!(&record.outcome, Ok(celetixo_engine::engine::MutationValue::SourceCommitted(receipt)) if receipt.as_ref()==&change.receipt)
+            ).ok_or(AuthorityFailure::Integrity)?;
+            let celetixo_engine::engine::MutationRequest::SourceCommit(request) = &record.request
+            else {
+                return Err(AuthorityFailure::Integrity);
+            };
+            let context = record
+                .source_commit
+                .as_ref()
+                .ok_or(AuthorityFailure::Integrity)?;
+            let analyst = celetixo_engine::engine::MutationActor::Session {
+                principal: context.analysis_principal.clone(),
+                grant: context.analysis_grant,
+            };
+            original
+                .check_source_commit_metadata_at(now, &key.actor, &analyst, request)
+                .map_err(|_| AuthorityFailure::Contention)?;
+        }
+    }
     // Newly issued execution/cleanup grants must still be live at publication.
     // Historical allocation replies introduce no grant and cannot renew expiry.
     for (id, grant) in &after.executors {

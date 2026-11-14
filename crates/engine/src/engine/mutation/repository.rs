@@ -396,7 +396,7 @@ impl RepositoryMutation {
         Ok(size)
     }
 }
-fn analysis_size(analysis: &RepositoryAnalysis) -> Result<RecoverySize, RestoreError> {
+pub(super) fn analysis_size(analysis: &RepositoryAnalysis) -> Result<RecoverySize, RestoreError> {
     let mut cost = RecoverySize {
         entries: 0,
         bytes: 1024,

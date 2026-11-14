@@ -5,6 +5,7 @@ use authority::AuthorityFailure;
 mod administrative;
 mod execution;
 mod repository;
+mod source_commit;
 mod source_executor;
 pub use administrative::{AdministrativeContext, AdministrativeMutation, AdministrativeResource};
 use execution::{
@@ -12,6 +13,11 @@ use execution::{
     patch_size, validate as validate_execution,
 };
 pub use repository::RepositoryMutation;
+pub(super) fn repository_analysis_size(
+    analysis: &RepositoryAnalysis,
+) -> Result<crate::persistence::RecoverySize, crate::persistence::RestoreError> {
+    repository::analysis_size(analysis)
+}
 pub use source_executor::{
     SourceExecutorAction, SourceExecutorMutation, SourceMutationContext, SourceMutationResult,
 };
@@ -53,6 +59,7 @@ pub struct MutationKey {
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MutationRequest {
+    SourceCommit(Box<SourceCommitRequest>),
     SourceExecutor(Box<SourceExecutorMutation>),
     Administrative(Box<AdministrativeMutation>),
     Repository(Box<RepositoryMutation>),
@@ -95,6 +102,7 @@ impl MutationRequest {
     pub const FORMAT: &str = "celetixo/engine-mutation-request/v1";
     pub fn transaction(&self) -> Option<&TransactionId> {
         match self {
+            Self::SourceCommit(request) => Some(&request.binding.transaction),
             Self::SourceExecutor(request) => Some(&request.binding.transaction),
             Self::Repository(_) | Self::Administrative(_) => None,
             Self::Analyze { transaction }
@@ -110,6 +118,7 @@ impl MutationRequest {
     }
     fn permission(&self) -> Option<Permission> {
         Some(match self {
+            Self::SourceCommit(_) => Permission::Commit,
             Self::Administrative(_) | Self::SourceExecutor(_) => return None,
             Self::Repository(request) => request.permission(),
             Self::Analyze { .. } => Permission::Analyze,
@@ -122,11 +131,22 @@ impl MutationRequest {
             Self::Abort { .. } => Permission::Cancel,
         })
     }
-    fn check_recovery_limits(&self) -> Result<(), EngineError> {
+    pub(super) fn check_recovery_limits(&self) -> Result<(), EngineError> {
         let limits = authority::NativeRecordLimits::default();
         let mut bytes = 4096usize;
         let mut entries = 1usize;
         match self {
+            Self::SourceCommit(request) => {
+                let size = request.recovery_size().map_err(|_| {
+                    EngineError::InvalidIntent("mutation request exceeds recovery limits".into())
+                })?;
+                bytes = bytes.checked_add(size.bytes).ok_or_else(|| {
+                    EngineError::InvalidIntent("mutation request exceeds recovery limits".into())
+                })?;
+                entries = entries.checked_add(size.entries).ok_or_else(|| {
+                    EngineError::InvalidIntent("mutation request exceeds recovery limits".into())
+                })?;
+            }
             Self::SourceExecutor(request) => {
                 let size = request.recovery_size().map_err(|_| {
                     EngineError::InvalidIntent("mutation request exceeds recovery limits".into())
@@ -217,6 +237,10 @@ impl MutationRequest {
         c.str(scope.repository.as_str());
         actor.encode(&mut c);
         match self {
+            Self::SourceCommit(request) => {
+                c.str("CommitSource");
+                request.encode_body(&mut c);
+            }
             Self::SourceExecutor(request) => request.encode(&mut c),
             Self::Administrative(request) => request.encode(&mut c),
             Self::Repository(request) => request.encode(&mut c),
@@ -289,6 +313,7 @@ impl MutationRequest {
 /// A historical result, never a currently valid lease or launch permission.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MutationValue {
+    SourceCommitted(Box<SourceCommitReceipt>),
     SourceAttempt(Box<SourceMutationResult>),
     Allocation {
         resource: AdministrativeResource,
@@ -335,6 +360,7 @@ pub struct MutationRecord {
     pub lease_events_before: u64,
     pub administration: Option<AdministrativeContext>,
     pub source_execution: Option<SourceMutationContext>,
+    pub source_commit: Option<Box<SourceCommitContext>>,
     pub outcome: Result<MutationValue, EngineError>,
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -358,6 +384,12 @@ impl MutationRecord {
         actor: &MutationActor,
     ) -> Result<(), crate::persistence::RestoreError> {
         use crate::persistence::RestoreError;
+        if let MutationRequest::SourceCommit(request) = &self.request {
+            return source_commit::check_record(request, self, actor);
+        }
+        if self.source_commit.is_some() {
+            return Err(RestoreError::BindingMismatch);
+        }
         if let MutationRequest::SourceExecutor(request) = &self.request {
             return if matches!(actor, MutationActor::SourceExecutor {grant,..} if *grant != 0) {
                 request.check_record(self)
@@ -484,6 +516,10 @@ impl Engine {
         key: IdempotencyKey,
         request: MutationRequest,
     ) -> Result<MutationResponse, EngineError> {
+        // A one-session dispatch cannot supply the separate approval role.
+        if matches!(request, MutationRequest::SourceCommit(_)) {
+            return Err(EngineError::Unauthorized);
+        }
         let permission = request.permission().ok_or(EngineError::Unauthorized)?;
         self.store.session(session, scope, permission).atomic(|db| {
             if let Err(error) = self.authorize(db, session, scope, permission) {return Ok(Err(error));}
@@ -493,7 +529,7 @@ impl Engine {
             if matches!(&request, MutationRequest::Repository(request) if matches!(request.as_ref(), RepositoryMutation::RegisterRepository {..}))
                 && let Err(error) = self.authorize(db, session, scope, Permission::ManageModel) {return Ok(Err(error));}
             let actor = MutationActor::Session {principal: session.principal.clone(), grant: session.token};
-            apply_once(db, scope, actor, key, request, |db, request| self.apply_session_mutation(db, session, scope, request))
+            apply_once(db, scope, actor, key, request, None, |db, request| self.apply_session_mutation(db, session, scope, request))
         })?
     }
     fn apply_session_mutation(
@@ -504,6 +540,7 @@ impl Engine {
         request: &MutationRequest,
     ) -> Result<MutationValue, EngineError> {
         match request {
+            MutationRequest::SourceCommit(_) => Err(EngineError::Unauthorized),
             MutationRequest::Administrative(_) | MutationRequest::SourceExecutor(_) => {
                 Err(EngineError::Unauthorized)
             }
@@ -603,12 +640,13 @@ impl Engine {
 }
 
 /// One atomic journal path shared by separately authenticated actor entry points.
-fn apply_once(
+pub(super) fn apply_once(
     db: &mut Database,
     scope: &Scope,
     actor: MutationActor,
     key: IdempotencyKey,
     request: MutationRequest,
+    source_commit: Option<Box<SourceCommitContext>>,
     execute: impl FnOnce(&mut Database, &MutationRequest) -> Result<MutationValue, EngineError>,
 ) -> Result<Result<MutationResponse, EngineError>, AuthorityFailure> {
     if let Err(error) = request.check_recovery_limits() {
@@ -667,6 +705,7 @@ fn apply_once(
         lease_events_before,
         administration,
         source_execution,
+        source_commit,
         outcome,
     };
     validate(db, scope, &key, &record).map_err(|_| AuthorityFailure::Integrity)?;
@@ -690,6 +729,7 @@ fn lease_error(request: &MutationRequest, error: &EngineError) -> bool {
 
 fn mutation_error(request: &MutationRequest, error: &EngineError) -> bool {
     match request {
+        MutationRequest::SourceCommit(_) => source_commit::domain_error(error),
         MutationRequest::SourceExecutor(request) => request.domain_error(error),
         MutationRequest::Administrative(request) => request.domain_error(error),
         MutationRequest::Repository(request) => request.domain_error(error),
@@ -1013,7 +1053,19 @@ pub(crate) fn recovery_size(
         bytes = bytes.checked_add(reason.len()).ok_or(RestoreError::Limit)?;
     }
     let mut entries = 1usize;
+    if let Some(context) = &record.source_commit {
+        bytes = bytes
+            .checked_add(8192)
+            .and_then(|n| n.checked_add(context.analysis_principal.as_str().len()))
+            .ok_or(RestoreError::Limit)?;
+        if let Some(source) = &context.source {
+            bytes = bytes
+                .checked_add(source.source_attempt.as_str().len())
+                .ok_or(RestoreError::Limit)?;
+        }
+    }
     let input_size = match &record.request {
+        MutationRequest::SourceCommit(request) => Some(request.recovery_size()?),
         MutationRequest::SourceExecutor(request) => Some(request.recovery_size()?),
         MutationRequest::Administrative(request) => Some(request.recovery_size()?),
         MutationRequest::Repository(request) => Some(request.recovery_size()?),
@@ -1185,6 +1237,9 @@ pub(super) fn validate(
     let invalid = RestoreError::BindingMismatch;
     if let MutationRequest::SourceExecutor(request) = &r.request {
         return request.validate(db, scope, key, r);
+    }
+    if let MutationRequest::SourceCommit(request) = &r.request {
+        return source_commit::validate(db, scope, key, request, r);
     }
     if let MutationRequest::Administrative(request) = &r.request {
         if key.actor != MutationActor::EmbeddingAdministrator || r.recorded_at_ms > db.now {
@@ -1362,7 +1417,8 @@ pub(super) fn validate(
         }
         Err(_) => Err(invalid),
         Ok(
-            MutationValue::SourceAttempt(_)
+            MutationValue::SourceCommitted(_)
+            | MutationValue::SourceAttempt(_)
             | MutationValue::State { .. }
             | MutationValue::Repository { .. }
             | MutationValue::Policy { .. }

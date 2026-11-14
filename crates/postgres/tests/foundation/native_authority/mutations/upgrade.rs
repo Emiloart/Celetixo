@@ -1,4 +1,4 @@
-//! A real published v5 row and its original payloads survive the v6 upgrade.
+//! A real published v5 row and its original payloads survive later additive upgrades.
 use super::*;
 use celetixo_engine::persistence::MutationOutcomeRecord;
 
@@ -27,6 +27,7 @@ fn v5_original_mutation_upgrade_preserves_rows_and_rolls_back_errors_and_process
         lease_events_before: 0,
         administration: None,
         source_execution: None,
+        source_commit: None,
         outcome: Err(EngineError::NotFound),
     };
     let outcome = MutationOutcomeRecord::new(scope.clone(), key.clone(), record).unwrap();
@@ -93,10 +94,10 @@ fn v5_original_mutation_upgrade_preserves_rows_and_rolls_back_errors_and_process
             .get::<_, i64>(0),
         5
     );
-    assert_eq!(migrate(&mut client).unwrap().schema_version, 6);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 7);
     validate_schema(&mut client).unwrap();
     assert!(!migrate(&mut client).unwrap().newly_applied);
-    let after:String=client.query_one("SELECT (to_jsonb(m)-ARRAY['raw_source_attempt_id','raw_source_admission_digest','resolved_source_attempt_id','source_admission_digest','source_state_before','source_executor_before','source_events_before','source_events_after','source_before_event_sequence','source_effect_event_sequence','result_source_state','result_source_event_sequence','result_source_executor_grant_id'])::text FROM celetixo.engine_mutations m",&[]).unwrap().get(0);
+    let after:String=client.query_one("SELECT (to_jsonb(m)-ARRAY['raw_source_attempt_id','raw_source_admission_digest','resolved_source_attempt_id','source_admission_digest','source_state_before','source_executor_before','source_events_before','source_events_after','source_before_event_sequence','source_effect_event_sequence','result_source_state','result_source_event_sequence','result_source_executor_grant_id','source_commit_actor_digest'])::text FROM celetixo.engine_mutations m",&[]).unwrap().get(0);
     assert_eq!(after, before);
     for (id, expected) in [
         (request.digest(scope, &key.actor), input),

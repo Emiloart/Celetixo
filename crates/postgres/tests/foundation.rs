@@ -129,7 +129,7 @@ fn owner() -> Client {
 /// Build an exact supported published schema in a fresh fixture database.
 /// This never rewrites the migration ledger of an existing fixture/database.
 fn fresh_prior_database(label: &str, version: u8) -> (Client, Client, String, Snapshot) {
-    assert!(matches!(version, 1..=5));
+    assert!(matches!(version, 1..=6));
     assert!(label.chars().all(|c| c.is_ascii_lowercase() || c == '_'));
     let database = format!("celetixo_v{version}_{label}_{}", std::process::id());
     let config = fixture();
@@ -202,6 +202,17 @@ fn fresh_prior_database(label: &str, version: u8) -> (Client, Client, String, Sn
             tx.batch_execute(sql).unwrap();
             tx.execute("INSERT INTO celetixo.schema_migrations (version,migration_name,migration_sha256) VALUES (5,'0005_mutation_recovery',$1::bytea)", &[&&checksum[..]]).unwrap();
         }
+        if version >= 6 {
+            let sql = include_str!("../migrations/0006_source_executor_mutations.sql");
+            let checksum: [u8; 32] = Sha256::digest(sql.as_bytes()).into();
+            let hex: String = checksum.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                hex,
+                "18128aba1e1bed29e48f949ca3a8aa3b567f7af4a775217bc2b5880d2e5db561"
+            );
+            tx.batch_execute(sql).unwrap();
+            tx.execute("INSERT INTO celetixo.schema_migrations (version,migration_name,migration_sha256) VALUES (6,'0006_source_executor_mutations',$1::bytea)", &[&&checksum[..]]).unwrap();
+        }
         tx.commit().unwrap();
     }
     let selected = scope(label);
@@ -264,14 +275,14 @@ fn v1_upgrade_is_atomic_preserves_data_and_rejects_incomplete_or_future_history(
         .get(0);
     assert_eq!(count, 1);
     let receipt = migrate(&mut client).unwrap();
-    assert_eq!(receipt.schema_version, 6);
+    assert_eq!(receipt.schema_version, 7);
     assert!(receipt.newly_applied);
     assert!(!migrate(&mut client).unwrap().newly_applied);
     validate_schema(&mut client).unwrap();
     for mutation in [
         "DELETE FROM celetixo.schema_migrations WHERE version=1",
         "UPDATE celetixo.schema_migrations SET migration_name='wrong' WHERE version=1",
-        "INSERT INTO celetixo.schema_migrations (version,migration_name,migration_sha256) VALUES (7,'future',decode(repeat('00',32),'hex'))",
+        "INSERT INTO celetixo.schema_migrations (version,migration_name,migration_sha256) VALUES (8,'future',decode(repeat('00',32),'hex'))",
     ] {
         let mut tx = client.transaction().unwrap();
         tx.batch_execute(mutation).unwrap();
@@ -317,7 +328,7 @@ fn process_death_during_v1_upgrade_retains_v1_until_recovered_publication() {
         .map(|row| row.get(0))
         .collect();
     assert_eq!(versions, vec![1]);
-    assert_eq!(migrate(&mut client).unwrap().schema_version, 6);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 7);
     {
         let mut catalog =
             SnapshotCatalog::connect(&connection("runtime", Some(&database))).unwrap();
@@ -372,7 +383,7 @@ fn v2_upgrade_recovers_errors_and_process_death_with_scoped_immutable_publicatio
             .get::<_, i64>(0),
         2
     );
-    assert_eq!(migrate(&mut client).unwrap().schema_version, 6);
+    assert_eq!(migrate(&mut client).unwrap().schema_version, 7);
     validate_schema(&mut client).unwrap();
     assert!(!migrate(&mut client).unwrap().newly_applied);
     {
@@ -1292,7 +1303,7 @@ fn authorize_registration(owner: &mut Client, selected: &Scope) {
         let name = &config.roles[role].user;
         let reads = "principals,grants,grant_permissions,engine_counters,engine_model_heads,reservation_fences,policies,policy_heads,artifact_store_registrations,transactions,attempts,access_provenance,transaction_outcomes,committed_changes,reservations,reservation_claims,reservation_events,operations,source_attempts,source_attempt_events,source_attempt_outcomes,source_rejections,artifact_objects,evidence,evidence_receipts,attempt_checks,reference_evidence_admissions,reference_evidence_signers,authority_publications,outbox,outbox_delivery,inbox";
         let reads = format!(
-            "{reads},source_analyses,source_policy_catalog,source_check_definitions,source_policy_dependencies,source_attempt_contexts,source_attempt_policies,source_admission_contexts,source_operation_contexts,source_rejection_contexts,source_rejection_events,source_unprepared_commits,source_executor_definitions,source_executor_tiers,source_cleanup_definitions,artifact_contents,artifact_locations,artifact_references,source_evidence_objects,engine_mutations"
+            "{reads},source_analyses,source_policy_catalog,source_check_definitions,source_policy_dependencies,source_attempt_contexts,source_attempt_policies,source_admission_contexts,source_operation_contexts,source_rejection_contexts,source_rejection_events,source_unprepared_commits,source_executor_definitions,source_executor_tiers,source_cleanup_definitions,artifact_contents,artifact_locations,artifact_references,source_evidence_objects,engine_mutations,source_commit_mutations,source_committed_changes"
         );
         let reads = reads
             .split(',')
@@ -2061,7 +2072,7 @@ fn sql_registration_checks_the_new_schema_after_waiting_for_a_migrator() {
     }
     // Simulate a newer writer's schema ledger in a dedicated disposable database.
     // Retain it afterward; never repair a published database's checksum history.
-    migration.execute("INSERT INTO celetixo.schema_migrations (version,migration_name,migration_sha256) VALUES (7,'unsupported-future-fixture',$1::bytea)",&[&&[0u8;32][..]]).unwrap();
+    migration.execute("INSERT INTO celetixo.schema_migrations (version,migration_name,migration_sha256) VALUES (8,'unsupported-future-fixture',$1::bytea)",&[&&[0u8;32][..]]).unwrap();
     migration.commit().unwrap();
     assert_eq!(
         reader.join().unwrap(),

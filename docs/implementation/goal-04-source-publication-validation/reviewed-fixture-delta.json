@@ -1,0 +1,9 @@
+{
+  "changed_paths": [
+    "crates/repository/tests/capture.rs"
+  ],
+  "reason": "Exact public-source review fixture hashes updated after independent review of numeric grant metadata; default detection and path/content mismatch assertions unchanged.",
+  "sql_production_sources_unchanged": true,
+  "previous_manifest": "source-manifest.json",
+  "workspace_manifest": "source-manifest-reviewed-fixture.json"
+}

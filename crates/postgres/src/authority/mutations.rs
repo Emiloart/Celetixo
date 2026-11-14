@@ -7,7 +7,8 @@ use celetixo_engine::engine::{
 };
 use celetixo_engine::ids::{IdempotencyKey, TransactionId};
 use celetixo_engine::persistence::{
-    ImpactAnalysisRecord, MutationOutcomeRecord, restore_mutation_outcome, restore_mutation_request,
+    ImpactAnalysisRecord, MutationOutcomeRecord, restore_mutation_outcome,
+    restore_mutation_request_for_key,
 };
 use native::{Loader, SqlResult, optional_digest, optional_number};
 use postgres::types::ToSql;
@@ -15,6 +16,7 @@ mod source_executor;
 
 fn kind(request: &MutationRequest) -> &'static str {
     match request {
+        MutationRequest::SourceCommit(_) => "CommitSource",
         MutationRequest::SourceExecutor(request) => request.action.kind(),
         MutationRequest::Administrative(request) => request.kind(),
         MutationRequest::Repository(request) => match request.as_ref() {
@@ -68,7 +70,7 @@ pub(super) fn load(
             return Err(AuthorityFailure::Integrity);
         }
         let bytes = loader.payload(tx, request_id, MutationRequest::FORMAT)?;
-        let request = restore_mutation_request(loader.scope, &key.actor, request_id, &bytes, loader.budget.decode_limits()).map_err(restore)?;
+        let request = restore_mutation_request_for_key(loader.scope, &key, request_id, &bytes, loader.budget.decode_limits()).map_err(restore)?;
         if row.get::<_, String>(5) != kind(&request)
             || row.get::<_, Option<String>>(8).as_deref() != request.transaction().map(TransactionId::as_str)
         {
@@ -92,6 +94,7 @@ pub(super) fn load(
             return Err(AuthorityFailure::Integrity);
         }
         let (outcome_kind, sequence, fence, expiry, acquisition) = match record.outcome {
+            Ok(MutationValue::SourceCommitted(_)) => ("Accepted",None,None,None,None),
             Ok(MutationValue::SourceAttempt(_)) => ("Accepted",None,None,None,None),
             Ok(MutationValue::Allocation {..} | MutationValue::Revocation {..}) => ("Accepted", None, None, None, None),
             Ok(MutationValue::Policy {..})=>("Accepted",None,None,None,None),
@@ -104,6 +107,7 @@ pub(super) fn load(
             Ok(MutationValue::Bindings {..}|MutationValue::Evidence {..})=>("Accepted",None,None,None,None),
         };
         let (result_kind,result_state,result_attempt)=match record.outcome {
+            Ok(MutationValue::SourceCommitted(_)) => (Some("SourceCommitted"),None,None),
             Ok(MutationValue::SourceAttempt(_)) => (Some("SourceAttempt"),None,None),
             Ok(MutationValue::Allocation {..})=>(Some("Allocation"),None,None),
             Ok(MutationValue::Revocation {..})=>(Some("Revocation"),None,None),
@@ -229,6 +233,7 @@ pub(super) fn publish(
         let attempt = record.resolved_attempt.map(|n| n.to_string());
         let state = record.state_before.map(native::state_name);
         let (outcome_kind, sequence, fence, expiry, acquisition) = match record.outcome {
+            Ok(MutationValue::SourceCommitted(_)) => ("Accepted", None, None, None, None),
             Ok(MutationValue::SourceAttempt(_)) => ("Accepted", None, None, None, None),
             Ok(MutationValue::Allocation { .. } | MutationValue::Revocation { .. }) => {
                 ("Accepted", None, None, None, None)
@@ -254,6 +259,7 @@ pub(super) fn publish(
             }
         };
         let (result_kind, result_state, result_attempt) = match record.outcome {
+            Ok(MutationValue::SourceCommitted(_)) => (Some("SourceCommitted"), None, None),
             Ok(MutationValue::SourceAttempt(_)) => (Some("SourceAttempt"), None, None),
             Ok(MutationValue::Allocation { .. }) => (Some("Allocation"), None, None),
             Ok(MutationValue::Revocation { .. }) => (Some("Revocation"), None, None),

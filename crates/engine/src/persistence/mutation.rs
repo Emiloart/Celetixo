@@ -51,12 +51,64 @@ pub fn restore_mutation_request(
     bytes: &[u8],
     limits: DomainDecodeLimits,
 ) -> Result<MutationRequest, RestoreError> {
+    restore_request_inner(
+        expected_scope,
+        expected_actor,
+        None,
+        expected,
+        bytes,
+        limits,
+    )
+}
+
+/// Context-aware restoration for requests whose operation identity contains an
+/// external idempotency selector. No placeholder key or capability is created.
+pub fn restore_mutation_request_for_key(
+    expected_scope: &Scope,
+    expected_key: &MutationKey,
+    expected: Digest,
+    bytes: &[u8],
+    limits: DomainDecodeLimits,
+) -> Result<MutationRequest, RestoreError> {
+    restore_request_inner(
+        expected_scope,
+        &expected_key.actor,
+        Some(&expected_key.key),
+        expected,
+        bytes,
+        limits,
+    )
+}
+
+fn restore_request_inner(
+    expected_scope: &Scope,
+    expected_actor: &MutationActor,
+    operation_key: Option<&crate::ids::IdempotencyKey>,
+    expected: Digest,
+    bytes: &[u8],
+    limits: DomainDecodeLimits,
+) -> Result<MutationRequest, RestoreError> {
     let mut r = Reader::new(expected, MutationRequest::FORMAT, bytes, limits)?;
     scope(&mut r, expected_scope)?;
     if actor(&mut r)? != *expected_actor {
         return Err(RestoreError::BindingMismatch);
     }
     let kind = text(&mut r, 64)?;
+    if kind == "CommitSource" {
+        let key = operation_key
+            .ok_or(RestoreError::UnsupportedDomainValue)?
+            .clone();
+        let request =
+            MutationRequest::SourceCommit(Box::new(source_commit::decode_request(&mut r, key)?));
+        r.end()?;
+        lifecycle::canonical(
+            request.digest(expected_scope, expected_actor),
+            expected,
+            &request.canonical_bytes(expected_scope, expected_actor),
+            bytes,
+        )?;
+        return Ok(request);
+    }
     if source_mutation::is_kind(kind) {
         let request =
             MutationRequest::SourceExecutor(Box::new(source_mutation::request(&mut r, kind)?));
@@ -199,6 +251,17 @@ impl MutationOutcomeRecord {
         record: MutationRecord,
     ) -> Result<Self, RestoreError> {
         record.check_shape(&key.actor)?;
+        if let MutationRequest::SourceCommit(request) = &record.request {
+            if request.key != key.key {
+                return Err(RestoreError::BindingMismatch);
+            }
+            if let Ok(MutationValue::SourceCommitted(receipt)) = &record.outcome {
+                let MutationActor::Session { principal, .. } = &key.actor else {
+                    return Err(RestoreError::BindingMismatch);
+                };
+                receipt.validate_request(&scope, principal, request)?;
+            }
+        }
         if let Err(error) = &record.outcome {
             source_errors::encode_engine_error(&mut Canonical::default(), error)?;
         }
@@ -255,7 +318,15 @@ impl MutationOutcomeRecord {
         if let Some(context) = &self.record.source_execution {
             source_mutation::encode_context(&mut c, context);
         }
+        if let Some(context) = &self.record.source_commit {
+            source_commit::encode_context(&mut c, context);
+        }
         match &self.record.outcome {
+            Ok(MutationValue::SourceCommitted(receipt)) => {
+                c.str("Accepted");
+                c.str("SourceCommitted");
+                receipt.encode_fields(&mut c);
+            }
             Ok(MutationValue::SourceAttempt(value)) => {
                 c.str("Accepted");
                 c.str("SourceAttempt");
@@ -414,8 +485,16 @@ pub fn restore_mutation_outcome(
     } else {
         None
     };
+    let source_commit = if matches!(request, MutationRequest::SourceCommit(_)) {
+        Some(Box::new(source_commit::decode_context(&mut r)?))
+    } else {
+        None
+    };
     let outcome = match text(&mut r, 64)? {
         "Accepted" => Ok(match text(&mut r, 64)? {
+            "SourceCommitted" => {
+                MutationValue::SourceCommitted(Box::new(source_commit::decode_receipt(&mut r)?))
+            }
             "SourceAttempt" => {
                 MutationValue::SourceAttempt(Box::new(source_mutation::result(&mut r)?))
             }
@@ -471,6 +550,7 @@ pub fn restore_mutation_outcome(
             lease_events_before,
             administration,
             source_execution,
+            source_commit,
             outcome,
         },
     )?;

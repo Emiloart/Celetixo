@@ -10,6 +10,8 @@ use celetixo_execution::artifacts::{ArtifactStoreLimits, LocalSourceArtifactStor
 
 #[path = "mutations.rs"]
 mod mutations;
+#[path = "publication.rs"]
+mod publication;
 
 fn element() -> ElementId {
     ElementId::new("symbol:main").unwrap()
@@ -596,6 +598,64 @@ fn source_evidence_receipts_and_logical_object_associations_reopen_all_assessmen
             expected
         );
         assert_eq!(h.engine.current(&h.owner, h.scope()).unwrap(), h.base);
+        let preview = h
+            .engine
+            .source_publication_candidate(&h.owner, h.scope(), admission.id());
+        if case == 0 {
+            let candidate = preview.as_ref().unwrap();
+            assert_eq!(candidate.application(), &application);
+            assert_eq!(candidate.snapshot().revision(), Revision(1));
+            assert_eq!(
+                candidate.snapshot().manifest(),
+                application.snapshot().manifest()
+            );
+            assert_ne!(candidate.snapshot().id(), admission.resulting_snapshot());
+        } else {
+            assert_eq!(preview, Err(SourceAttemptError::InvalidState.into()));
+        }
+        let prepared = if let Ok(candidate) = &preview {
+            let analyst = h
+                .admin
+                .grant(
+                    PrincipalId::new("publication-analysis-approver").unwrap(),
+                    h.scope().clone(),
+                    [Permission::ManageModel].into(),
+                )
+                .unwrap();
+            let analysis = RepositoryAnalysis::new(
+                candidate.snapshot(),
+                RepositoryAnalysisInput {
+                    index_generation: d("publication-index"),
+                    analyzer_version: "complete-synthetic-publication/v1".into(),
+                    configuration: d("publication-analysis"),
+                    elements: [element()].into(),
+                    dependencies: BTreeMap::new(),
+                    checks: [(element(), [check_id()].into())].into(),
+                    gaps: BTreeSet::new(),
+                },
+            )
+            .unwrap();
+            let request = h
+                .engine
+                .prepare_source_commit_request(
+                    &h.owner,
+                    &analyst,
+                    h.scope(),
+                    SourceCommitPreparation {
+                        admission: admission.id(),
+                        analysis,
+                        key: IdempotencyKey::new("source-publication-preparation").unwrap(),
+                    },
+                )
+                .unwrap();
+            assert_eq!(request.binding, *admission.binding());
+            assert_eq!(request.verified_snapshot, application.snapshot().id());
+            assert_eq!(request.publication_snapshot, candidate.snapshot().id());
+            assert_eq!(h.engine.current(&h.owner, h.scope()).unwrap(), h.base);
+            Some(request)
+        } else {
+            None
+        };
         let records = h.authority.inspect_source(h.scope()).unwrap().records;
         assert_eq!(records.evidence.len(), 1);
         assert_eq!(
@@ -626,6 +686,48 @@ fn source_evidence_receipts_and_logical_object_associations_reopen_all_assessmen
                 .unwrap(),
             (evidence, receipt)
         );
+        // Read-only publication analysis works after a cold Engine open, with
+        // no restored runtime executor/reader and a revoked artifact store.
+        // This cannot authorize commit or attest current object availability.
+        assert_eq!(
+            fresh.source_publication_candidate(&session, h.scope(), admission.id()),
+            preview
+        );
+        assert_eq!(fresh.current(&session, h.scope()).unwrap(), h.base);
+        if let Some(request) = prepared {
+            let approver = fresh_admin
+                .authenticate_existing_session(h.scope(), request.analysis_grant, |p, s| {
+                    assert_eq!(p, &request.analysis_principal);
+                    assert_eq!(s, h.scope());
+                    Ok(())
+                })
+                .unwrap();
+            let restored = celetixo_engine::persistence::restore_source_commit_request(
+                h.scope(),
+                session.principal(),
+                request.key.clone(),
+                request.digest(h.scope(), session.principal()),
+                &request.canonical_bytes(h.scope(), session.principal()),
+                Default::default(),
+            )
+            .unwrap();
+            assert_eq!(
+                fresh
+                    .prepare_source_commit_request(
+                        &session,
+                        &approver,
+                        h.scope(),
+                        SourceCommitPreparation {
+                            admission: request.admission,
+                            analysis: restored.analysis.clone(),
+                            key: request.key.clone(),
+                        }
+                    )
+                    .unwrap(),
+                restored
+            );
+            assert_eq!(fresh.current(&session, h.scope()).unwrap(), h.base);
+        }
         assert_eq!(
             fresh_authority
                 .inspect_source(h.scope())

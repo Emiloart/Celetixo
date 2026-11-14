@@ -108,8 +108,8 @@ jobs:
       - name: Inspect exact repository tree through the Engine
         run: >-
           cargo run --locked -p celetixo-repository --example inspect_repository -- . --git-tree "$(git rev-parse HEAD)" --changed crates/engine/src/engine.rs
-          --reviewed-public-input crates/engine/src/engine.rs=9c92eab1627977cf6b355ce90f75490aa37871d3fcafe15c1e13fea906cd066c
-          --reviewed-public-input crates/engine/src/engine/authority/records.rs=4b38c95bf1e0739a57db589bd9865da841af3a437fff557350a9a965fa22acf9
+          --reviewed-public-input crates/engine/src/engine.rs=23158b817a7fd305b8963902f25fa99aa520c0e987064dcf7a802b7e2df59bda
+          --reviewed-public-input crates/engine/src/engine/authority/records.rs=b6717da80b1abf6be20de1e85bb2f4faaf9555963dae0670a26c13683f1805c4
           --reviewed-public-input crates/engine/src/engine/source_recovery.rs=1552093e377c74023caa1aaf702a116758b81d203735c074e62b4d26a98f658d
           --reviewed-public-input crates/postgres/src/lib.rs=a511beb062d8cc1fdbf4d1098a2b9dd0da4b40fd08b1f5565b830b05481b6cb2
           --reviewed-public-input docs/implementation/goal-04-registration-validation/fixture.json=7af849f6ea540693cdecf457975ba468b550ae60a3d728a520a17504c9941d92
@@ -121,8 +121,8 @@ jobs:
       - name: Check source patch measurement runner on this immutable tree
         run: >-
           cargo run --locked -p celetixo-execution --example source_patch_bench -- . "$(git rev-parse HEAD)" --iterations 1
-          --reviewed-public-input crates/engine/src/engine.rs=9c92eab1627977cf6b355ce90f75490aa37871d3fcafe15c1e13fea906cd066c
-          --reviewed-public-input crates/engine/src/engine/authority/records.rs=4b38c95bf1e0739a57db589bd9865da841af3a437fff557350a9a965fa22acf9
+          --reviewed-public-input crates/engine/src/engine.rs=23158b817a7fd305b8963902f25fa99aa520c0e987064dcf7a802b7e2df59bda
+          --reviewed-public-input crates/engine/src/engine/authority/records.rs=b6717da80b1abf6be20de1e85bb2f4faaf9555963dae0670a26c13683f1805c4
           --reviewed-public-input crates/engine/src/engine/source_recovery.rs=1552093e377c74023caa1aaf702a116758b81d203735c074e62b4d26a98f658d
           --reviewed-public-input crates/postgres/src/lib.rs=a511beb062d8cc1fdbf4d1098a2b9dd0da4b40fd08b1f5565b830b05481b6cb2
           --reviewed-public-input docs/implementation/goal-04-registration-validation/fixture.json=7af849f6ea540693cdecf457975ba468b550ae60a3d728a520a17504c9941d92

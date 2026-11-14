@@ -19,6 +19,15 @@ use crate::source_execution::{
 };
 use crate::source_patch::SourcePatch;
 
+pub(super) mod history;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceCommittedRecord {
+    pub receipt: SourceCommitReceipt,
+    pub accesses: AccessSet,
+    pub provenance: AccessProvenance,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceAnalysisContext {
     pub analysis: Digest,
@@ -29,6 +38,7 @@ pub struct SourceRecords {
     /// Shared rows do not select a runtime profile. Native-only entry points
     /// still reject source content; these rows require the whole source graph.
     pub base: BaseRecords,
+    pub history: Vec<SourceCommittedRecord>,
     pub analysis_head: Option<Digest>,
     pub analyses: BTreeMap<Digest, RepositoryAnalysis>,
     pub policy_head: Option<Digest>,
@@ -54,6 +64,7 @@ impl SourceRecords {
     pub fn empty(scope: Scope) -> Self {
         Self {
             base: BaseRecords::empty(scope),
+            history: Vec::new(),
             analysis_head: None,
             analyses: BTreeMap::new(),
             policy_head: None,
@@ -137,6 +148,31 @@ pub struct SourceUnpreparedCommitRecord {
 }
 
 impl AuthorityState {
+    /// Read-only final metadata validation for a trusted backend retaining its
+    /// repository transaction. Actor records are attribution, not opaque caller
+    /// authentication; this method neither reads objects nor publishes effects.
+    pub fn check_source_commit_metadata_at(
+        &self,
+        now: u64,
+        owner: &MutationActor,
+        analyst: &MutationActor,
+        request: &SourceCommitRequest,
+    ) -> Result<(), EngineError> {
+        if now < self.db.now {
+            return Err(EngineError::Authority(AuthorityFailure::ClockRegression));
+        }
+        let mut observed = self.db.clone();
+        observed.now = now;
+        super::super::source_publication::validate_source_commit_metadata(
+            &observed,
+            &self.scope,
+            owner,
+            analyst,
+            request,
+        )
+        .map(|_| ())
+    }
+
     pub fn from_source_records(
         records: SourceRecords,
         limits: NativeRecordLimits,
@@ -200,6 +236,7 @@ pub(super) fn export(db: &Database, scope: &Scope) -> Result<SourceRecords, Rest
 
     let mut result = SourceRecords {
         base,
+        history: history::export(db, scope)?,
         analysis_head: db
             .repositories
             .get(scope)
@@ -353,15 +390,18 @@ fn validate_catalogs(r: &SourceRecords) -> Result<(), RestoreError> {
             || !r.rejections.is_empty()
             || !r.evidence.is_empty()
             || !r.unprepared_commits.is_empty()
+            || !r.history.is_empty()
         {
             return invalid();
         }
         return Ok(());
     };
-    // Source revision publication has no accepted implementation yet.
-    if repo.initial != repo.current || !repo.history.is_empty() || repo.registered.len() != 1 {
+    // Native PatchId history cannot represent source publications. Source rows
+    // have their own typed receipts and must be a complete revision chain.
+    if !repo.history.is_empty() {
         return Err(RestoreError::UnsupportedDomainValue);
     }
+    history::validate_catalog(r)?;
     let current = repo
         .registered
         .get(&repo.current)
@@ -499,7 +539,21 @@ pub(super) fn validate_transaction(
                     .as_ref()
                     .is_some_and(|v| !v.trim().is_empty())
         }
-        TransactionState::Committed | TransactionState::RevalidationRequired => false,
+        TransactionState::Committed => {
+            analyzed
+                && !leased
+                && tx
+                    .last_reason
+                    .as_ref()
+                    .is_some_and(|v| !v.trim().is_empty())
+        }
+        TransactionState::RevalidationRequired => {
+            analyzed
+                && tx
+                    .last_reason
+                    .as_ref()
+                    .is_some_and(|v| !v.trim().is_empty())
+        }
     };
     if !valid {
         return invalid();
@@ -610,9 +664,15 @@ fn install_source_graph(db: &mut Database, r: &SourceRecords) -> Result<(), Rest
                 && db.source_attempts.values().any(|a| {
                     a.admission.id() == e.receipt.admission
                         && a.admission.binding().transaction == tx.id
+                        && a.admission.binding().transaction_attempt == tx.attempt().number
                 })
         });
-        if (tx.state == TransactionState::Validating) != passed
+        if matches!(
+            tx.state,
+            TransactionState::Validating
+                | TransactionState::Committed
+                | TransactionState::RevalidationRequired
+        ) != passed
             && tx.state != TransactionState::Aborted
         {
             return invalid();
@@ -1220,6 +1280,10 @@ fn check_source_budget_with_extra(
     }
     let mut b = SourceBudget::new(limits)?;
     b.base(&records.base)?;
+    b.entries(records.history.len())?;
+    for change in &records.history {
+        b.value(history::cost(change)?)?;
+    }
     if let Some(extra) = extra {
         b.value(extra)?;
     }
@@ -1784,6 +1848,10 @@ fn check_database_budget(
             let mut c = Cost::default();
             crate::persistence::source_snapshot_cost(&mut c, snap)?;
             b.value(c)?;
+        }
+        b.entries(repo.history.len())?;
+        for change in &repo.history {
+            b.value(history::change_cost(change)?)?;
         }
     }
     for ((s, id), tx) in &db.transactions {

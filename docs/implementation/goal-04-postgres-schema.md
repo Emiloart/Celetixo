@@ -1,7 +1,7 @@
 # Goal 04 PostgreSQL authority schema
 
 **Status:** implementation foundation for milestone 04.1; not a completed durable Engine or a distributed-commit claim
-**Canonical SQL:** immutable [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql), additive [0002_lifecycle_reconstruction.sql](../../crates/postgres/migrations/0002_lifecycle_reconstruction.sql), [0003_native_lifecycle.sql](../../crates/postgres/migrations/0003_native_lifecycle.sql) and [0004_source_lifecycle.sql](../../crates/postgres/migrations/0004_source_lifecycle.sql)
+**Canonical SQL:** immutable [0001_authority.sql](../../crates/postgres/migrations/0001_authority.sql), additive [0002_lifecycle_reconstruction.sql](../../crates/postgres/migrations/0002_lifecycle_reconstruction.sql), [0003_native_lifecycle.sql](../../crates/postgres/migrations/0003_native_lifecycle.sql) and [0004_source_lifecycle.sql](../../crates/postgres/migrations/0004_source_lifecycle.sql), [0005_mutation_recovery.sql](../../crates/postgres/migrations/0005_mutation_recovery.sql), [0006_source_executor_mutations.sql](../../crates/postgres/migrations/0006_source_executor_mutations.sql) and [0007_source_publication.sql](../../crates/postgres/migrations/0007_source_publication.sql)
 **Authority:** [Goal 04](goal-04.md), ADR-0003 and ADR-0004
 
 Subsequent integration: [04.1g](goal-04-registration-authority.md) now routes scoped
@@ -9,8 +9,9 @@ native grants and repository/model registration through this schema.
 [04.1h](goal-04-native-sql-authority.md) extends that adapter to checked native
 lifecycle/lease/evidence/request recovery and atomic native commit/outbox facts.
 [Source SQL lifecycle](goal-04-source-sql-authority.md) adds normalized source
-publication through evidence receipts. Source revision commit and full-goal
-services remain pending.
+publication through evidence receipts. [Source publication](goal-04-source-publication.md) adds source revision commit,
+original outcomes and committed history through additive schema v7. Fresh source
+revalidation and full-goal services remain pending.
 
 This schema separates mutable operational authority, immutable engineering values and
 append-only outcomes. It provides database constraints and row isolation. Rust still
@@ -55,6 +56,7 @@ unsigned decimal values; SQL numeric coercion is not an integer request parser.
 | `transactions`, `attempts` | Scoped lifecycle/current attempt and preserved zero-based attempt records, snapshot/model/analysis/patch bindings. The initial transaction/attempt are inserted in one SQL transaction; the current-attempt foreign key is deferred until commit. |
 | `access_provenance` | Separate explicit, derived, effective, invariant, predicate and analysis payloads per attempt. |
 | `transaction_outcomes`, `committed_changes` | One immutable terminal outcome per transaction, unique committed transaction and repository revision, with provenance and receipt references. |
+| `source_commit_mutations`, `source_committed_changes` | Schema v7 projections of source original-outcome observations and committed revision receipts, access/provenance and analysis. Deferred associations require both context and publication effect; source IDs remain distinct from native patch/evidence IDs. |
 | `reservation_fences`, `reservations`, `reservation_claims`, `reservation_events` | Durable fencing counter, owner/attempt/expiry, current semantic-element claims and append-only lease history. The Engine allocates/increments fences and evaluates conflicts/expiry. |
 | `operations` | Immutable resolved operation outcome, keyed by scope, operation kind and idempotency key; canonical request digest, original request-payload reference and exact transaction/attempt are retained. |
 | `source_attempts`, `source_attempt_events`, `source_attempt_outcomes`, `source_rejections` | Source admission, exact patch/application, single active attempt per transaction, executor claim, history, terminal result and pre-admission rejection records. |
@@ -74,6 +76,11 @@ separate physical bytes, per-store locations and logical names/media;
 Legacy artifact/rejection rows remain preserved without inventing missing trust
 or current runtime resources. Repository authority profiles bind before model
 registration and cannot be reinterpreted later.
+
+Schema v7 requires explicit SELECT on its two source relations for checked
+loading and unsupported-profile detection. Source publication additionally needs
+INSERT; it grants no UPDATE/DELETE on immutable history or original outcomes.
+Scoped login and Engine permission checks remain independent requirements.
 
 `domain_payloads` caps each value at 64 MiB and records its format and version.
 The database enforces length/foreign-key structure, not the domain-separated content
@@ -223,8 +230,9 @@ adapters to their current registration before using them.
 Authoritative clock policy, lock ordering, bounded retries, statement deadlines,
 database availability behavior, fencing use and terminal-state reconstruction must
 be documented and tested with the routed backend. This migration alone does not
-supply those implementations. Captured source publication remains unsupported
-until a separately implemented and validated Engine contract permits it.
+supply those implementations. The separately validated
+[source publication contract](goal-04-source-publication.md) permits bounded source
+revision commits; its raw restored metadata cannot authorize a new effect.
 
 ## Verification required for milestone claims
 

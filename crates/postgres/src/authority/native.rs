@@ -614,7 +614,7 @@ fn event_id(outcome: &CommitOutcomeRecord) -> Digest {
         &outcome.canonical_bytes(),
     )
 }
-fn reason(
+pub(super) fn reason(
     scope: &Scope,
     id: &TransactionId,
     tx: &TransactionRecord,

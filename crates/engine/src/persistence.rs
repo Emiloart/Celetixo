@@ -26,12 +26,14 @@ pub(crate) use semantic::encode_model_fields;
 mod source_admission;
 mod source_artifacts;
 mod source_authority;
+mod source_commit;
 mod source_errors;
 mod source_event;
 mod source_evidence;
 mod source_execution;
 mod source_mutation;
 mod source_operation;
+mod source_publication;
 pub use lifecycle::{
     ImpactAnalysisRecord, NativeIntentRecord, VerificationEvidenceRecord, restore_access_set,
     restore_commit_request, restore_impact_record, restore_native_intent, restore_reference_patch,
@@ -40,7 +42,10 @@ pub use lifecycle::{
 pub use metadata::{
     LeaseEventRecord, TransactionReasonRecord, restore_lease_event, restore_transaction_reason,
 };
-pub use mutation::{MutationOutcomeRecord, restore_mutation_outcome, restore_mutation_request};
+pub use mutation::{
+    MutationOutcomeRecord, restore_mutation_outcome, restore_mutation_request,
+    restore_mutation_request_for_key,
+};
 pub use outcome::{
     AccessProvenanceRecord, CommitOutcomeRecord, restore_access_provenance, restore_commit_outcome,
 };
@@ -55,6 +60,7 @@ pub use source_artifacts::{
 pub use source_authority::{
     SourceArtifactRegistrationRecord, restore_source_artifact_registration,
 };
+pub use source_commit::{restore_source_commit_receipt, restore_source_commit_request};
 pub use source_event::{SourceEventKind, SourceEventRecord, restore_source_event};
 
 /// Conservative canonical-data accounting for referenced owned domain values.
@@ -76,6 +82,7 @@ pub use source_operation::{
     SourceOutcomeContext, SourceOutcomeRecord, SourceRequestRecord, restore_source_outcome,
     restore_source_request,
 };
+pub use source_publication::restore_source_publication_analysis;
 
 #[derive(Debug, Clone, Copy)]
 pub struct SnapshotDecodeLimits {

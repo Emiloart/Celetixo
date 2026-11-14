@@ -54,14 +54,14 @@ fn load_base(
             "artifact_locations",
             "artifact_references",
             "source_evidence_objects",
+            "source_commit_mutations",
+            "source_committed_changes",
         ][..]
     } else {
         &[
             "artifact_objects",
             "inbox",
             "committed_changes",
-            "outbox",
-            "outbox_delivery",
             "reference_evidence_admissions",
             "reference_evidence_signers",
             "attempt_checks",
@@ -285,7 +285,9 @@ fn load_base(
         load_commits(tx, loader, &mut records)?;
         load_operations(tx, loader, &mut records)?;
     }
-    load_terminal_and_outbox(tx, loader, &records)?;
+    if profile == LoadProfile::Native {
+        load_terminal_and_outbox(tx, loader, &records)?;
+    }
     super::super::mutations::load(tx, loader, &mut records)?;
     if counters.is_empty()
         && (!records.grants.is_empty()

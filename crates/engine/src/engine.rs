@@ -27,6 +27,7 @@ mod source_attempts;
 mod source_cleanup;
 mod source_evidence_gate;
 mod source_policy;
+mod source_publication;
 mod source_recovery;
 mod state_access;
 pub use commit_request::{CommitRequest, ReservationView};
@@ -45,6 +46,10 @@ pub use source_cleanup::SourceCleanupCapability;
 pub use source_evidence_gate::{
     SourceArtifactAdapter, SourceArtifactStoreCapability, SourceEvidenceFault,
     SourceEvidenceReceipt,
+};
+pub use source_publication::{
+    SourceCommitArtifactRead, SourceCommitContext, SourceCommitPreparation, SourceCommitReceipt,
+    SourceCommitRequest, SourceCommitSourceContext,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

@@ -577,6 +577,7 @@ impl Administrator {
                 MutationActor::EmbeddingAdministrator,
                 key,
                 request,
+                None,
                 |db, request| {
                     let MutationRequest::Administrative(request) = request else {
                         return Err(EngineError::Unauthorized);

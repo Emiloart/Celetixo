@@ -342,7 +342,7 @@ fn publish_base(
         publish_history(tx, before, after)?;
         publish_operations(tx, before, after)?;
     }
-    publish_terminal(tx, before, after)?;
+    publish_terminal(tx, before, after, profile)?;
     if profile == LoadProfile::Native {
         publish_heads(tx, generation, before, after)?;
     }
@@ -678,6 +678,7 @@ fn publish_terminal(
     tx: &mut Transaction<'_>,
     before: &NativeRecords,
     after: &NativeRecords,
+    profile: LoadProfile,
 ) -> SqlResult<()> {
     let scope = &after.scope;
     let repo = after
@@ -697,7 +698,7 @@ fn publish_terminal(
             TransactionState::Aborted => reason(scope, id, transaction)?
                 .ok_or(AuthorityFailure::Integrity)?
                 .digest(),
-            TransactionState::Committed => accepted(
+            TransactionState::Committed if profile == LoadProfile::Native => accepted(
                 scope,
                 &repo
                     .history

@@ -13,4 +13,5 @@ pub mod snapshot;
 pub mod source_evidence;
 pub mod source_execution;
 pub mod source_patch;
+pub mod source_publication;
 pub mod transaction;

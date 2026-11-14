@@ -18,6 +18,9 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
 
+#[path = "source_evidence/publication.rs"]
+mod publication;
+
 fn d(value: &str) -> Digest {
     Digest::of("source-evidence-reference/v1", value.as_bytes())
 }

@@ -403,7 +403,7 @@ pub(super) fn heads(
         return Ok(());
     };
     if let Some(old) = &before.base.repository
-        && (old.current != repo.current || old.initial != repo.initial)
+        && old.initial != repo.initial
     {
         return Err(AuthorityFailure::UnsupportedProfile);
     }
@@ -454,11 +454,46 @@ pub(super) fn heads(
             ],
         )?;
     } else {
+        let old = before
+            .base
+            .repository
+            .as_ref()
+            .ok_or(AuthorityFailure::Integrity)?;
+        let old_snapshot = old
+            .registered
+            .get(&old.current)
+            .ok_or(AuthorityFailure::Integrity)?;
+        let old_model = EngineeringModelRecord::new(old_snapshot, old.model.clone())
+            .map_err(|_| AuthorityFailure::Integrity)?;
+        if old.current != repo.current {
+            let change = after.history.last().ok_or(AuthorityFailure::Protocol)?;
+            if after.history.len() != before.history.len() + 1
+                || change.receipt.publication_snapshot != repo.current
+                || change.receipt.revision != snapshot.revision()
+                || old_snapshot.revision().0.checked_add(1) != Some(snapshot.revision().0)
+            {
+                return Err(AuthorityFailure::Protocol);
+            }
+            one(execute(
+                tx,
+                scope,
+                &format!(
+                    "UPDATE celetixo.repository_heads SET revision=$6::text::numeric,snapshot_digest=$7::bytea,head_generation=$8::text::numeric WHERE {FILTER} AND revision=$4::text::numeric AND snapshot_digest=$5::bytea"
+                ),
+                &[
+                    &old_snapshot.revision().0.to_string(),
+                    &&old.current.0.as_bytes()[..],
+                    &snapshot.revision().0.to_string(),
+                    &&repo.current.0.as_bytes()[..],
+                    &generation.to_string(),
+                ],
+            )?)?;
+        }
         one(execute(
             tx,
             scope,
             &format!(
-                "UPDATE celetixo.engine_model_heads SET model_generation=$4::text::numeric,model_payload_digest=$5::bytea,analysis_payload_digest=$6::bytea,index_generation=$7::bytea WHERE {FILTER} AND runtime_profile=$8"
+                "UPDATE celetixo.engine_model_heads SET model_generation=$4::text::numeric,model_payload_digest=$5::bytea,analysis_payload_digest=$6::bytea,index_generation=$7::bytea,snapshot_digest=$9::bytea WHERE {FILTER} AND runtime_profile=$8 AND snapshot_digest=$10::bytea AND model_generation=$11::text::numeric AND model_payload_digest=$12::bytea AND analysis_payload_digest=$13::bytea"
             ),
             &[
                 &repo.model.generation.to_string(),
@@ -466,6 +501,11 @@ pub(super) fn heads(
                 &&analysis.digest().as_bytes()[..],
                 &&analysis.index_generation().as_bytes()[..],
                 &PROFILE,
+                &&repo.current.0.as_bytes()[..],
+                &&old.current.0.as_bytes()[..],
+                &old.model.generation.to_string(),
+                &&old_model.digest().as_bytes()[..],
+                &before.analysis_head.map(|id| id.as_bytes().to_vec()),
             ],
         )?)?;
     }

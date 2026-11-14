@@ -153,7 +153,7 @@ pub(super) fn export_base(
             .ok_or(RestoreError::BindingMismatch)?
             .id();
         let mut history = Vec::new();
-        for change in &repo.history {
+        for change in repo.history.iter().filter(|_| !source) {
             let tx = db
                 .transactions
                 .get(&(scope.clone(), change.transaction.clone()))
@@ -314,15 +314,10 @@ pub(super) fn restore_base(
         .registered
         .get(&repo.current)
         .ok_or(RestoreError::BindingMismatch)?;
+    let history_len = source.map_or(repo.history.len(), |s| s.history.len());
     if initial.revision() != Revision(0)
-        || current.revision().0
-            != u64::try_from(repo.history.len()).map_err(|_| RestoreError::Limit)?
-        || repo.registered.len()
-            != repo
-                .history
-                .len()
-                .checked_add(1)
-                .ok_or(RestoreError::Limit)?
+        || current.revision().0 != u64::try_from(history_len).map_err(|_| RestoreError::Limit)?
+        || repo.registered.len() != history_len.checked_add(1).ok_or(RestoreError::Limit)?
     {
         return Err(RestoreError::BindingMismatch);
     }
@@ -505,6 +500,15 @@ pub(super) fn restore_base(
             provenance: change.provenance,
         });
     }
+    if let Some(source) = source {
+        history = super::source_records::history::restore_base(&db, source, registered)?;
+        for change in &history {
+            if !committed.insert(change.transaction.clone()) {
+                return Err(RestoreError::NonCanonical);
+            }
+            committed_revisions.insert(change.transaction.clone(), change.revision);
+        }
+    }
     for ((_, id), tx) in &db.transactions {
         if (tx.state == TransactionState::Committed) != committed.contains(id) {
             return Err(RestoreError::BindingMismatch);
@@ -584,7 +588,9 @@ pub(super) fn restore_base(
                 }
             }
         }
-        if tx.state == TransactionState::Committed {
+        // Source checks use their typed evidence graph, validated after this
+        // structural base is restored. They never synthesize native evidence.
+        if source.is_none() && tx.state == TransactionState::Committed {
             for check in &tx.intent.required_checks {
                 let id = tx
                     .attempt()
@@ -728,7 +734,7 @@ pub(super) fn restore_base(
             },
         );
     }
-    if accepted != committed {
+    if source.is_none() && accepted != committed {
         return Err(RestoreError::BindingMismatch);
     }
     if source.is_none() {
